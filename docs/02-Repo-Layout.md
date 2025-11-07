@@ -1,0 +1,72 @@
+# Repository Layout
+
+```
+/Game
+  Game1.cs
+  Assets.cs
+  PhaseManager.cs
+  Sim/
+    SimClock.cs
+    Systems/
+      EconomySystem.cs
+      PopulationSystem.cs
+      ConstructionSystem.cs
+      OrdersSystem.cs
+      FowSystem.cs
+  Maps/
+    IMap.cs
+    FarmMap.cs
+    CityMap.cs
+    HexMap.cs
+    StarMap.cs
+    Grid/
+      SquareCoord.cs
+      HexCoord.cs
+  ECS/
+    Components.cs
+    Tags.cs
+    Systems/
+      MovementSystem.cs
+      RenderSystem.cs
+      CollisionSystem.cs
+      SpawnerSystem.cs
+      UISystem.cs
+  Data/
+    Schema/
+      building.schema.md
+      unit.schema.md
+      tech.schema.md
+      resource.schema.md
+    Content/
+      buildings.json
+      units.json
+      techs.json
+      resources.json
+  UI/
+    UiRoot.cs
+    Panels/
+      BudgetPanel.cs
+      BuildPanel.cs
+      CityPanel.cs
+      TechPanel.cs
+      EmpirePanel.cs
+  Util/
+    RNG.cs
+    Mathx.cs
+    AABB.cs
+    Heatmap.cs
+  Save/
+    SaveGame.cs
+    SaveMigrator.cs
+    Converters/
+      HomesteadToTownshipConverter.cs
+      TownshipToNationConverter.cs
+      NationToStellarConverter.cs
+  Content/
+    Content.mgcb
+    font.spritefont
+    textures/
+    audio/
+```
+
+Notes: one type per file; XML docs on public APIs; immutable config where possible.
