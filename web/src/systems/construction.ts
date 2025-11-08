@@ -6,8 +6,12 @@ import type {
   GameState
 } from '../types';
 
+export type CompletedConstruction =
+  | { job: ConstructionJob; instance: BuildingInstance; reason?: undefined }
+  | { job: ConstructionJob; instance?: undefined; reason: 'unknown-building' };
+
 export type ConstructionResult = {
-  completed: BuildingInstance[];
+  completed: CompletedConstruction[];
 };
 
 export function processConstruction(
@@ -15,7 +19,7 @@ export function processConstruction(
   dt: number,
   buildingDefs: Record<BuildingId, BuildingDefinition>
 ): ConstructionResult {
-  const completed: BuildingInstance[] = [];
+  const completed: CompletedConstruction[] = [];
   const nextQueue: ConstructionJob[] = [];
 
   for (const job of state.constructionQueue) {
@@ -27,7 +31,7 @@ export function processConstruction(
 
     const def = buildingDefs[job.buildingId];
     if (!def) {
-      // Unknown building, drop the job but keep progressing the queue.
+      completed.push({ job, reason: 'unknown-building' });
       continue;
     }
 
@@ -36,7 +40,7 @@ export function processConstruction(
       buildingId: job.buildingId,
       recipeId: def.recipeId
     };
-    completed.push(instance);
+    completed.push({ job: { ...job, remaining: 0 }, instance });
     state.buildings.push(instance);
   }
 
