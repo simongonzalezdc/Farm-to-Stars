@@ -5,6 +5,7 @@ import { gridToScreen, TILE_W, TILE_H } from './iso';
 import type { GameState } from './types';
 import { load, save } from './storage';
 import { enableAudio, toggleMute } from './audio';
+import { tick, fmt, initWorld } from './world';
 import { defaultState, hydrateState, tick, fmt, SIM_DT } from './world';
 import { tick, fmt } from './world';
 import { BUILDINGS, applyCost, canAfford, formatCost } from './buildings';
@@ -211,6 +212,8 @@ class IsoScene extends Phaser.Scene {
     this.tables = await dataTablesPromise;
     const loaded = await load(this.tables.resources);
     this.state = loaded ?? defaultState(this.tables.resources);
+
+    initWorld(this.state);
 
     const cam = this.cameras.main;
     cam.setBackgroundColor('#0e0e10');
