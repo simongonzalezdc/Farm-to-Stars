@@ -47,6 +47,10 @@ export function tick(
       while (resourceRemainder[resource] >= 1) {
         resourceRemainder[resource] -= 1;
         events.push({ type: 'resource.collected', resource, amount: 1 });
+        const detail: ResourceProducedDetail = { resource, amount: 1 };
+        gameEvents.dispatchEvent(
+          new CustomEvent<ResourceProducedDetail>(EVENT_RESOURCE_PRODUCED, { detail })
+        );
       }
     }
     lastTotals[resource] = total;

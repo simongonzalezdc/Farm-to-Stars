@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { gridToScreen, TILE_H, TILE_W } from './iso';
 import { defaultState, type GameState, type Structure } from './types';
 import { load, save } from './storage';
-import { enableAudio, toggleMute } from './audio';
+import { enableAudio, playSfx, toggleMute } from './audio';
 import { fmt, initWorld, SIM_DT, tick } from './world';
 import { getUiBuildingDefinition } from './buildings';
 import {
