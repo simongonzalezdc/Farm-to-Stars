@@ -11,6 +11,7 @@ import {
   createDefaultSeasonState,
   createDefaultStaminaState,
   createDefaultTimeState,
+  createDefaultToolMasteryState,
   createDefaultWeatherState,
   createEmptyFieldState,
   createEmptyResourceStorage,
@@ -37,6 +38,7 @@ import {
   type ResourcesTable,
   type ResourceStorageState,
   type ToolPerkId,
+  type ToolMasteryState,
   type ToolId,
   type SaveV0,
   type SaveV1,
@@ -45,6 +47,7 @@ import {
   type SaveV4,
   type SaveV5,
   type SaveV6,
+  type SaveV7,
   type SeasonState,
   type WeatherEventsState,
   type WeatherState
@@ -67,14 +70,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function isSaveV6(candidate: unknown): candidate is SaveV6 {
+function isSaveV7(candidate: unknown): candidate is SaveV7 {
   if (!isRecord(candidate)) return false;
   return candidate.v === 1 && candidate.schemaVersion === CURRENT_SCHEMA_VERSION;
 }
 
-function isSaveV5(candidate: unknown): candidate is SaveV5 {
+function isSaveV6(candidate: unknown): candidate is SaveV6 {
   if (!isRecord(candidate)) return false;
   return candidate.v === 1 && candidate.schemaVersion === PREVIOUS_SCHEMA_VERSION;
+}
+
+function isSaveV5(candidate: unknown): candidate is SaveV5 {
+  if (!isRecord(candidate)) return false;
+  return candidate.v === 1 && candidate.schemaVersion === 5;
 }
 
 function isSaveV4(candidate: unknown): candidate is SaveV4 {
@@ -367,6 +375,35 @@ function normalizeResourceStorage(
   return storage;
 }
 
+function normalizeToolMastery(candidate: unknown): ToolMasteryState {
+  if (!isRecord(candidate)) {
+    return createDefaultToolMasteryState();
+  }
+
+  const mastery = createDefaultToolMasteryState();
+  for (const [key, value] of Object.entries(candidate)) {
+    if (!isRecord(value)) {
+      continue;
+    }
+    const usesRaw = (value as { uses?: unknown }).uses;
+    const uses =
+      typeof usesRaw === 'number' && Number.isFinite(usesRaw) && usesRaw > 0
+        ? Math.max(0, Math.floor(usesRaw))
+        : 0;
+    const unlockedRaw = (value as { unlocked?: unknown }).unlocked;
+    const unlocked: ToolPerkId[] = [];
+    if (Array.isArray(unlockedRaw)) {
+      for (const entry of unlockedRaw) {
+        if (typeof entry === 'string') {
+          unlocked.push(entry);
+        }
+      }
+    }
+    mastery[key as ToolId] = { uses, unlocked };
+  }
+  return mastery;
+}
+
 function normalizeHomesteadState(candidate: unknown): HomesteadState {
   const fallback = createDefaultHomesteadState();
   if (!isRecord(candidate)) {
@@ -378,8 +415,9 @@ function normalizeHomesteadState(candidate: unknown): HomesteadState {
   const stamina = normalizeStaminaState((candidate as { stamina?: unknown }).stamina);
   const weather = normalizeWeatherState((candidate as { weather?: unknown }).weather);
   const livestock = normalizeLivestockState((candidate as { livestock?: unknown }).livestock);
+  const toolMastery = normalizeToolMastery((candidate as { toolMastery?: unknown }).toolMastery);
 
-  return { field, time, stamina, weather, livestock };
+  return { field, time, stamina, weather, livestock, toolMastery };
 }
 
 function normalizeFieldState(candidate: unknown, fallback: FieldState): FieldState {
@@ -703,25 +741,25 @@ function normalizeWeatherEvents(candidate: unknown): WeatherEventsState {
   return { active, nextRollIn, serial };
 }
 
-function assembleLatestState(save: Partial<SaveV6> & SaveV3, resourceTable: ResourcesTable): SaveV6 {
+function assembleLatestState(save: Partial<SaveV7> & SaveV3, resourceTable: ResourcesTable): SaveV7 {
   const baseState = defaultState(resourceTable);
   const resources = sanitizeResources(save.resources ?? {}, resourceTable);
   const structures = normalizeStructures(save.structures, baseState.structures);
   const buildQueue = normalizeBuildQueue(save.buildQueue);
   const constructionQueue = normalizeConstructionQueue(save.constructionQueue, buildQueue);
   const buildings = normalizeBuildingInstances(save.buildings);
-  const productionNodes = normalizeProductionNodes((save as Partial<SaveV6>).productionNodes);
-  const productionQueue = normalizeProductionQueue((save as Partial<SaveV6>).productionQueue);
-  const productionModifiers = normalizeProductionModifiers((save as Partial<SaveV6>).productionModifiers);
+  const productionNodes = normalizeProductionNodes((save as Partial<SaveV7>).productionNodes);
+  const productionQueue = normalizeProductionQueue((save as Partial<SaveV7>).productionQueue);
+  const productionModifiers = normalizeProductionModifiers((save as Partial<SaveV7>).productionModifiers);
   const resourceStorage = normalizeResourceStorage(
-    (save as Partial<SaveV6>).resourceStorage,
+    (save as Partial<SaveV7>).resourceStorage,
     resourceTable,
     resources
   );
-  const season = normalizeSeasonState((save as Partial<SaveV6>).season);
-  const homestead = normalizeHomesteadState((save as Partial<SaveV6>).homestead);
-  const mail = normalizeMailState((save as Partial<SaveV6>).mail);
-  const jobQueue = normalizeJobQueueState((save as Partial<SaveV6>).jobQueue);
+  const season = normalizeSeasonState((save as Partial<SaveV7>).season);
+  const homestead = normalizeHomesteadState((save as Partial<SaveV7>).homestead);
+  const mail = normalizeMailState((save as Partial<SaveV7>).mail);
+  const jobQueue = normalizeJobQueueState((save as Partial<SaveV7>).jobQueue);
 
   const nodeIds = new Set<number>();
   for (const node of productionNodes) {
@@ -830,20 +868,24 @@ function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV3 {
 }
 
 export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameState | null {
-  if (isSaveV6(raw)) {
+  if (isSaveV7(raw)) {
     return assembleLatestState(raw, resourceTable);
   }
 
+  if (isSaveV6(raw)) {
+    return assembleLatestState(raw as unknown as Partial<SaveV7> & SaveV3, resourceTable);
+  }
+
   if (isSaveV5(raw)) {
-    return assembleLatestState(raw as unknown as Partial<SaveV6> & SaveV3, resourceTable);
+    return assembleLatestState(raw as unknown as Partial<SaveV7> & SaveV3, resourceTable);
   }
 
   if (isSaveV4(raw)) {
-    return assembleLatestState(raw as unknown as Partial<SaveV6> & SaveV3, resourceTable);
+    return assembleLatestState(raw as unknown as Partial<SaveV7> & SaveV3, resourceTable);
   }
 
   if (isSaveV3(raw)) {
-    return assembleLatestState(raw as unknown as Partial<SaveV6> & SaveV3, resourceTable);
+    return assembleLatestState(raw as unknown as Partial<SaveV7> & SaveV3, resourceTable);
   }
 
   if (isSaveV2(raw)) {
@@ -860,15 +902,15 @@ export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameSt
       nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
       nextBuildingInstanceId: 1
     };
-    return assembleLatestState(partial as unknown as Partial<SaveV6> & SaveV3, resourceTable);
+    return assembleLatestState(partial as unknown as Partial<SaveV7> & SaveV3, resourceTable);
   }
 
   if (isSaveV1(raw)) {
-    return assembleLatestState(migrateV1ToV3(raw, resourceTable) as unknown as Partial<SaveV6> & SaveV3, resourceTable);
+    return assembleLatestState(migrateV1ToV3(raw, resourceTable) as unknown as Partial<SaveV7> & SaveV3, resourceTable);
   }
 
   if (isSaveV0(raw)) {
-    return assembleLatestState(migrateV0ToV3(raw, resourceTable) as unknown as Partial<SaveV6> & SaveV3, resourceTable);
+    return assembleLatestState(migrateV0ToV3(raw, resourceTable) as unknown as Partial<SaveV7> & SaveV3, resourceTable);
   }
 
   return null;

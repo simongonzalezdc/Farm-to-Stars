@@ -12,7 +12,7 @@
 loop, and forecast-driven moisture events are wired into the Homestead simulation._
 - [x] **Week 7:** Expand Homestead content set (crops, tools, starter structures, inventory hooks). _Complete — dynamic
 inventory HUD, tool/seed bars, and tent/well/crate visual overrides now pull straight from the Homestead data tables._
-- [ ] **Week 8:** Extend save schema + migrations, hook UI/UX for new interactions.
+- [x] **Week 8:** Extend save schema + migrations, hook UI/UX for new interactions. _Complete — schema v7 persists tool mastery progress and migration paths while perk unlock feedback now survives reloads._
 - [ ] **Week 9:** Balance Homestead pacing, tune weather, add audio/visual polish.
 - [ ] **Week 10:** Regression sweep, QA checklist updates, and playtest instrumentation for Homestead.
 
