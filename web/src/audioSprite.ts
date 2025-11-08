@@ -237,8 +237,9 @@ export const UI_SPRITE_DATA = `data:audio/wav;base64,${UI_SPRITE_BASE64}`;
 
 export const UI_SPRITES = {
   place: [0, 180],
-  build: [180, 280],
-  resource: [460, 220]
+  buildDone: [180, 280],
+  resource: [460, 220],
+  invalidPlacement: [0, 120] // Placeholder: reuses place cue for now
 } as const;
 
 export type UiSpriteId = keyof typeof UI_SPRITES;

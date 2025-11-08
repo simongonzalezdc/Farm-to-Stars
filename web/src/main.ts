@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { gridToScreen, screenToGrid, TILE_H, TILE_W } from './iso';
 import { defaultState, type BuildingType, type GameState, type Structure } from './types';
 import { load, save } from './storage';
-import { enableAudio, toggleMute } from './audio';
+import { enableAudio, playSfx, toggleMute } from './audio';
 import { fmt, initWorld, SIM_DT, tick } from './world';
 import { BUILDINGS, applyCost, canAfford, formatCost } from './buildings';
 import {
@@ -384,11 +384,13 @@ class IsoScene extends Phaser.Scene {
     if (!placement.ok) {
       this.showBlockedTiles(placement.issues);
       feedbackEl.textContent = 'Cannot place there: tiles are occupied.';
+      playSfx('invalidPlacement');
       return;
     }
 
     if (!canAfford(this.state.resources, def.cost)) {
       feedbackEl.textContent = 'Not enough resources for that building.';
+      playSfx('invalidPlacement');
       return;
     }
 
@@ -409,6 +411,7 @@ class IsoScene extends Phaser.Scene {
     markJob(this.occupancy, x, y, def.footprint.w, def.footprint.h, type, jobId);
     this.addJobMarker(jobId, x, y);
     feedbackEl.textContent = `${def.label} queued for construction.`;
+    playSfx('place');
     this.hideBlockedTiles();
     const pointer = this.input.activePointer;
     this.updatePlacementPreview(pointer.worldX, pointer.worldY);

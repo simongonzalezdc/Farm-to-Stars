@@ -70,9 +70,23 @@ const ui = new Howl({
   sprite: UI_SPRITES
 });
 
+const DEBUG_AUDIO = import.meta.env.DEV;
+
 function playSprite(name: UiSpriteId) {
-  if (!started || muted) return;
+  if (!started || muted) {
+    if (DEBUG_AUDIO) {
+      console.debug('[audio] skip sfx', name, { started, muted });
+    }
+    return;
+  }
+  if (DEBUG_AUDIO) {
+    console.debug('[audio] play sfx', name);
+  }
   ui.play(name);
+}
+
+export function playSfx(name: UiSpriteId) {
+  playSprite(name);
 }
 
 const resourceNotes: Record<ResourceId, string> = {
@@ -84,7 +98,7 @@ const resourceNotes: Record<ResourceId, string> = {
 
 function handleResourceProduced(event: Event) {
   const detail = (event as CustomEvent<ResourceProducedDetail>).detail;
-  playSprite('resource');
+  playSfx('resource');
   if (!started || muted) return;
   const note = resourceNotes[detail.resource] ?? 'E5';
   shimmer.triggerAttackRelease(note, '16n');
@@ -92,7 +106,7 @@ function handleResourceProduced(event: Event) {
 
 function handleBuildComplete(event: Event) {
   const detail = (event as CustomEvent<BuildCompleteDetail>).detail;
-  playSprite('build');
+  playSfx('buildDone');
   if (!started || muted) return;
   const note = detail.buildingId === 'cottage' ? 'C5' : 'E5';
   bell.triggerAttackRelease(note, '2n');
@@ -116,10 +130,6 @@ export function toggleMute(): boolean {
   master.gain.rampTo(muted ? 0 : 0.9, 0.05);
   ui.mute(muted);
   return muted;
-}
-
-export function playPlace() {
-  playSprite('place');
 }
 
 export function transport() {

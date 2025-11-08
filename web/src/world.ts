@@ -1,4 +1,26 @@
-import type { GameEvent, GameState, ResourceId, Resources, Structure } from './types';
+import type {
+  BuildingType,
+  GameEvent,
+  GameState,
+  ResourceId,
+  Resources,
+  Structure
+} from './types';
+
+export const EVENT_RESOURCE_PRODUCED = 'resource.produced';
+export const EVENT_BUILD_COMPLETE = 'construction.completed';
+
+export type ResourceProducedDetail = {
+  resource: ResourceId;
+  amount: number;
+};
+
+export type BuildCompleteDetail = {
+  buildingId: BuildingType;
+  structure: Structure;
+};
+
+export const gameEvents = new EventTarget();
 
 export const SIM_DT = 0.1; // 10 Hz
 
@@ -34,6 +56,10 @@ export function tick(state: GameState, dt: number): GameEvent[] {
       while (resourceRemainder[resource] >= 1) {
         resourceRemainder[resource] -= 1;
         events.push({ type: 'resource.collected', resource, amount: 1 });
+        const detail: ResourceProducedDetail = { resource, amount: 1 };
+        gameEvents.dispatchEvent(
+          new CustomEvent<ResourceProducedDetail>(EVENT_RESOURCE_PRODUCED, { detail })
+        );
       }
     }
     lastTotals[resource] = total;
@@ -56,6 +82,10 @@ export function tick(state: GameState, dt: number): GameEvent[] {
       state.structures.push(structure);
       state.buildQueue.shift();
       events.push({ type: 'construction.completed', building: structure });
+      const detail: BuildCompleteDetail = { buildingId: structure.type, structure };
+      gameEvents.dispatchEvent(
+        new CustomEvent<BuildCompleteDetail>(EVENT_BUILD_COMPLETE, { detail })
+      );
     }
   }
 
