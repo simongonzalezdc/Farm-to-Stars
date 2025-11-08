@@ -14,16 +14,23 @@ export type ConstructionResult = {
   completed: CompletedConstruction[];
 };
 
+export interface ConstructionOptions {
+  speedMultiplier?: number;
+}
+
 export function processConstruction(
   state: GameState,
   dt: number,
-  buildingDefs: Record<BuildingId, BuildingDefinition>
+  buildingDefs: Record<BuildingId, BuildingDefinition>,
+  options: ConstructionOptions = {}
 ): ConstructionResult {
   const completed: CompletedConstruction[] = [];
   const nextQueue: ConstructionJob[] = [];
+  const speedMultiplier = Math.max(0, options.speedMultiplier ?? 1);
+  const scaledDt = dt * speedMultiplier;
 
   for (const job of state.constructionQueue) {
-    const remaining = Math.max(0, job.remaining - dt);
+    const remaining = Math.max(0, job.remaining - scaledDt);
     if (remaining > 0) {
       nextQueue.push({ ...job, remaining });
       continue;

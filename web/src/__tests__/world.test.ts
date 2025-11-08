@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { fmt, initWorld, tick } from '../world';
-import { defaultState, type BuildingDefinition, type BuildingId } from '../types';
+import {
+  defaultState,
+  type BuildingDefinition,
+  type BuildingId
+} from '../types';
+import { getSeasonDefinition, getNextSeason, SeasonId } from '../config/seasons';
 
 const buildingDefs = {
   cottage: {
@@ -16,11 +21,33 @@ describe('world simulation', () => {
     const state = defaultState();
     initWorld(state);
     tick(state, 1.0, buildingDefs);
+    const springDef = getSeasonDefinition(state.season.active);
     expect(state.resources.wood).toBeGreaterThan(0);
-    expect(state.resources.wood).toBeCloseTo(0.1, 5);
+    expect(state.resources.wood).toBeCloseTo(0.1 * springDef.multipliers.resourceRate, 5);
   });
 
   it('formats resource counts for display', () => {
     expect(fmt(1234.56)).toBe('1,234');
+  });
+
+  it('applies seasonal multipliers and emits season change events', () => {
+    const state = defaultState();
+    initWorld(state);
+    const initialDef = getSeasonDefinition(state.season.active);
+    state.season.elapsed = initialDef.durationSeconds - 0.01;
+
+    const events = tick(state, 0.02, buildingDefs);
+
+    const expectedSeason = getNextSeason(initialDef.id);
+    expect(state.season.active).toBe(expectedSeason);
+    expect(events.some((event) => event.type === 'season.changed')).toBe(true);
+
+    const winterState = defaultState();
+    winterState.season.active = SeasonId.Winter;
+    initWorld(winterState);
+    tick(winterState, 1.0, buildingDefs);
+
+    const winterDef = getSeasonDefinition(SeasonId.Winter);
+    expect(winterState.resources.wood).toBeCloseTo(0.1 * winterDef.multipliers.resourceRate, 5);
   });
 });

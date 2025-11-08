@@ -59,11 +59,26 @@ describe('processConstruction', () => {
     });
 
     const result = processConstruction(state, 0, buildingDefs);
-
+    
     expect(result.completed).toEqual([
       { job: expect.objectContaining({ id: 3 }), reason: 'unknown-building' }
     ]);
     expect(state.constructionQueue).toHaveLength(0);
     expect(state.buildings).toHaveLength(0);
+  });
+
+  it('applies speed multipliers when provided', () => {
+    const state = defaultState();
+    state.constructionQueue.push({
+      id: 4,
+      buildingId: 'cottage',
+      duration: 10,
+      remaining: 10,
+      footprint: { w: 1, h: 1 }
+    });
+
+    processConstruction(state, 1, buildingDefs, { speedMultiplier: 2 });
+
+    expect(state.constructionQueue[0]?.remaining).toBeCloseTo(8);
   });
 });
