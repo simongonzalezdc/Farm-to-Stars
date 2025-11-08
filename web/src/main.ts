@@ -43,7 +43,10 @@ import { BuildModeController } from './ui/buildModeController';
 import { HomesteadController } from './ui/homesteadController';
 import { getNormalizedTime } from './state/time';
 import { getStaminaRatio } from './state/stamina';
-import { TelemetryTracker, type TelemetrySnapshot } from './telemetry/telemetry';
+import { TelemetryTracker } from './telemetry/telemetry';
+import { TelemetryBuffer } from './telemetry/buffer';
+import { HomesteadMetrics, type HomesteadDaySummaryEvent } from './telemetry/homesteadMetrics';
+import { DebugOverlay } from './hud/debug/Overlay';
 
 const dataTablesPromise = loadDataTables();
 
@@ -225,163 +228,13 @@ function prepareHud(tables: DataTables) {
 
 type WorldBuildingDefinition = Pick<BuildingDefinition, 'id' | 'label' | 'buildTime' | 'footprint'>;
 
-type PerformanceWithMemory = Performance & {
-  memory?: {
-    usedJSHeapSize: number;
-    jsHeapSizeLimit: number;
-  };
-};
-
-class DebugOverlay {
-  private readonly container: HTMLDivElement;
-  private frameCount = 0;
-  private lastSample = performance.now();
-  private fps = 0;
-
-  constructor(private readonly telemetry: TelemetryTracker) {
-    this.container = document.createElement('div');
-    this.container.id = 'debug-overlay';
-    this.container.style.position = 'fixed';
-    this.container.style.right = '0.75rem';
-    this.container.style.bottom = '0.75rem';
-    this.container.style.padding = '0.5rem 0.75rem';
-    this.container.style.background = 'rgba(10, 12, 20, 0.78)';
-    this.container.style.border = '1px solid rgba(148, 163, 184, 0.35)';
-    this.container.style.borderRadius = '10px';
-    this.container.style.color = '#f8fafc';
-    this.container.style.fontFamily = 'JetBrains Mono, SFMono-Regular, Menlo, monospace';
-    this.container.style.fontSize = '0.72rem';
-    this.container.style.lineHeight = '1.45';
-    this.container.style.whiteSpace = 'pre';
-    this.container.style.pointerEvents = 'none';
-    this.container.style.zIndex = '1000';
-    this.container.setAttribute('aria-live', 'polite');
-    document.body.appendChild(this.container);
-  }
-
-  update(deltaMs: number, state: GameState) {
-    this.frameCount += 1;
-    const now = performance.now();
-    const elapsed = now - this.lastSample;
-    if (elapsed >= 500) {
-      this.fps = (this.frameCount * 1000) / elapsed;
-      this.frameCount = 0;
-      this.lastSample = now;
-    }
-
-    const memoryInfo = (performance as PerformanceWithMemory).memory;
-    const memoryText = memoryInfo
-      ? ` | Mem ${(memoryInfo.usedJSHeapSize / 1048576).toFixed(1)} / ${(
-          memoryInfo.jsHeapSizeLimit / 1048576
-        ).toFixed(0)} MB`
-      : '';
-
-    const snapshot = this.telemetry.snapshot(state);
-    const lines: string[] = [];
-    lines.push(`FPS ${this.fps.toFixed(1)} | Frame ${deltaMs.toFixed(2)} ms${memoryText}`);
-
-    const seasonLine = this.formatSeasonLine(snapshot);
-    if (seasonLine) {
-      lines.push(seasonLine);
-    }
-
-    lines.push(this.formatHomesteadLine(snapshot));
-    lines.push(this.formatWeatherLine(snapshot));
-
-    const resourceLine = this.formatResourceLine(snapshot);
-    if (resourceLine) {
-      lines.push(resourceLine);
-    }
-
-    const dailyLine = this.formatDailyLine(snapshot);
-    if (dailyLine) {
-      lines.push(dailyLine);
-    }
-
-    if (snapshot.recentEvents.length > 0) {
-      lines.push(`Recent ${snapshot.recentEvents.slice(0, 4).join(' | ')}`);
-    }
-
-    this.container.textContent = lines.join('\n');
-  }
-
-  private formatSeasonLine(snapshot: TelemetrySnapshot): string | null {
-    const { season } = snapshot;
-    const progress = (season.progress * 100).toFixed(0);
-    const remaining = Number.isFinite(season.remainingSeconds)
-      ? this.formatDuration(season.remainingSeconds)
-      : '∞';
-    return `Season ${season.id} • Y${season.year}C${season.cycle} • ${progress}% • Next ${remaining}`;
-  }
-
-  private formatHomesteadLine(snapshot: TelemetrySnapshot): string {
-    const staminaPercent = Math.round(snapshot.homestead.staminaRatio * 100);
-    const exhausted = snapshot.homestead.exhausted ? ' (!)' : '';
-    return `Day ${snapshot.homestead.day} @ ${snapshot.homestead.clock} | Stamina ${staminaPercent}%${exhausted}`;
-  }
-
-  private formatWeatherLine(snapshot: TelemetrySnapshot): string {
-    const delta = snapshot.homestead.moistureDeltaPerSecond;
-    const formattedDelta = delta === 0 ? '0.000' : delta.toFixed(3);
-    return `Weather ${snapshot.homestead.weather} (${formattedDelta} moisture/s)`;
-  }
-
-  private formatResourceLine(snapshot: TelemetrySnapshot): string | null {
-    const entries = Object.entries(snapshot.resources.totals) as [ResourceId, number][];
-    if (entries.length === 0) {
-      return null;
-    }
-    entries.sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
-    const parts = entries.slice(0, 4).map(([resource, total]) => {
-      const rate = snapshot.resources.ratesPerMinute[resource] ?? 0;
-      return `${resource}:${Math.floor(total)} (${this.formatRate(rate)}/m)`;
-    });
-    return `Res ${parts.join(' | ')}`;
-  }
-
-  private formatDailyLine(snapshot: TelemetrySnapshot): string {
-    const daily = snapshot.daily;
-    const outputs = this.formatProductionOutputs(daily.productionOutputs);
-    const base = `Daily build:${daily.buildsCompleted} crop:${daily.cropsMatured}/${daily.cropsWithered} prod:${daily.productionCycles}`;
-    return outputs ? `${base} • ${outputs}` : base;
-  }
-
-  private formatProductionOutputs(outputs: Record<ResourceId, number>): string | null {
-    const entries = Object.entries(outputs) as [ResourceId, number][];
-    if (entries.length === 0) {
-      return null;
-    }
-    entries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
-    return entries
-      .slice(0, 3)
-      .map(([resource, amount]) => `${resource}:${amount.toFixed(1)}`)
-      .join(', ');
-  }
-
-  private formatRate(rate: number): string {
-    if (Math.abs(rate) < 0.05) {
-      return '0.0';
-    }
-    const sign = rate >= 0 ? '+' : '-';
-    return `${sign}${Math.abs(rate).toFixed(1)}`;
-  }
-
-  private formatDuration(seconds: number): string {
-    if (!Number.isFinite(seconds)) {
-      return '∞';
-    }
-    const clamped = Math.max(0, seconds);
-    const minutes = Math.floor(clamped / 60);
-    const secs = Math.floor(clamped % 60);
-    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-}
-
 class IsoScene extends Phaser.Scene {
   state: GameState = defaultState();
   tables!: DataTables;
   private readonly telemetry = new TelemetryTracker();
   private readonly debugOverlay = new DebugOverlay(this.telemetry);
+  private readonly telemetryBuffer = new TelemetryBuffer<HomesteadDaySummaryEvent>();
+  private readonly homesteadMetrics = new HomesteadMetrics({ buffer: this.telemetryBuffer });
   private accum = 0;
   private ground!: Phaser.GameObjects.Container;
   private fieldTiles!: Phaser.GameObjects.Container;
@@ -530,6 +383,7 @@ class IsoScene extends Phaser.Scene {
 
     initWorld(this.state);
     this.telemetry.reset(this.state);
+    this.homesteadMetrics.reset(this.state);
     this.occupancy = createOccupancyMap();
 
     const cam = this.cameras.main;
@@ -661,6 +515,7 @@ class IsoScene extends Phaser.Scene {
         this.tables.livestock
       );
       this.telemetry.recordTick(this.state, events, SIM_DT);
+      this.homesteadMetrics.recordTick(this.state, events, SIM_DT);
       if (events.length > 0) {
         const last = events[events.length - 1];
         this.registry.set('lastEvent', last.type);
