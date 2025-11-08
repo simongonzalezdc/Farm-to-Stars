@@ -1,4 +1,4 @@
 {
-  "wheat": {"inputs":[["water",1.0]], "duration":30.0, "outputs":[["food",3]]},
-  "sell":  {"inputs":[["food",1]],    "duration":2.0,  "outputs":[["coins",2]]}
+  "wheat": {"inputs":[], "duration":24.0, "outputs":[["food",6]]},
+  "sell":  {"inputs":[["food",2]], "duration":4.0, "outputs":[["coins",5]]}
 }

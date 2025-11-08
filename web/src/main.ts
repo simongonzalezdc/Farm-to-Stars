@@ -3,6 +3,9 @@ import { gridToScreen, TILE_H, TILE_W } from './iso';
 import { defaultState, type GameState, type Structure } from './types';
 import { load, save } from './storage';
 import { enableAudio, toggleMute } from './audio';
+import { fmt, initWorld, SIM_DT, tick } from './world';
+import { enableAudio, playSfx, toggleMute } from './audio';
+import { setupPwaInstallPrompt } from './pwa/installPrompt';
 import {
   EVENT_RESOURCES_UPDATED,
   fmt,
@@ -44,6 +47,7 @@ const seasonNameEl = document.getElementById('seasonName')!;
 const seasonEffectsEl = document.getElementById('seasonEffects')!;
 const seasonTimerEl = document.getElementById('seasonTimer')!;
 const buildButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-building]'));
+const installButton = document.getElementById('installApp') as HTMLButtonElement | null;
 
 (document.getElementById('installAudio') as HTMLButtonElement).addEventListener(
   'click',
@@ -56,6 +60,10 @@ const buildButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[d
     String(muted)
   );
 });
+
+if (installButton) {
+  setupPwaInstallPrompt(installButton);
+}
 
 type PerformanceWithMemory = Performance & {
   memory?: {

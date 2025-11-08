@@ -54,8 +54,8 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
   [SeasonId.Spring]: {
     id: SeasonId.Spring,
     label: 'Spring Awakening',
-    summary: '+20% growth speed, +10% resource yield.',
-    durationSeconds: 180,
+    summary: '+20% gather, +25% build speed, +10% sell value.',
+    durationSeconds: 150,
     visuals: {
       background: '#0e2017',
       groundTint: 0xa2f0c4,
@@ -65,16 +65,16 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       icon: '🌱'
     },
     multipliers: {
-      resourceRate: 1.1,
-      constructionSpeed: 1.2,
-      economy: 1.05
+      resourceRate: 1.2,
+      constructionSpeed: 1.25,
+      economy: 1.1
     }
   },
   [SeasonId.Summer]: {
     id: SeasonId.Summer,
     label: 'Summer Zenith',
-    summary: '+15% market value, steady growth.',
-    durationSeconds: 180,
+    summary: '+10% gather, +15% sell value.',
+    durationSeconds: 150,
     visuals: {
       background: '#1b1f0e',
       groundTint: 0xfff2a8,
@@ -84,7 +84,7 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       icon: '☀️'
     },
     multipliers: {
-      resourceRate: 1.0,
+      resourceRate: 1.1,
       constructionSpeed: 1.0,
       economy: 1.15
     }
@@ -92,8 +92,8 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
   [SeasonId.Autumn]: {
     id: SeasonId.Autumn,
     label: 'Autumn Harvest',
-    summary: '+10% market value, -10% growth speed.',
-    durationSeconds: 180,
+    summary: 'Steady yields, -5% build speed, +10% sell value.',
+    durationSeconds: 150,
     visuals: {
       background: '#1f140b',
       groundTint: 0xffb680,
@@ -103,16 +103,16 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       icon: '🍂'
     },
     multipliers: {
-      resourceRate: 0.95,
-      constructionSpeed: 0.9,
+      resourceRate: 1.0,
+      constructionSpeed: 0.95,
       economy: 1.1
     }
   },
   [SeasonId.Winter]: {
     id: SeasonId.Winter,
     label: 'Winter Slumber',
-    summary: '-40% growth speed, -30% yields.',
-    durationSeconds: 180,
+    summary: '-15% gather, -25% build speed, -10% sell value.',
+    durationSeconds: 150,
     visuals: {
       background: '#0e1420',
       groundTint: 0xc9d8ff,
@@ -122,9 +122,9 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       icon: '❄️'
     },
     multipliers: {
-      resourceRate: 0.7,
-      constructionSpeed: 0.6,
-      economy: 0.85
+      resourceRate: 0.85,
+      constructionSpeed: 0.75,
+      economy: 0.9
     }
   }
 };
