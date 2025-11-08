@@ -1,22 +1,21 @@
 import Phaser from 'phaser';
-import { gridToScreen, screenToGrid, TILE_H, TILE_W } from './iso';
-import { defaultState, type BuildingType, type GameState, type Structure } from './types';
+import { gridToScreen, TILE_H, TILE_W } from './iso';
+import { defaultState, type GameState, type Structure } from './types';
 import { load, save } from './storage';
 import { enableAudio, playSfx, toggleMute } from './audio';
 import { fmt, initWorld, SIM_DT, tick } from './world';
-import { BUILDINGS, applyCost, canAfford, formatCost } from './buildings';
+import { getUiBuildingDefinition } from './buildings';
 import {
+  clearArea,
   createOccupancyMap,
   markJob,
   markStructure,
-  validatePlacement,
-  withinBounds,
   type OccupancyMap,
-  type PlacementIssue,
   MAP_HEIGHT,
   MAP_WIDTH
 } from './maps/tilemap';
 import { loadDataTables, type DataTables } from './data';
+import { BuildModeController } from './ui/buildModeController';
 
 const dataTablesPromise = loadDataTables();
 
@@ -102,17 +101,10 @@ class IsoScene extends Phaser.Scene {
   private ground!: Phaser.GameObjects.Container;
   private overlays!: Phaser.GameObjects.Container;
   private props!: Phaser.GameObjects.Container;
-  private ghost!: Phaser.GameObjects.Image;
   private occupancy: OccupancyMap = createOccupancyMap();
-  private blockedOverlays: Phaser.GameObjects.Image[] = [];
   private structureSprites = new Map<number, Phaser.GameObjects.Image>();
   private jobMarkers = new Map<number, Phaser.GameObjects.Image>();
-  private ui: {
-    mode: 'pan' | 'build';
-    selected?: BuildingType;
-    hover?: { x: number; y: number };
-  } = { mode: 'pan' };
-  private selectedButton: HTMLButtonElement | null = null;
+  private buildMode!: BuildModeController;
 
   preload() {
     const g = this.add.graphics({ x: 0, y: 0 });
@@ -179,7 +171,45 @@ class IsoScene extends Phaser.Scene {
     const loaded = await load(this.tables.resources);
     this.state = loaded ?? defaultState(this.tables.resources);
 
+    this.buildingDefs = Object.fromEntries(
+      Object.values(BUILDINGS).map((def) => [
+        def.id as BuildingId,
+        {
+          id: def.id,
+          label: def.label,
+          buildTime: def.buildTime,
+          footprint: def.footprint
+        } satisfies WorldBuildingDefinition
+      ])
+    ) as Record<BuildingId, WorldBuildingDefinition>;
+
+    const constructionById = new Map(this.state.constructionQueue.map((job) => [job.id, job]));
+    for (const job of this.state.buildQueue) {
+      const existing = constructionById.get(job.id);
+      if (existing) {
+        job.duration = existing.duration;
+        job.remaining = existing.remaining;
+        continue;
+      }
+      const fallbackDef = this.buildingDefs[job.type as BuildingId];
+      const duration = fallbackDef?.buildTime ?? job.duration;
+      const remaining = Math.min(job.remaining, duration);
+      const footprint = fallbackDef?.footprint ?? job.footprint;
+      const constructionJob = {
+        id: job.id,
+        buildingId: job.type,
+        duration,
+        remaining,
+        footprint
+      };
+      this.state.constructionQueue.push(constructionJob);
+      constructionById.set(job.id, constructionJob);
+      job.duration = duration;
+      job.remaining = remaining;
+    }
+
     initWorld(this.state);
+    this.occupancy = createOccupancyMap();
 
     const cam = this.cameras.main;
     cam.setBackgroundColor('#0e0e10');
@@ -200,9 +230,6 @@ class IsoScene extends Phaser.Scene {
       }
     }
 
-    this.ghost = this.add.image(0, 0, 'prop:cottage').setVisible(false).setAlpha(0.7);
-    this.ghost.setDepth(1000);
-
     for (const structure of this.state.structures) {
       this.addStructure(structure);
       markStructure(
@@ -218,29 +245,37 @@ class IsoScene extends Phaser.Scene {
 
     for (const job of this.state.buildQueue) {
       markJob(this.occupancy, job.x, job.y, job.footprint.w, job.footprint.h, job.type, job.id);
-      this.addJobMarker(job.id, job.x, job.y);
+      this.addJobMarker(job);
     }
 
     this.refreshQueueHud();
-    this.setupHud();
-
-    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
-      if (p.isDown && this.ui.mode === 'pan') {
-        cam.scrollX -= p.velocity.x / cam.zoom;
-        cam.scrollY -= p.velocity.y / cam.zoom;
-      }
-      if (this.ui.mode === 'build') {
-        this.updatePlacementPreview(p.worldX, p.worldY);
+    this.buildMode = new BuildModeController({
+      scene: this,
+      state: this.state,
+      occupancy: this.occupancy,
+      overlayLayer: this.overlays,
+      hud: {
+        modeIndicator: modeEl,
+        selectedCost: selectedCostEl,
+        feedback: feedbackEl
+      },
+      buttons: buildButtons,
+      onJobQueued: (job) => {
+        this.addJobMarker(job.id, job.x, job.y);
+        this.refreshQueueHud();
       }
     });
 
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (p.isDown && !this.buildMode.isActive()) {
+        cam.scrollX -= p.velocity.x / cam.zoom;
+        cam.scrollY -= p.velocity.y / cam.zoom;
+      }
+      this.buildMode.handlePointerMove(p.worldX, p.worldY);
+    });
+
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      if (this.ui.mode === 'build' && p.leftButtonDown()) {
-        this.attemptPlacement();
-      }
-      if (this.ui.mode === 'build' && p.rightButtonDown()) {
-        this.exitBuildMode();
-      }
+      this.buildMode.handlePointerDown(p);
     });
 
     this.input.on('wheel', (_p: unknown, _go: unknown, _dx: number, dy: number) => {
@@ -248,7 +283,7 @@ class IsoScene extends Phaser.Scene {
       cam.setZoom(next);
     });
 
-    this.input.keyboard?.on('keydown-ESC', () => this.exitBuildMode());
+    this.input.keyboard?.on('keydown-ESC', () => this.buildMode.cancel());
 
     this.time.addEvent({ delay: 5000, loop: true, callback: () => save(this.state) });
   }
@@ -256,7 +291,7 @@ class IsoScene extends Phaser.Scene {
   update(_time: number, deltaMs: number) {
     this.accum += deltaMs / 1000;
     while (this.accum >= SIM_DT) {
-      const events = tick(this.state, SIM_DT);
+      const events = tick(this.state, SIM_DT, this.buildingDefs);
       if (events.length > 0) {
         const last = events[events.length - 1];
         this.registry.set('lastEvent', last.type);
@@ -275,153 +310,17 @@ class IsoScene extends Phaser.Scene {
       return aImg.y - bImg.y;
     });
 
-    this.syncStructures();
     this.syncJobMarkers();
-    this.refreshQueueHud();
-  }
-
-  private setupHud() {
-    modeEl.textContent = 'Camera';
-    selectedCostEl.textContent = '—';
-    feedbackEl.textContent = 'Camera pan + zoom enabled.';
-    buildButtons.forEach((btn) => {
-      const type = btn.dataset.building as BuildingType | undefined;
-      if (!type) {
-        return;
-      }
-      const def = BUILDINGS[type];
-      btn.textContent = `${def.label} (${formatCost(def.cost)})`;
-      btn.addEventListener('click', () => {
-        if (this.ui.selected === type && this.ui.mode === 'build') {
-          this.exitBuildMode();
-          return;
-        }
-        this.enterBuildMode(type, btn);
-      });
-    });
-  }
-
-  private enterBuildMode(type: BuildingType, button: HTMLButtonElement) {
-    this.ui.mode = 'build';
-    this.ui.selected = type;
-    this.selectedButton?.setAttribute('aria-pressed', 'false');
-    this.selectedButton = button;
-    this.selectedButton.setAttribute('aria-pressed', 'true');
-    const def = BUILDINGS[type];
-    this.ghost.setTexture(def.texture);
-    this.ghost.setVisible(false);
-    modeEl.textContent = 'Placement';
-    selectedCostEl.textContent = formatCost(def.cost);
-    feedbackEl.textContent =
-      'Click a tile to queue construction. Right click or press Esc to cancel.';
-    const pointer = this.input.activePointer;
-    this.updatePlacementPreview(pointer.worldX, pointer.worldY);
-  }
-
-  private exitBuildMode() {
-    this.ui.mode = 'pan';
-    this.ui.selected = undefined;
-    this.ui.hover = undefined;
-    this.selectedButton?.setAttribute('aria-pressed', 'false');
-    this.selectedButton = null;
-    this.ghost.setVisible(false);
-    this.hideBlockedTiles();
-    modeEl.textContent = 'Camera';
-    selectedCostEl.textContent = '—';
-    feedbackEl.textContent = 'Camera pan + zoom enabled.';
-  }
-
-  private updatePlacementPreview(worldX: number, worldY: number) {
-    if (this.ui.mode !== 'build' || !this.ui.selected) {
-      return;
-    }
-    const def = BUILDINGS[this.ui.selected];
-    const { ix, iy } = screenToGrid(worldX, worldY);
-    if (!withinBounds(this.occupancy, ix, iy, def.footprint.w, def.footprint.h)) {
-      this.ghost.setVisible(false);
-      this.ui.hover = undefined;
-      this.showBlockedTiles([
-        { x: ix, y: iy, reason: 'out-of-bounds' as PlacementIssue['reason'] }
-      ]);
-      return;
-    }
-
-    const { x, y } = gridToScreen(ix, iy, def.elevation ?? 0);
-    this.ghost.setVisible(true);
-    this.ghost.setPosition(x, y - (def.anchorOffset ?? 0));
-    this.ui.hover = { x: ix, y: iy };
-
-    const placement = validatePlacement(this.occupancy, ix, iy, def.footprint.w, def.footprint.h);
-
-    const affordable = canAfford(this.state.resources, def.cost);
-    const valid = placement.ok && affordable;
-
-    if (!placement.ok) {
-      this.showBlockedTiles(placement.issues);
-    } else {
-      this.hideBlockedTiles();
-    }
-
-    if (!affordable) {
-      this.ghost.setTint(0xffd166);
-    } else if (valid) {
-      this.ghost.setTint(0x82ff9a);
-    } else {
-      this.ghost.setTint(0xff6b6b);
-    }
-    this.ghost.setAlpha(valid ? 0.85 : 0.65);
-  }
-
-  private attemptPlacement() {
-    if (this.ui.mode !== 'build' || !this.ui.selected || !this.ui.hover) {
-      return;
-    }
-    const type = this.ui.selected;
-    const def = BUILDINGS[type];
-    const { x, y } = this.ui.hover;
-    const placement = validatePlacement(this.occupancy, x, y, def.footprint.w, def.footprint.h);
-
-    if (!placement.ok) {
-      this.showBlockedTiles(placement.issues);
-      feedbackEl.textContent = 'Cannot place there: tiles are occupied.';
-      playSfx('invalidPlacement');
-      return;
-    }
-
-    if (!canAfford(this.state.resources, def.cost)) {
-      feedbackEl.textContent = 'Not enough resources for that building.';
-      playSfx('invalidPlacement');
-      return;
-    }
-
-    applyCost(this.state.resources, def.cost);
-
-    const jobId = this.state.nextBuildId++;
-    const job = {
-      id: jobId,
-      type,
-      x,
-      y,
-      footprint: def.footprint,
-      duration: def.buildTime,
-      remaining: def.buildTime,
-      status: 'queued' as const
-    };
-    this.state.buildQueue.push(job);
-    markJob(this.occupancy, x, y, def.footprint.w, def.footprint.h, type, jobId);
-    this.addJobMarker(jobId, x, y);
-    feedbackEl.textContent = `${def.label} queued for construction.`;
-    playSfx('place');
-    this.hideBlockedTiles();
-    const pointer = this.input.activePointer;
-    this.updatePlacementPreview(pointer.worldX, pointer.worldY);
+    this.syncStructures();
     this.refreshQueueHud();
   }
 
   private addStructure(structure: Structure) {
-    const def = BUILDINGS[structure.type];
+    const def = getUiBuildingDefinition(structure.type);
     const { x, y } = gridToScreen(structure.x, structure.y, def.elevation ?? 0);
-    const sprite = this.add.image(x, y - (def.anchorOffset ?? 0), def.texture).setOrigin(0.5, 1.0);
+    const sprite = this.add
+      .image(x, y - (def.anchorOffset ?? 0), def.texture)
+      .setOrigin(0.5, def.anchorOffset !== undefined ? 1.0 : 0.5);
     this.props.add(sprite);
     this.structureSprites.set(structure.id, sprite);
   }
@@ -443,30 +342,41 @@ class IsoScene extends Phaser.Scene {
     }
   }
 
-  private addJobMarker(jobId: number, x: number, y: number) {
-    const { x: sx, y: sy } = gridToScreen(x, y, 0);
-    const marker = this.add.image(sx, sy, 'tile:outline:valid').setOrigin(0.5, 0.5).setAlpha(0.5);
+  private addJobMarker(job: BuildJob) {
+    const { x: sx, y: sy } = gridToScreen(job.x, job.y, 0);
+    const marker = this.add
+      .image(sx, sy, 'tile:outline:valid')
+      .setOrigin(0.5, 0.5)
+      .setAlpha(0.5);
     this.overlays.add(marker);
     marker.setDepth(500);
-    this.jobMarkers.set(jobId, marker);
+    this.jobMarkers.set(job.id, {
+      marker,
+      x: job.x,
+      y: job.y,
+      w: job.footprint.w,
+      h: job.footprint.h
+    });
   }
 
   private syncJobMarkers() {
     const activeIds = new Set(this.state.buildQueue.map((j) => j.id));
-    for (const [id, marker] of this.jobMarkers.entries()) {
+    for (const [id, entry] of this.jobMarkers.entries()) {
       if (!activeIds.has(id)) {
-        marker.destroy();
+        entry.marker.destroy();
+        clearArea(this.occupancy, entry.x, entry.y, entry.w, entry.h);
         this.jobMarkers.delete(id);
       }
     }
     for (const job of this.state.buildQueue) {
-      const marker = this.jobMarkers.get(job.id);
-      if (!marker) {
-        this.addJobMarker(job.id, job.x, job.y);
+      const entry = this.jobMarkers.get(job.id);
+      if (!entry) {
+        this.addJobMarker(job);
         continue;
       }
-      const progress = Phaser.Math.Clamp(1 - job.remaining / job.duration, 0, 1);
-      marker.setAlpha(0.3 + 0.5 * progress);
+      const progress =
+        job.duration > 0 ? Phaser.Math.Clamp(1 - job.remaining / job.duration, 0, 1) : 1;
+      entry.marker.setAlpha(0.3 + 0.5 * progress);
     }
   }
 
@@ -479,34 +389,8 @@ class IsoScene extends Phaser.Scene {
     }
     const next = buildQueue[0];
     const remaining = Math.ceil(next.remaining);
-    queueDetailsEl.textContent = `${BUILDINGS[next.type].label} (${remaining}s remaining)`;
-  }
-
-  private showBlockedTiles(issues: PlacementIssue[]) {
-    if (!issues.length) {
-      this.hideBlockedTiles();
-      return;
-    }
-    this.blockedOverlays.forEach((img) => img.setVisible(false));
-    issues.forEach((issue, idx) => {
-      if (issue.x < 0 || issue.y < 0 || issue.x >= MAP_WIDTH || issue.y >= MAP_HEIGHT) {
-        return;
-      }
-      let img = this.blockedOverlays[idx];
-      if (!img) {
-        img = this.add.image(0, 0, 'tile:outline:blocked').setOrigin(0.5, 0.5);
-        this.overlays.add(img);
-        this.blockedOverlays[idx] = img;
-      }
-      img.setVisible(true);
-      const { x, y } = gridToScreen(issue.x, issue.y, 0);
-      img.setPosition(x, y);
-      img.setDepth(600);
-    });
-  }
-
-  private hideBlockedTiles() {
-    this.blockedOverlays.forEach((img) => img.setVisible(false));
+    const def = getUiBuildingDefinition(next.type);
+    queueDetailsEl.textContent = `${def.label} (${remaining}s remaining)`;
   }
 }
 
