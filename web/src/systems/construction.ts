@@ -17,7 +17,7 @@ export type ConstructionResult = {
 export function processConstruction(
   state: GameState,
   dt: number,
-  buildingDefs: Record<BuildingId, BuildingDefinition>
+  buildingDefs: Partial<Record<BuildingId, BuildingDefinition>>
 ): ConstructionResult {
   const completed: CompletedConstruction[] = [];
   const nextQueue: ConstructionJob[] = [];

@@ -9,6 +9,18 @@ import {
 } from './world';
 import type { ResourceId } from './types';
 import { UI_SPRITE_DATA, UI_SPRITES, type UiSpriteId } from './audioSprite';
+import {
+  createSeasonMusicController,
+  logSeasonMusicState,
+  type SeasonMusicController
+} from './audio/musicLayers';
+import {
+  EVENT_SEASON_CHANGED,
+  getSeason,
+  seasonEvents,
+  type SeasonChangeDetail,
+  type SeasonId
+} from './state/seasons';
 
 let started = false;
 let muted = false;
@@ -17,21 +29,16 @@ let transportRunning = false;
 const master = new Tone.Gain(0.9).toDestination();
 const ambience = new Tone.Gain(0.7).connect(master);
 const eventsBus = new Tone.Gain(0.9).connect(master);
+const musicBus = new Tone.Gain(0.75).connect(ambience);
 
 Tone.Transport.bpm.value = 72;
 Tone.Transport.loop = true;
 Tone.Transport.loopEnd = '16m';
 
-const padSynth = new Tone.PolySynth(Tone.Synth, {
-  envelope: { attack: 2.0, release: 4.5 },
-  oscillator: { type: 'sine' }
-}).connect(ambience);
-
-const bassSynth = new Tone.MonoSynth({
-  envelope: { attack: 0.4, decay: 0.3, sustain: 0.6, release: 1.2 },
-  filter: { type: 'lowpass', rolloff: -24, Q: 2 },
-  oscillator: { type: 'triangle' }
-}).connect(ambience);
+const seasonMusic: SeasonMusicController = createSeasonMusicController(musicBus, {
+  crossfadeSeconds: 4,
+  debug: DEBUG_AUDIO
+});
 
 const shimmer = new Tone.Synth({
   oscillator: { type: 'triangle' },
@@ -45,25 +52,6 @@ const bell = new Tone.FMSynth({
   envelope: { attack: 0.02, decay: 0.8, sustain: 0, release: 1.2 }
 }).connect(eventsBus);
 
-const padProgression = ['C4', 'G4', 'A4', 'F4'];
-let padStep = 0;
-
-new Tone.Loop((time) => {
-  const root = padProgression[padStep % padProgression.length];
-  const fifth = Tone.Frequency(root).transpose(7).toNote();
-  padSynth.triggerAttackRelease([root, fifth], '2m', time);
-  padStep++;
-}, '4m').start(0);
-
-const bassProgression = ['C2', 'G2', 'A2', 'F2'];
-let bassStep = 0;
-
-new Tone.Loop((time) => {
-  const bassRoot = bassProgression[bassStep % bassProgression.length];
-  bassSynth.triggerAttackRelease(bassRoot, '1m', time);
-  bassStep++;
-}, '2m').start('0:2:0');
-
 const ui = new Howl({
   src: [UI_SPRITE_DATA],
   volume: 0.7,
@@ -71,6 +59,21 @@ const ui = new Howl({
 });
 
 const DEBUG_AUDIO = import.meta.env.DEV;
+
+let currentSeason: SeasonId = getSeason();
+
+function applySeason(season: SeasonId, immediate = false) {
+  currentSeason = season;
+  seasonMusic.setSeason(season, { immediate: immediate || !started });
+}
+
+function handleSeasonChanged(event: Event) {
+  const detail = (event as CustomEvent<SeasonChangeDetail>).detail;
+  applySeason(detail.season);
+}
+
+seasonEvents.addEventListener(EVENT_SEASON_CHANGED, handleSeasonChanged);
+applySeason(currentSeason, true);
 
 function playSprite(name: UiSpriteId) {
   if (!started || muted) {
@@ -130,6 +133,17 @@ export function toggleMute(): boolean {
   master.gain.rampTo(muted ? 0 : 0.9, 0.05);
   ui.mute(muted);
   return muted;
+}
+
+export function setSeasonLayerVolume(season: SeasonId, volume: number) {
+  seasonMusic.setSeasonVolume(season, volume);
+  if (DEBUG_AUDIO) {
+    logSeasonMusicState(seasonMusic.getSnapshot(), `season-volume:${season}`);
+  }
+}
+
+export function logActiveSeasonLayers(label = 'season-music') {
+  logSeasonMusicState(seasonMusic.getSnapshot(), label);
 }
 
 export function transport() {

@@ -9,6 +9,21 @@ import type {
   Structure
 } from './types';
 
+export const EVENT_RESOURCE_PRODUCED = 'world.resource.produced';
+export const EVENT_BUILD_COMPLETE = 'world.build.complete';
+
+export interface ResourceProducedDetail {
+  resource: ResourceId;
+  amount: number;
+}
+
+export interface BuildCompleteDetail {
+  buildingId: BuildingId;
+  structure: Structure;
+}
+
+export const gameEvents = new EventTarget();
+
 export const SIM_DT = 0.1; // 10 Hz
 
 const resourceRemainder: Resources = { wood: 0, stone: 0, food: 0, coins: 0 };
@@ -23,12 +38,26 @@ export function initWorld(state: GameState) {
     resourceRemainder[key] = 0;
     lastTotals[key] = state.resources[key] ?? 0;
   }
+
+  const activeConstructionIds = new Set(state.constructionQueue.map((job) => job.id));
+  for (const job of state.buildQueue) {
+    if (job.status !== 'building' || activeConstructionIds.has(job.id)) {
+      continue;
+    }
+    state.constructionQueue.push({
+      id: job.id,
+      buildingId: job.type as BuildingId,
+      duration: job.duration,
+      remaining: job.remaining,
+      footprint: job.footprint
+    });
+  }
 }
 
 export function tick(
   state: GameState,
   dt: number,
-  buildingDefs: Record<BuildingId, BuildingDefinition>
+  buildingDefs: Partial<Record<BuildingId, BuildingDefinition>> = {}
 ): GameEvent[] {
   const events: GameEvent[] = [];
 
@@ -76,9 +105,6 @@ export function tick(
       continue;
     }
     const [job] = state.buildQueue.splice(index, 1);
-    if (result.reason === 'unknown-building') {
-      continue;
-    }
     const structure: Structure = {
       id: job.id,
       type: job.type,
@@ -86,8 +112,18 @@ export function tick(
       y: job.y,
       footprint: job.footprint
     };
+    const buildDetail: BuildCompleteDetail = { buildingId: result.job.buildingId, structure };
+    if (result.reason === 'unknown-building') {
+      gameEvents.dispatchEvent(
+        new CustomEvent<BuildCompleteDetail>(EVENT_BUILD_COMPLETE, { detail: buildDetail })
+      );
+      continue;
+    }
     state.structures.push(structure);
     events.push({ type: 'construction.completed', building: structure });
+    gameEvents.dispatchEvent(
+      new CustomEvent<BuildCompleteDetail>(EVENT_BUILD_COMPLETE, { detail: buildDetail })
+    );
   }
 
   return events;
