@@ -71,3 +71,24 @@ These guided scenarios are designed for moderated sessions with 1–2 players an
 - Crafting queue logs no failed recipes due to unclear inputs.
 - Durability, stamina, and cooldown indicators remain legible and responsive.
 - Player surfaces at least one balance or UX improvement idea during debrief.
+
+## Scenario D: Homestead Pace & Telemetry Calibration
+- **Objective:** Validate the rebalanced day/night cadence, stamina flow, and playtest instrumentation for Homestead.
+- **Participant Profile:** Returning farming loop player comfortable with toolbelt interactions.
+- **Duration:** 25 minutes including debrief.
+- **Instrumentation:** Enable telemetry opt-in, keep the debug overlay visible, and note the HUD playtest status counter before/after each in-game day.
+
+### Moderator Script
+1. Start from a fresh Homestead save and guide the participant through opting into telemetry via the HUD toggle.
+2. Observe the player tending three plots (till, water, plant, harvest) while tracking stamina usage and rest prompts.
+3. Encourage at least one manual rest before sunset to verify day skip flow and the new feedback styling.
+4. After each day, export telemetry logs and confirm `homestead.daySummary` entries appear with crop/stamina/weather deltas.
+5. Debrief questions:
+   - Did the shorter day length feel rushed, relaxed, or just right?
+   - Were stamina costs readable after the balance pass?
+   - Did the HUD and audio feedback reinforce changing weather states?
+
+### Success Criteria
+- Player completes two full in-game days (one natural, one rested) without moderator intervention.
+- Telemetry export contains daily summaries with non-zero stamina `spent` and accurate rest counts.
+- Participant calls out at least one instance of weather audio/visual feedback influencing their choices.

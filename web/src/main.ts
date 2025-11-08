@@ -50,12 +50,14 @@ import { HomesteadController } from './ui/homesteadController';
 import { getNormalizedTime } from './state/time';
 import { getStaminaRatio } from './state/stamina';
 import { TelemetryTracker, type TelemetrySnapshot } from './telemetry/telemetry';
+import { HomesteadMetrics } from './telemetry/homesteadMetrics';
 import { exportHomesteadToTownship } from './sim/export/homesteadToTownship';
 import {
   flushPlaytestEvents,
   getPlaytestTelemetryOptIn,
   peekPlaytestEvents,
   recordExportGenerated,
+  recordHomesteadDaySummary,
   setPlaytestTelemetryOptIn
 } from './telemetry/playtest';
 import { HOMESTEAD_QUESTS, type QuestMetricId } from './config/quests';
@@ -257,6 +259,7 @@ class IsoScene extends Phaser.Scene {
   state: GameState = defaultState();
   tables!: DataTables;
   private readonly telemetry = new TelemetryTracker();
+  private readonly homesteadMetrics = new HomesteadMetrics();
   private debugOverlay: DebugOverlay | null = null;
   private calendarHud: CalendarHud | null = null;
   private questLog: QuestLog | null = null;
@@ -414,6 +417,7 @@ class IsoScene extends Phaser.Scene {
 
     initWorld(this.state);
     this.telemetry.reset(this.state);
+    this.homesteadMetrics.reset(this.state);
     this.occupancy = createOccupancyMap();
 
     const cam = this.cameras.main;
@@ -480,7 +484,10 @@ class IsoScene extends Phaser.Scene {
       toolButtons,
       seedButtons,
       restButton,
-      feedbackEl: homesteadFeedbackEl
+      feedbackEl: homesteadFeedbackEl,
+      onRest: ({ previousDay, nextDay }) => {
+        this.homesteadMetrics.recordManualAdvance(this.state, previousDay, nextDay);
+      }
     });
     this.homestead.updateField();
     this.updateHomesteadHud();
@@ -596,6 +603,7 @@ class IsoScene extends Phaser.Scene {
         this.tables.livestock
       );
       this.telemetry.recordTick(this.state, events, SIM_DT);
+      this.homesteadMetrics.recordTick(this.state, events, SIM_DT);
       simMs += performance.now() - tickStart;
       steps += 1;
       if (events.length > 0) {
@@ -604,6 +612,8 @@ class IsoScene extends Phaser.Scene {
       }
       this.accum -= SIM_DT;
     }
+
+    this.flushHomesteadSummaries();
 
     const frameDuration = performance.now() - frameStart;
     this.telemetry.recordFrame(frameDuration, simMs, steps);
@@ -629,6 +639,16 @@ class IsoScene extends Phaser.Scene {
     this.syncJobMarkers();
     this.syncStructures();
     this.refreshQueueHud();
+  }
+
+  private flushHomesteadSummaries() {
+    const drained = this.homesteadMetrics.buffer.drain();
+    if (!drained.length) {
+      return;
+    }
+    for (const record of drained) {
+      recordHomesteadDaySummary(record.payload);
+    }
   }
 
   private addStructure(structure: Structure) {
@@ -871,7 +891,9 @@ class IsoScene extends Phaser.Scene {
     downloadPerfButton?.removeAttribute('disabled');
     const events = peekPlaytestEvents();
     const perf = (snapshot ?? this.telemetry.snapshot(this.state)).performance;
-    playtestStatusEl.textContent = `Opted in • ${perf.sampleCount} perf samples • ${events.length} buffered events.`;
+    const daySummaries = events.filter((event) => event.type === 'homestead.daySummary').length;
+    const summaryLabel = daySummaries > 0 ? ` • ${daySummaries} day summaries` : '';
+    playtestStatusEl.textContent = `Opted in • ${perf.sampleCount} perf samples • ${events.length} buffered events${summaryLabel}.`;
   }
 
   private handleDownloadPerf() {

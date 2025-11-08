@@ -29,9 +29,10 @@ interface HomesteadControllerOptions {
   seedButtons: HTMLButtonElement[];
   restButton: HTMLButtonElement | null;
   feedbackEl: HTMLElement;
+  onRest?: (context: { previousDay: number; nextDay: number }) => void;
 }
 
-const PLANT_STAMINA_COST = 4;
+const PLANT_STAMINA_COST = 3;
 
 export class HomesteadController {
   private readonly scene: Phaser.Scene;
@@ -41,6 +42,7 @@ export class HomesteadController {
   private readonly toolButtons: HTMLButtonElement[];
   private readonly seedButtons: HTMLButtonElement[];
   private readonly restButton: HTMLButtonElement | null;
+  private readonly onRest?: (context: { previousDay: number; nextDay: number }) => void;
 
   private readonly crops: DataTables['crops'];
   private readonly tools: DataTables['tools'];
@@ -63,6 +65,7 @@ export class HomesteadController {
     this.toolButtons = options.toolButtons;
     this.seedButtons = options.seedButtons;
     this.restButton = options.restButton;
+    this.onRest = options.onRest;
     this.crops = options.tables.crops;
     this.tools = options.tables.tools;
 
@@ -409,12 +412,14 @@ export class HomesteadController {
   }
 
   private rest() {
+    const previousDay = this.state.homestead.time.day;
     applyRest(this.state.homestead.stamina);
     resetForNewDay(this.state.homestead.time);
     this.state.homestead.weather.elapsed = 0;
     this.setFeedback(`Rested until dawn. Day ${this.state.homestead.time.day}.`, 'success');
     this.cancel();
     this.updateField();
+    this.onRest?.({ previousDay, nextDay: this.state.homestead.time.day });
   }
 }
 

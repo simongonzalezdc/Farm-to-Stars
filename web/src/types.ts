@@ -459,15 +459,15 @@ export function createDefaultTimeState(): TimeOfDayState {
   return {
     day: 1,
     elapsed: 0,
-    secondsPerDay: 900
+    secondsPerDay: 780
   };
 }
 
 export function createDefaultStaminaState(): StaminaState {
   return {
-    current: 100,
-    max: 100,
-    regenPerSecond: 12,
+    current: 120,
+    max: 120,
+    regenPerSecond: 14,
     exhausted: false
   };
 }
@@ -487,9 +487,9 @@ export function createDefaultWeatherState(): WeatherState {
   return {
     current: 'clear',
     elapsed: 0,
-    duration: 180,
-    moistureDeltaPerSecond: -0.005,
-    events: { active: [], nextRollIn: 90, serial: 0 },
+    duration: 210,
+    moistureDeltaPerSecond: -0.0035,
+    events: { active: [], nextRollIn: 75, serial: 0 },
     rngState: 0x9e3779b9
   };
 }
