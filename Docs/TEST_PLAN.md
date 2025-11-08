@@ -82,7 +82,7 @@ Use this page as a printable or digital worksheet during guided playtests. Check
 
 ## 4) Homestead Phase Checks
 
-- **Farming lifecycle:** Till soil, plant wheat/potato/berry, water through a dry spell, and confirm harvest yields populate the new resources (wheat, potato, berries, fiber).
-- **Time & stamina loop:** Ensure stamina drains on tool use, regenerates via rest, and that the day/night HUD reflects the updated clock cadence.
-- **Weather/moisture:** Advance several in-game days to observe rain/storm rolls, verify soil moisture overlays respond, and crops wither if ignored.
+- **Farming lifecycle:** Use the toolbelt (Hoe/Water/Sickle) and seed bar to till soil, plant wheat/potato/berry, water through a dry spell, and confirm harvest yields populate the new resources (wheat, potato, berries, fiber) with stamina costs applied.
+- **Time & stamina loop:** Ensure stamina drains on tool use, regenerates via rest, and that the day/night HUD reflects the updated clock cadence (rest button should advance to dawn and clear exhaustion states).
+- **Weather/moisture:** Advance several in-game days to observe rain/storm rolls, verify soil moisture overlays recolor tiles, and confirm crops wither if ignored.
 - **Save migration:** Load a pre-Homestead save to confirm crops/time/weather defaults populate without data loss and that new saves persist field state.

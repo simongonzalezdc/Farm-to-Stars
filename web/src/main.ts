@@ -3,9 +3,6 @@ import { gridToScreen, TILE_H, TILE_W } from './iso';
 import { defaultState, type GameState, type Structure } from './types';
 import { load, save } from './storage';
 import { enableAudio, toggleMute } from './audio';
-import { fmt, initWorld, SIM_DT, tick } from './world';
-import { enableAudio, playSfx, toggleMute } from './audio';
-import { setupPwaInstallPrompt } from './pwa/installPrompt';
 import {
   EVENT_RESOURCES_UPDATED,
   fmt,
@@ -15,6 +12,7 @@ import {
   tick,
   type ResourcesUpdatedDetail
 } from './world';
+import { setupPwaInstallPrompt } from './pwa/installPrompt';
 import { getUiBuildingDefinition } from './buildings';
 import {
   getSeasonDefinition,
@@ -33,6 +31,9 @@ import {
 } from './maps/tilemap';
 import { loadDataTables, type DataTables } from './data';
 import { BuildModeController } from './ui/buildModeController';
+import { HomesteadController } from './ui/homesteadController';
+import { getNormalizedTime } from './state/time';
+import { getStaminaRatio } from './state/stamina';
 
 const dataTablesPromise = loadDataTables();
 
@@ -48,6 +49,14 @@ const seasonEffectsEl = document.getElementById('seasonEffects')!;
 const seasonTimerEl = document.getElementById('seasonTimer')!;
 const buildButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-building]'));
 const installButton = document.getElementById('installApp') as HTMLButtonElement | null;
+const homesteadDayEl = document.getElementById('homesteadDay')!;
+const homesteadClockEl = document.getElementById('homesteadClock')!;
+const homesteadStaminaEl = document.getElementById('homesteadStamina')!;
+const homesteadWeatherEl = document.getElementById('homesteadWeather')!;
+const homesteadFeedbackEl = document.getElementById('homesteadFeedback')!;
+const toolButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tool]'));
+const seedButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-crop]'));
+const restButton = document.getElementById('restButton') as HTMLButtonElement | null;
 
 (document.getElementById('installAudio') as HTMLButtonElement).addEventListener('click', () => {
   void enableAudio();
@@ -123,6 +132,7 @@ class IsoScene extends Phaser.Scene {
   tables!: DataTables;
   private accum = 0;
   private ground!: Phaser.GameObjects.Container;
+  private fieldTiles!: Phaser.GameObjects.Container;
   private overlays!: Phaser.GameObjects.Container;
   private props!: Phaser.GameObjects.Container;
   private seasonOverlay?: Phaser.GameObjects.Rectangle;
@@ -131,6 +141,7 @@ class IsoScene extends Phaser.Scene {
   private structureSprites = new Map<number, Phaser.GameObjects.Image>();
   private jobMarkers = new Map<number, Phaser.GameObjects.Image>();
   private buildMode!: BuildModeController;
+  private homestead!: HomesteadController;
   private detachHudListener?: () => void;
 
   preload() {
@@ -245,6 +256,7 @@ class IsoScene extends Phaser.Scene {
     cam.roundPixels = true;
 
     this.ground = this.add.container(0, 0);
+    this.fieldTiles = this.add.container(0, 0);
     this.overlays = this.add.container(0, 0);
     this.props = this.add.container(0, 0);
 
@@ -293,8 +305,22 @@ class IsoScene extends Phaser.Scene {
       }
     });
 
+    this.homestead = new HomesteadController({
+      scene: this,
+      state: this.state,
+      layer: this.fieldTiles,
+      tables: this.tables,
+      toolButtons,
+      seedButtons,
+      restButton,
+      feedbackEl: homesteadFeedbackEl
+    });
+    this.homestead.updateField();
+    this.updateHomesteadHud();
+
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
-      if (p.isDown && !this.buildMode.isActive()) {
+      const homesteadActive = this.homestead.handlePointerMove(p);
+      if (p.isDown && !this.buildMode.isActive() && !homesteadActive) {
         cam.scrollX -= p.velocity.x / cam.zoom;
         cam.scrollY -= p.velocity.y / cam.zoom;
       }
@@ -302,6 +328,9 @@ class IsoScene extends Phaser.Scene {
     });
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      if (this.homestead.handlePointerDown(p)) {
+        return;
+      }
       this.buildMode.handlePointerDown(p);
     });
 
@@ -310,7 +339,10 @@ class IsoScene extends Phaser.Scene {
       cam.setZoom(next);
     });
 
-    this.input.keyboard?.on('keydown-ESC', () => this.buildMode.cancel());
+    this.input.keyboard?.on('keydown-ESC', () => {
+      this.buildMode.cancel();
+      this.homestead.cancel();
+    });
 
     this.time.addEvent({ delay: 5000, loop: true, callback: () => save(this.state) });
 
@@ -338,7 +370,13 @@ class IsoScene extends Phaser.Scene {
   update(_time: number, deltaMs: number) {
     this.accum += deltaMs / 1000;
     while (this.accum >= SIM_DT) {
-      const events = tick(this.state, SIM_DT, this.buildingDefs, this.tables.recipes);
+      const events = tick(
+        this.state,
+        SIM_DT,
+        this.buildingDefs,
+        this.tables.recipes,
+        this.tables.crops
+      );
       if (events.length > 0) {
         const last = events[events.length - 1];
         this.registry.set('lastEvent', last.type);
@@ -352,6 +390,8 @@ class IsoScene extends Phaser.Scene {
     stoneEl.textContent = fmt(this.state.resources.stone ?? 0);
 
     this.syncSeasonState();
+    this.homestead.updateField();
+    this.updateHomesteadHud();
 
     this.props.list.sort((a, b) => {
       const aImg = a as Phaser.GameObjects.Image;
@@ -461,6 +501,28 @@ class IsoScene extends Phaser.Scene {
       this.currentSeasonId = definition.id;
     }
     this.updateSeasonHud(definition);
+  }
+
+  private updateHomesteadHud() {
+    const homestead = this.state.homestead;
+    const day = Math.max(1, Math.floor(homestead.time.day));
+    homesteadDayEl.textContent = day.toString();
+
+    const normalized = getNormalizedTime(homestead.time);
+    const hoursFloat = (normalized * 24 + 6) % 24;
+    const hours = Math.floor(hoursFloat);
+    const minutes = Math.floor((hoursFloat - hours) * 60);
+    homesteadClockEl.textContent = `${hours.toString().padStart(2, '0')}:${minutes
+      .toString()
+      .padStart(2, '0')}`;
+
+    const staminaPct = Math.round(getStaminaRatio(homestead.stamina) * 100);
+    homesteadStaminaEl.textContent = homestead.stamina.exhausted
+      ? `${staminaPct}% (Exhausted)`
+      : `${staminaPct}%`;
+
+    const weatherLabel = homestead.weather.current;
+    homesteadWeatherEl.textContent = weatherLabel.charAt(0).toUpperCase() + weatherLabel.slice(1);
   }
 
   private applySeasonVisuals(definition: SeasonDefinition) {

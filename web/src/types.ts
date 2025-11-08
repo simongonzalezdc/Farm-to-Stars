@@ -220,6 +220,10 @@ export type GameEvent =
   | { type: 'construction.completed'; building: Structure }
   | { type: 'resource.collected'; resource: ResourceId; amount: number }
   | { type: 'season.changed'; season: SeasonId }
+  | { type: 'homestead.time.advanced'; day: number; normalizedTime: number }
+  | { type: 'homestead.weather.changed'; weather: WeatherType; moistureDeltaPerSecond: number }
+  | { type: 'homestead.crop.matured'; cropId: CropId; x: number; y: number }
+  | { type: 'homestead.crop.withered'; cropId: CropId; x: number; y: number }
   | { type: 'production.cycle'; nodeId: number; recipeId: RecipeId; outputs: RecipeIO };
 
 export const CURRENT_SCHEMA_VERSION = 5;

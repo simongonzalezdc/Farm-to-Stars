@@ -4,6 +4,7 @@ import {
   defaultState,
   type BuildingDefinition,
   type BuildingId,
+  type CropsTable,
   type RecipeDefinition,
   type RecipeId
 } from '../types';
@@ -29,7 +30,13 @@ describe('world simulation', () => {
     expect(state.resources.wood).toBeCloseTo(baseGain * 2, 5);
     state.resources.wood = 1.25;
 
-    const events = tick(state, 0.1, buildingDefs, {} as Record<RecipeId, RecipeDefinition>);
+    const events = tick(
+      state,
+      0.1,
+      buildingDefs,
+      {} as Record<RecipeId, RecipeDefinition>,
+      {} as CropsTable
+    );
 
     expect(events).toEqual([
       { type: 'resource.collected', resource: 'wood', amount: 1 }
