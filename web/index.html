@@ -197,6 +197,15 @@
       <small id="seasonEffects" class="season-effects">+20% growth speed, +10% resource yield.</small>
       <small id="seasonTimer" class="season-timer">Year 1 • Cycle 1 • Next in 03:00</small>
     </div>
+    <div class="row labels">
+      <span>Homestead status:</span>
+    </div>
+    <div class="row">
+      <span>Day: <b id="homesteadDay">1</b></span>
+      <span>Time: <b id="homesteadClock">06:00</b></span>
+      <span>Stamina: <b id="homesteadStamina">100%</b></span>
+      <span>Weather: <b id="homesteadWeather">Clear</b></span>
+    </div>
     <div class="row">
       <button id="installAudio">Enable Audio</button>
       <button id="mute" aria-pressed="false">Mute</button>
@@ -208,12 +217,32 @@
     <div class="row">
       <button data-building="cottage" aria-pressed="false">Cottage</button>
     </div>
+    <div class="row labels">
+      <span>Tools:</span>
+    </div>
+    <div class="row" id="toolbelt">
+      <button data-tool="hoe" aria-pressed="false">Stone Hoe</button>
+      <button data-tool="wateringCan" aria-pressed="false">Copper Watering Can</button>
+      <button data-tool="sickle" aria-pressed="false">Harvesting Sickle</button>
+      <button id="restButton">Rest Until Dawn</button>
+    </div>
+    <div class="row labels">
+      <span>Seeds:</span>
+    </div>
+    <div class="row" id="seedBar">
+      <button data-crop="wheat" aria-pressed="false">Plant Wheat</button>
+      <button data-crop="potato" aria-pressed="false">Plant Potato</button>
+      <button data-crop="berry" aria-pressed="false">Plant Berry</button>
+    </div>
     <div class="row queue">
       <span>Queue: <b id="buildQueue">0</b></span>
       <small id="queueDetails">No active construction.</small>
     </div>
     <div class="row">
       <div id="buildFeedback" class="feedback" aria-live="polite" data-tone="info">Camera pan + zoom enabled.</div>
+    </div>
+    <div class="row">
+      <div id="homesteadFeedback" class="feedback" aria-live="polite" data-tone="info">Select a tool to tend the field.</div>
     </div>
   </div>
   <script type="module" src="/src/main.ts"></script>

@@ -39,6 +39,24 @@ export interface SeasonDefinition {
   durationSeconds: number;
   visuals: SeasonVisualTheme;
   multipliers: SeasonMultipliers;
+  weather: SeasonWeatherProfile;
+}
+
+export interface SeasonWeatherProfile {
+  /** Probability (0-1) of a rainy segment when rolling weather. */
+  rainChance: number;
+  /** Probability (0-1) of a storm; applied after rain chance. */
+  stormChance: number;
+  /** Minimum simulated seconds before rerolling weather. */
+  minDurationSeconds: number;
+  /** Maximum simulated seconds before rerolling weather. */
+  maxDurationSeconds: number;
+  /** Soil evaporation rate applied every simulated second when no precipitation occurs. */
+  evaporationPerSecond: number;
+  /** Moisture added per second while raining. */
+  rainPrecipitationPerSecond: number;
+  /** Moisture added per second while storming. */
+  stormPrecipitationPerSecond: number;
 }
 
 export const SEASON_ORDER: SeasonId[] = [
@@ -68,6 +86,15 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       resourceRate: 1.2,
       constructionSpeed: 1.25,
       economy: 1.1
+    },
+    weather: {
+      rainChance: 0.35,
+      stormChance: 0.12,
+      minDurationSeconds: 90,
+      maxDurationSeconds: 220,
+      evaporationPerSecond: 0.004,
+      rainPrecipitationPerSecond: 0.025,
+      stormPrecipitationPerSecond: 0.04
     }
   },
   [SeasonId.Summer]: {
@@ -87,6 +114,15 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       resourceRate: 1.1,
       constructionSpeed: 1.0,
       economy: 1.15
+    },
+    weather: {
+      rainChance: 0.22,
+      stormChance: 0.08,
+      minDurationSeconds: 110,
+      maxDurationSeconds: 260,
+      evaporationPerSecond: 0.006,
+      rainPrecipitationPerSecond: 0.02,
+      stormPrecipitationPerSecond: 0.032
     }
   },
   [SeasonId.Autumn]: {
@@ -106,6 +142,15 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       resourceRate: 1.0,
       constructionSpeed: 0.95,
       economy: 1.1
+    },
+    weather: {
+      rainChance: 0.3,
+      stormChance: 0.1,
+      minDurationSeconds: 100,
+      maxDurationSeconds: 240,
+      evaporationPerSecond: 0.0045,
+      rainPrecipitationPerSecond: 0.022,
+      stormPrecipitationPerSecond: 0.036
     }
   },
   [SeasonId.Winter]: {
@@ -125,6 +170,15 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       resourceRate: 0.85,
       constructionSpeed: 0.75,
       economy: 0.9
+    },
+    weather: {
+      rainChance: 0.18,
+      stormChance: 0.06,
+      minDurationSeconds: 120,
+      maxDurationSeconds: 260,
+      evaporationPerSecond: 0.0025,
+      rainPrecipitationPerSecond: 0.018,
+      stormPrecipitationPerSecond: 0.028
     }
   }
 };

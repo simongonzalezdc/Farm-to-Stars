@@ -3,5 +3,9 @@
   "stone": {"display": "Stone", "stack": 9999},
   "water": {"display": "Water", "stack": 9999},
   "food":  {"display": "Food",  "stack": 9999},
-  "coins": {"display": "Coins", "stack": 999999}
+  "coins": {"display": "Coins", "stack": 999999},
+  "wheat": {"display": "Wheat Bundles", "stack": 500},
+  "potato": {"display": "Potatoes", "stack": 500},
+  "berries": {"display": "Wild Berries", "stack": 250},
+  "fiber": {"display": "Plant Fiber", "stack": 750}
 }

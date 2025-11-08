@@ -3,6 +3,7 @@ import {
   defaultState,
   type BuildingDefinition,
   type BuildingId,
+  type CropsTable,
   type GameState,
   type RecipeDefinition,
   type RecipeId
@@ -41,6 +42,7 @@ describe('world audio events', () => {
     }
   } as Record<BuildingId, BuildingDefinition>;
   const emptyRecipes = {} as Record<RecipeId, RecipeDefinition>;
+  const emptyCrops = {} as CropsTable;
 
   it('dispatches a build completion detail when construction finishes', () => {
     const state: GameState = {
@@ -77,7 +79,7 @@ describe('world audio events', () => {
         captured = (event as CustomEvent<BuildCompleteDetail>).detail;
       },
       () => {
-        tick(state, 0.1, buildingDefs, emptyRecipes);
+        tick(state, 0.1, buildingDefs, emptyRecipes, emptyCrops);
       }
     );
 
@@ -97,7 +99,7 @@ describe('world audio events', () => {
       },
       () => {
         state.resources.wood = 1.1;
-        tick(state, 0.1, buildingDefs, emptyRecipes);
+        tick(state, 0.1, buildingDefs, emptyRecipes, emptyCrops);
       }
     );
 

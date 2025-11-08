@@ -30,5 +30,29 @@
     "size": [2, 2],
     "cost": { "wood": 14 },
     "production": "sell"
+  },
+  "tent": {
+    "label": "Settler Tent",
+    "category": "housing",
+    "buildTime": 6.0,
+    "size": [2, 2],
+    "cost": { "fiber": 18, "wood": 6 },
+    "effects": { "popCap": 2 }
+  },
+  "well": {
+    "label": "Well",
+    "category": "infrastructure",
+    "buildTime": 5.5,
+    "size": [1, 1],
+    "cost": { "stone": 16, "wood": 4 },
+    "effects": { "waterRate": 1.2 }
+  },
+  "crate": {
+    "label": "Storage Crate",
+    "category": "storage",
+    "buildTime": 3.5,
+    "size": [1, 1],
+    "cost": { "wood": 12, "fiber": 10 },
+    "effects": { "storageBonus": 250 }
   }
 }

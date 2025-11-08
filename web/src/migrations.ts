@@ -1,14 +1,26 @@
 import {
   CURRENT_SCHEMA_VERSION,
+  LEGACY_SCHEMA_VERSION,
+  clamp01,
   clampSeasonElapsed,
+  createDefaultHomesteadState,
   createDefaultSeasonState,
+  createDefaultStaminaState,
+  createDefaultTimeState,
+  createDefaultWeatherState,
+  createEmptyFieldState,
   createEmptyResourceStorage,
   createEmptyResources,
   defaultState,
+  isWeatherType,
+  parseTileKey,
   LEGACY_RESOURCE_IDS,
   type BuildJob,
   type ConstructionJob,
+  type CropTileState,
+  type FieldState,
   type GameState,
+  type HomesteadState,
   type ProductionModifiers,
   type ProductionNode,
   type ProductionQueueItem,
@@ -21,7 +33,9 @@ import {
   type SaveV2,
   type SaveV3,
   type SaveV4,
-  type SeasonState
+  type SaveV5,
+  type SeasonState,
+  type WeatherState
 } from './types';
 import { getSeasonDefinition, isSeasonId } from './config/seasons';
 
@@ -41,9 +55,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function isSaveV4(candidate: unknown): candidate is SaveV4 {
+function isSaveV5(candidate: unknown): candidate is SaveV5 {
   if (!isRecord(candidate)) return false;
   return candidate.v === 1 && candidate.schemaVersion === CURRENT_SCHEMA_VERSION;
+}
+
+function isSaveV4(candidate: unknown): candidate is SaveV4 {
+  if (!isRecord(candidate)) return false;
+  return candidate.v === 1 && candidate.schemaVersion === LEGACY_SCHEMA_VERSION;
 }
 
 function isSaveV3(candidate: unknown): candidate is SaveV3 {
@@ -325,22 +344,173 @@ function normalizeResourceStorage(
   return storage;
 }
 
-function assembleV4State(save: Partial<SaveV4> & SaveV3, resourceTable: ResourcesTable): SaveV4 {
+function normalizeHomesteadState(candidate: unknown): HomesteadState {
+  const fallback = createDefaultHomesteadState();
+  if (!isRecord(candidate)) {
+    return fallback;
+  }
+
+  const field = normalizeFieldState((candidate as { field?: unknown }).field, fallback.field);
+  const time = normalizeTimeState((candidate as { time?: unknown }).time);
+  const stamina = normalizeStaminaState((candidate as { stamina?: unknown }).stamina);
+  const weather = normalizeWeatherState((candidate as { weather?: unknown }).weather);
+
+  return { field, time, stamina, weather };
+}
+
+function normalizeFieldState(candidate: unknown, fallback: FieldState): FieldState {
+  const base = createEmptyFieldState(fallback.width, fallback.height);
+  if (!isRecord(candidate)) {
+    return { ...base };
+  }
+
+  const width =
+    typeof (candidate as FieldState).width === 'number' && Number.isFinite((candidate as FieldState).width)
+      ? Math.max(1, Math.floor((candidate as FieldState).width))
+      : fallback.width;
+  const height =
+    typeof (candidate as FieldState).height === 'number' && Number.isFinite((candidate as FieldState).height)
+      ? Math.max(1, Math.floor((candidate as FieldState).height))
+      : fallback.height;
+
+  const tiles: FieldState['tiles'] = {};
+  const rawTiles = (candidate as FieldState).tiles;
+  if (isRecord(rawTiles)) {
+    for (const [key, value] of Object.entries(rawTiles)) {
+      if (!isRecord(value) || parseTileKey(key) == null) {
+        continue;
+      }
+      const tilled = typeof (value as { tilled?: unknown }).tilled === 'boolean' ? (value as { tilled: boolean }).tilled : false;
+      const moistureRaw = (value as { moisture?: unknown }).moisture;
+      const moisture = typeof moistureRaw === 'number' && Number.isFinite(moistureRaw) ? clamp01(moistureRaw) : 0;
+      const crop = normalizeCropTileState((value as { crop?: unknown }).crop);
+      if (tilled || crop) {
+        tiles[key] = { tilled, moisture, crop };
+      }
+    }
+  }
+
+  return { width, height, tiles };
+}
+
+function normalizeCropTileState(candidate: unknown): CropTileState | null {
+  if (!isRecord(candidate)) {
+    return null;
+  }
+  const cropId = typeof (candidate as CropTileState).cropId === 'string' ? (candidate as CropTileState).cropId : null;
+  if (!cropId) {
+    return null;
+  }
+  const stageIndex =
+    typeof (candidate as CropTileState).stageIndex === 'number' && Number.isFinite((candidate as CropTileState).stageIndex)
+      ? Math.max(0, Math.floor((candidate as CropTileState).stageIndex))
+      : 0;
+  const stageElapsed =
+    typeof (candidate as CropTileState).stageElapsed === 'number' && Number.isFinite((candidate as CropTileState).stageElapsed)
+      ? Math.max(0, (candidate as CropTileState).stageElapsed)
+      : 0;
+  const ready = (candidate as CropTileState).ready === true;
+  const withered = (candidate as CropTileState).withered === true;
+  return { cropId, stageIndex, stageElapsed, ready, withered };
+}
+
+function normalizeTimeState(candidate: unknown) {
+  const fallback = createDefaultTimeState();
+  if (!isRecord(candidate)) {
+    return fallback;
+  }
+
+  const secondsPerDay =
+    typeof (candidate as { secondsPerDay?: number }).secondsPerDay === 'number' &&
+    Number.isFinite((candidate as { secondsPerDay?: number }).secondsPerDay) &&
+    (candidate as { secondsPerDay?: number }).secondsPerDay! > 0
+      ? (candidate as { secondsPerDay: number }).secondsPerDay
+      : fallback.secondsPerDay;
+  const elapsedRaw =
+    typeof (candidate as { elapsed?: number }).elapsed === 'number' && Number.isFinite((candidate as { elapsed?: number }).elapsed)
+      ? Math.max(0, (candidate as { elapsed?: number }).elapsed!)
+      : fallback.elapsed;
+  const elapsed = Math.min(elapsedRaw, secondsPerDay);
+  const day =
+    typeof (candidate as { day?: number }).day === 'number' && Number.isFinite((candidate as { day?: number }).day)
+      ? Math.max(1, Math.floor((candidate as { day?: number }).day!))
+      : fallback.day;
+
+  return { secondsPerDay, elapsed, day };
+}
+
+function normalizeStaminaState(candidate: unknown) {
+  const fallback = createDefaultStaminaState();
+  if (!isRecord(candidate)) {
+    return fallback;
+  }
+
+  const max =
+    typeof (candidate as { max?: number }).max === 'number' && Number.isFinite((candidate as { max?: number }).max)
+      ? Math.max(1, Math.floor((candidate as { max?: number }).max!))
+      : fallback.max;
+  const currentRaw =
+    typeof (candidate as { current?: number }).current === 'number' &&
+    Number.isFinite((candidate as { current?: number }).current)
+      ? Math.max(0, (candidate as { current?: number }).current!)
+      : fallback.current;
+  const current = Math.min(currentRaw, max);
+  const regenPerSecond =
+    typeof (candidate as { regenPerSecond?: number }).regenPerSecond === 'number' &&
+    Number.isFinite((candidate as { regenPerSecond?: number }).regenPerSecond) &&
+    (candidate as { regenPerSecond?: number }).regenPerSecond! >= 0
+      ? (candidate as { regenPerSecond: number }).regenPerSecond
+      : fallback.regenPerSecond;
+  const exhausted = (candidate as { exhausted?: boolean }).exhausted === true && current <= 0;
+
+  return { max, current, regenPerSecond, exhausted };
+}
+
+function normalizeWeatherState(candidate: unknown): WeatherState {
+  const fallback = createDefaultWeatherState();
+  if (!isRecord(candidate)) {
+    return fallback;
+  }
+
+  const current = isWeatherType((candidate as WeatherState).current) ? (candidate as WeatherState).current : fallback.current;
+  const duration =
+    typeof (candidate as WeatherState).duration === 'number' &&
+    Number.isFinite((candidate as WeatherState).duration) &&
+    (candidate as WeatherState).duration > 0
+      ? (candidate as WeatherState).duration
+      : fallback.duration;
+  const elapsed =
+    typeof (candidate as WeatherState).elapsed === 'number' &&
+    Number.isFinite((candidate as WeatherState).elapsed) &&
+    (candidate as WeatherState).elapsed >= 0
+      ? Math.min((candidate as WeatherState).elapsed, duration)
+      : fallback.elapsed;
+  const moistureDelta =
+    typeof (candidate as WeatherState).moistureDeltaPerSecond === 'number' &&
+    Number.isFinite((candidate as WeatherState).moistureDeltaPerSecond)
+      ? (candidate as WeatherState).moistureDeltaPerSecond
+      : fallback.moistureDeltaPerSecond;
+
+  return { current, duration, elapsed, moistureDeltaPerSecond: moistureDelta };
+}
+
+function assembleV5State(save: Partial<SaveV5> & SaveV3, resourceTable: ResourcesTable): SaveV5 {
   const baseState = defaultState(resourceTable);
   const resources = sanitizeResources(save.resources ?? {}, resourceTable);
   const structures = normalizeStructures(save.structures, baseState.structures);
   const buildQueue = normalizeBuildQueue(save.buildQueue);
   const constructionQueue = normalizeConstructionQueue(save.constructionQueue, buildQueue);
   const buildings = normalizeBuildingInstances(save.buildings);
-  const productionNodes = normalizeProductionNodes((save as Partial<SaveV4>).productionNodes);
-  const productionQueue = normalizeProductionQueue((save as Partial<SaveV4>).productionQueue);
-  const productionModifiers = normalizeProductionModifiers((save as Partial<SaveV4>).productionModifiers);
+  const productionNodes = normalizeProductionNodes((save as Partial<SaveV5>).productionNodes);
+  const productionQueue = normalizeProductionQueue((save as Partial<SaveV5>).productionQueue);
+  const productionModifiers = normalizeProductionModifiers((save as Partial<SaveV5>).productionModifiers);
   const resourceStorage = normalizeResourceStorage(
-    (save as Partial<SaveV4>).resourceStorage,
+    (save as Partial<SaveV5>).resourceStorage,
     resourceTable,
     resources
   );
-  const season = normalizeSeasonState((save as Partial<SaveV4>).season);
+  const season = normalizeSeasonState((save as Partial<SaveV5>).season);
+  const homestead = normalizeHomesteadState((save as Partial<SaveV5>).homestead);
 
   const nodeIds = new Set<number>();
   for (const node of productionNodes) {
@@ -348,9 +518,9 @@ function assembleV4State(save: Partial<SaveV4> & SaveV3, resourceTable: Resource
   }
 
   let nextProductionNodeId =
-    typeof (save as Partial<SaveV4>).nextProductionNodeId === 'number' &&
-    Number.isFinite((save as Partial<SaveV4>).nextProductionNodeId)
-      ? (save as Partial<SaveV4>).nextProductionNodeId
+    typeof (save as Partial<SaveV5>).nextProductionNodeId === 'number' &&
+    Number.isFinite((save as Partial<SaveV5>).nextProductionNodeId)
+      ? (save as Partial<SaveV5>).nextProductionNodeId
       : productionNodes.reduce((max, node) => Math.max(max, node.id), 0) + 1;
 
   for (const building of buildings) {
@@ -409,7 +579,8 @@ function assembleV4State(save: Partial<SaveV4> & SaveV3, resourceTable: Resource
     nextBuildId,
     nextBuildingInstanceId,
     nextProductionNodeId,
-    season
+    season,
+    homestead
   };
 }
 
@@ -446,12 +617,16 @@ function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV3 {
 }
 
 export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameState | null {
+  if (isSaveV5(raw)) {
+    return assembleV5State(raw, resourceTable);
+  }
+
   if (isSaveV4(raw)) {
-    return assembleV4State(raw, resourceTable);
+    return assembleV5State(raw, resourceTable);
   }
 
   if (isSaveV3(raw)) {
-    return assembleV4State(raw, resourceTable);
+    return assembleV5State(raw, resourceTable);
   }
 
   if (isSaveV2(raw)) {
@@ -468,15 +643,15 @@ export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameSt
       nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
       nextBuildingInstanceId: 1
     };
-    return assembleV4State(partial, resourceTable);
+    return assembleV5State(partial, resourceTable);
   }
 
   if (isSaveV1(raw)) {
-    return assembleV4State(migrateV1ToV3(raw, resourceTable), resourceTable);
+    return assembleV5State(migrateV1ToV3(raw, resourceTable), resourceTable);
   }
 
   if (isSaveV0(raw)) {
-    return assembleV4State(migrateV0ToV3(raw, resourceTable), resourceTable);
+    return assembleV5State(migrateV0ToV3(raw, resourceTable), resourceTable);
   }
 
   return null;
