@@ -13,7 +13,7 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    'plugin:vitest/recommended',
+    'plugin:vitest/legacy-recommended',
     'plugin:prettier/recommended'
   ],
   overrides: [

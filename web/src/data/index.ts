@@ -74,12 +74,12 @@ function validateResourcesTable(raw: unknown): ResourcesTable {
   const table: Record<string, ResourceDefinition> = {};
   for (const [key, value] of Object.entries(raw)) {
     if (!isRecord(value)) {
-      throw new Error(`Resource \"${key}\" must be an object.`);
+      throw new Error(`Resource "${key}" must be an object.`);
     }
     const display = value.display;
     const stack = value.stack;
     if (!isString(display) || !isNumber(stack)) {
-      throw new Error(`Resource \"${key}\" is missing required fields.`);
+      throw new Error(`Resource "${key}" is missing required fields.`);
     }
     table[key] = { display, stack };
   }
@@ -95,7 +95,7 @@ function validateBuildingsTable(raw: unknown): BuildingsTable {
   const table: Record<string, BuildingDefinition> = {};
   for (const [key, value] of Object.entries(raw)) {
     if (!isRecord(value)) {
-      throw new Error(`Building \"${key}\" must be an object.`);
+      throw new Error(`Building "${key}" must be an object.`);
     }
 
     const category = value.category;
@@ -105,23 +105,23 @@ function validateBuildingsTable(raw: unknown): BuildingsTable {
     const production = value.production;
 
     if (!isString(category) || !isNumber(buildTime) || !Array.isArray(size) || size.length !== 2) {
-      throw new Error(`Building \"${key}\" is missing required fields.`);
+      throw new Error(`Building "${key}" is missing required fields.`);
     }
 
     const [width, height] = size;
     if (!isNumber(width) || !isNumber(height)) {
-      throw new Error(`Building \"${key}\" has invalid size tuple.`);
+      throw new Error(`Building "${key}" has invalid size tuple.`);
     }
 
     let normalizedEffects: BuildingEffects | undefined;
     if (effects !== undefined) {
       if (!isRecord(effects)) {
-        throw new Error(`Building \"${key}\" effects must be an object.`);
+        throw new Error(`Building "${key}" effects must be an object.`);
       }
       const effectRecord: BuildingEffects = {};
       for (const [effectKey, effectValue] of Object.entries(effects)) {
         if (!isNumber(effectValue)) {
-          throw new Error(`Building \"${key}\" effect \"${effectKey}\" must be numeric.`);
+          throw new Error(`Building "${key}" effect "${effectKey}" must be numeric.`);
         }
         effectRecord[effectKey] = effectValue;
       }
@@ -129,7 +129,7 @@ function validateBuildingsTable(raw: unknown): BuildingsTable {
     }
 
     if (production !== undefined && !isString(production)) {
-      throw new Error(`Building \"${key}\" production must be a string.`);
+      throw new Error(`Building "${key}" production must be a string.`);
     }
 
     table[key] = {
@@ -152,21 +152,25 @@ function validateRecipesTable(raw: unknown): RecipesTable {
   const table: Record<string, RecipeDefinition> = {};
   for (const [key, value] of Object.entries(raw)) {
     if (!isRecord(value)) {
-      throw new Error(`Recipe \"${key}\" must be an object.`);
+      throw new Error(`Recipe "${key}" must be an object.`);
     }
 
     const inputs = value.inputs;
     const duration = value.duration;
     const outputs = value.outputs;
+    const outputCaps = value.outputCaps;
 
     if (!Array.isArray(inputs) || !isNumber(duration) || !Array.isArray(outputs)) {
-      throw new Error(`Recipe \"${key}\" is missing required fields.`);
+      throw new Error(`Recipe "${key}" is missing required fields.`);
     }
 
     table[key] = {
+      id: key,
+      duration,
       inputs: normalizeRecipeIO(key, 'inputs', inputs),
       duration,
-      outputs: normalizeRecipeIO(key, 'outputs', outputs)
+      outputs: normalizeRecipeIO(key, 'outputs', outputs),
+      outputCaps: normalizeOutputCaps(key, outputCaps)
     };
   }
 
@@ -178,14 +182,36 @@ function normalizeRecipeIO(
   field: 'inputs' | 'outputs',
   entries: unknown[]
 ): RecipeDefinition['inputs'] {
-  return entries.map((entry, index) => {
+  return entries.reduce<RecipeDefinition['inputs']>((acc, entry, index) => {
     if (!Array.isArray(entry) || entry.length !== 2) {
-      throw new Error(`Recipe \"${recipeId}\" ${field} entry #${index} must be a tuple [resource, amount].`);
+      throw new Error(
+        `Recipe "${recipeId}" ${field} entry #${index} must be a tuple [resource, amount].`
+      );
     }
     const [resource, amount] = entry;
     if (!isString(resource) || !isNumber(amount)) {
-      throw new Error(`Recipe \"${recipeId}\" ${field} entry #${index} has invalid resource or amount.`);
+      throw new Error(
+        `Recipe "${recipeId}" ${field} entry #${index} has invalid resource or amount.`
+      );
     }
-    return [resource, amount];
-  });
+    acc[resource] = amount;
+    return acc;
+  }, {});
+}
+
+function normalizeOutputCaps(recipeId: string, raw: unknown): RecipeDefinition['outputCaps'] {
+  if (raw === undefined) {
+    return {};
+  }
+  if (!isRecord(raw)) {
+    throw new Error(`Recipe "${recipeId}" outputCaps must be an object map.`);
+  }
+  const caps: RecipeDefinition['outputCaps'] = {};
+  for (const [resource, value] of Object.entries(raw)) {
+    if (!isNumber(value)) {
+      throw new Error(`Recipe "${recipeId}" output cap for ${resource} must be numeric.`);
+    }
+    caps[resource as string] = value;
+  }
+  return caps;
 }
