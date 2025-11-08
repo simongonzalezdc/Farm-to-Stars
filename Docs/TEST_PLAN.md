@@ -14,8 +14,14 @@
 ## 2) Automated
 - **Unit tests:** economy math, construction timers, save migrations.
 - **E2E smoke (Playwright):** load → place road → save → reload → verify persisted.
-- **Migration CLI:** `npm run migrate -- --input web/scripts/migrate/__fixtures__/v5-basic.json --output tmp.json` should emit a
-  schema v6 save with populated mail/livestock fields (verify via diff or `jq '.schemaVersion'`).
+- **Migration CLI:** `yarn migrate --from v5` (or `npm run migrate -- --from v5`) regenerates v6 fixtures in `web/scripts/migrate/__fixtures__/`; verify outputs include mail/jobQueue scaffolding and carry forward livestock/weather state.
+
+### Migration ladder & nightly workflow
+
+1. **Regenerate ladder fixtures** – Run `yarn migrate --from v4` and `yarn migrate --from v5` to refresh `v6-from-*` payloads before every release cut or nightly soak. Confirm only expected fields change.
+2. **Diff validation** – Compare regenerated fixtures against source `v4/v5` inputs to ensure resources, season cadence, and homestead state persist; spot-check new mail/jobQueue defaults.
+3. **Automated regression** – Execute `npm test` to cover `web/tests/save/migration.spec.ts` alongside existing unit suites. The suite asserts upgrade + downgrade paths remain lossless.
+4. **Nightly job** – CI cron runs steps 1–3, archives regenerated fixtures, and posts diff summaries to the QA channel for triage. Failures block the following day's content pushes until resolved.
 
 ## 3) Week 1–4 Playtest Checklist
 

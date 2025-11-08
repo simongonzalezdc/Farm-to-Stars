@@ -68,3 +68,26 @@ export interface SaveV6 {
 ```
 - Migrations promote legacy saves (v0–v5) into the v6 layout, populating default livestock herds, mailboxes, and weather event
   schedulers.
+
+## 5) Simulation Event Contracts — `/web/src/sim/events.ts`
+```ts
+export interface SimEventBatch {
+  events: GameEvent[];
+}
+
+export interface LivestockTickResult extends SimEventBatch {
+  feedConsumed: Partial<Record<ResourceId, number>>;
+}
+
+export interface WeatherEventUpdateResult extends SimEventBatch {
+  started: WeatherEventInstance[];
+  ended: WeatherEventInstance[];
+  moistureModifier: number;
+}
+
+export interface MailQueueProcessResult extends SimEventBatch {
+  delivered: MailMessage[];
+}
+```
+- Simulation subsystems return these aggregates so higher-level systems can batch `GameEvent` emissions while persisting
+  subsystem-specific deltas such as weather activity, feed consumption, or delivered mail.

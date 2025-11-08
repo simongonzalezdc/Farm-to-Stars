@@ -1,4 +1,5 @@
 import type { GameEvent, GameState, MailMessage, ScheduledMail } from '../../types';
+import type { MailQueueProcessResult } from '../events';
 import { deriveSeed, nextRandom, randomBetween } from '../random';
 
 interface MailTemplate {
@@ -52,7 +53,7 @@ export function ensureDailyMail(state: GameState) {
   state.mail.lastGeneratedDay = Math.max(state.mail.lastGeneratedDay, currentDay);
 }
 
-export function processMailQueue(state: GameState): { events: GameEvent[]; delivered: MailMessage[] } {
+export function processMailQueue(state: GameState): MailQueueProcessResult {
   const now = getTimelineSeconds(state);
   const due = state.jobQueue.jobs.filter((job) => job.type === 'mail' && job.scheduledAt <= now);
   if (due.length === 0) {
