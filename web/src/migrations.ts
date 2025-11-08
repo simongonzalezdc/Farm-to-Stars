@@ -1,9 +1,13 @@
 import {
   CURRENT_SCHEMA_VERSION,
   LEGACY_SCHEMA_VERSION,
+  PREVIOUS_SCHEMA_VERSION,
   clamp01,
   clampSeasonElapsed,
   createDefaultHomesteadState,
+  createDefaultJobQueueState,
+  createDefaultLivestockState,
+  createDefaultMailState,
   createDefaultSeasonState,
   createDefaultStaminaState,
   createDefaultTimeState,
@@ -15,12 +19,15 @@ import {
   isWeatherType,
   parseTileKey,
   LEGACY_RESOURCE_IDS,
+  type BackgroundJobQueueState,
   type BuildJob,
   type ConstructionJob,
   type CropTileState,
   type FieldState,
   type GameState,
   type HomesteadState,
+  type LivestockHerdState,
+  type MailState,
   type ProductionModifiers,
   type ProductionNode,
   type ProductionQueueItem,
@@ -34,7 +41,9 @@ import {
   type SaveV3,
   type SaveV4,
   type SaveV5,
+  type SaveV6,
   type SeasonState,
+  type WeatherEventsState,
   type WeatherState
 } from './types';
 import { getSeasonDefinition, isSeasonId } from './config/seasons';
@@ -55,9 +64,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function isSaveV5(candidate: unknown): candidate is SaveV5 {
+function isSaveV6(candidate: unknown): candidate is SaveV6 {
   if (!isRecord(candidate)) return false;
   return candidate.v === 1 && candidate.schemaVersion === CURRENT_SCHEMA_VERSION;
+}
+
+function isSaveV5(candidate: unknown): candidate is SaveV5 {
+  if (!isRecord(candidate)) return false;
+  return candidate.v === 1 && candidate.schemaVersion === PREVIOUS_SCHEMA_VERSION;
 }
 
 function isSaveV4(candidate: unknown): candidate is SaveV4 {
@@ -354,8 +368,9 @@ function normalizeHomesteadState(candidate: unknown): HomesteadState {
   const time = normalizeTimeState((candidate as { time?: unknown }).time);
   const stamina = normalizeStaminaState((candidate as { stamina?: unknown }).stamina);
   const weather = normalizeWeatherState((candidate as { weather?: unknown }).weather);
+  const livestock = normalizeLivestockState((candidate as { livestock?: unknown }).livestock);
 
-  return { field, time, stamina, weather };
+  return { field, time, stamina, weather, livestock };
 }
 
 function normalizeFieldState(candidate: unknown, fallback: FieldState): FieldState {
@@ -391,6 +406,147 @@ function normalizeFieldState(candidate: unknown, fallback: FieldState): FieldSta
   }
 
   return { width, height, tiles };
+}
+
+function normalizeLivestockState(candidate: unknown): LivestockHerdState {
+  const fallback = createDefaultLivestockState();
+  if (!isRecord(candidate)) {
+    return fallback;
+  }
+
+  const animals: LivestockHerdState['animals'] = [];
+  if (Array.isArray((candidate as LivestockHerdState).animals)) {
+    for (const entry of (candidate as LivestockHerdState).animals ?? []) {
+      if (!isRecord(entry)) continue;
+      const id = typeof entry.id === 'number' && Number.isFinite(entry.id) ? Math.max(0, Math.floor(entry.id)) : animals.length;
+      const speciesId = typeof entry.speciesId === 'string' ? entry.speciesId : 'chicken';
+      const ageDays =
+        typeof entry.ageDays === 'number' && Number.isFinite(entry.ageDays) ? Math.max(0, entry.ageDays) : 0;
+      const growth =
+        typeof entry.growth === 'number' && Number.isFinite(entry.growth) ? clamp01(entry.growth) : 0;
+      const hunger =
+        typeof entry.hunger === 'number' && Number.isFinite(entry.hunger) ? clamp01(entry.hunger) : 0;
+      const produceProgress =
+        typeof entry.produceProgress === 'number' && Number.isFinite(entry.produceProgress)
+          ? Math.max(0, entry.produceProgress)
+          : 0;
+      const lastFedDay =
+        typeof entry.lastFedDay === 'number' && Number.isFinite(entry.lastFedDay)
+          ? Math.max(1, Math.floor(entry.lastFedDay))
+          : 1;
+      const alive = entry.alive !== false;
+      animals.push({ id, speciesId, ageDays, growth, hunger, produceProgress, lastFedDay, alive });
+    }
+  }
+
+  const nextAnimalId =
+    typeof (candidate as LivestockHerdState).nextAnimalId === 'number' &&
+    Number.isFinite((candidate as LivestockHerdState).nextAnimalId)
+      ? Math.max(animals.length, Math.floor((candidate as LivestockHerdState).nextAnimalId))
+      : Math.max(animals.length, fallback.nextAnimalId);
+
+  if (animals.length === 0) {
+    return { ...fallback };
+  }
+
+  return { animals, nextAnimalId };
+}
+
+function normalizeMailState(candidate: unknown): MailState {
+  const fallback = createDefaultMailState();
+  if (!isRecord(candidate)) {
+    return fallback;
+  }
+
+  const inbox: MailState['inbox'] = [];
+  if (Array.isArray((candidate as MailState).inbox)) {
+    for (const entry of (candidate as MailState).inbox ?? []) {
+      if (!isRecord(entry)) continue;
+      const id = typeof entry.id === 'number' && Number.isFinite(entry.id) ? Math.max(0, Math.floor(entry.id)) : inbox.length;
+      const sender = typeof entry.sender === 'string' ? entry.sender : 'unknown';
+      const subject = typeof entry.subject === 'string' ? entry.subject : 'Untitled';
+      const body = typeof entry.body === 'string' ? entry.body : '';
+      const deliveredAtSeconds =
+        typeof entry.deliveredAtSeconds === 'number' && Number.isFinite(entry.deliveredAtSeconds)
+          ? Math.max(0, entry.deliveredAtSeconds)
+          : 0;
+      const read = entry.read === true;
+      const attachments = normalizeResourceMap((entry as { attachments?: unknown }).attachments);
+      inbox.push({ id, sender, subject, body, attachments, deliveredAtSeconds, read });
+    }
+  }
+
+  const scheduled: MailState['scheduled'] = [];
+  if (Array.isArray((candidate as MailState).scheduled)) {
+    for (const entry of (candidate as MailState).scheduled ?? []) {
+      if (!isRecord(entry)) continue;
+      const id = typeof entry.id === 'number' && Number.isFinite(entry.id) ? Math.max(0, Math.floor(entry.id)) : scheduled.length;
+      const templateId = typeof entry.templateId === 'string' ? entry.templateId : 'unknown';
+      const npcId = typeof entry.npcId === 'string' ? entry.npcId : 'unknown';
+      const subject = typeof entry.subject === 'string' ? entry.subject : 'Untitled';
+      const body = typeof entry.body === 'string' ? entry.body : '';
+      const scheduledAtSeconds =
+        typeof entry.scheduledAtSeconds === 'number' && Number.isFinite(entry.scheduledAtSeconds)
+          ? Math.max(0, entry.scheduledAtSeconds)
+          : 0;
+      const attachments = normalizeResourceMap((entry as { attachments?: unknown }).attachments);
+      scheduled.push({ id, templateId, npcId, subject, body, scheduledAtSeconds, attachments });
+    }
+  }
+
+  const nextId =
+    typeof (candidate as MailState).nextId === 'number' && Number.isFinite((candidate as MailState).nextId)
+      ? Math.max(inbox.length + scheduled.length, Math.floor((candidate as MailState).nextId))
+      : Math.max(inbox.length + scheduled.length, fallback.nextId);
+  const lastGeneratedDay =
+    typeof (candidate as MailState).lastGeneratedDay === 'number' && Number.isFinite((candidate as MailState).lastGeneratedDay)
+      ? Math.max(0, Math.floor((candidate as MailState).lastGeneratedDay))
+      : fallback.lastGeneratedDay;
+
+  return { nextId, inbox, scheduled, lastGeneratedDay };
+}
+
+function normalizeJobQueueState(candidate: unknown): BackgroundJobQueueState {
+  const fallback = createDefaultJobQueueState();
+  if (!isRecord(candidate)) {
+    return fallback;
+  }
+
+  const jobs: BackgroundJobQueueState['jobs'] = [];
+  if (Array.isArray((candidate as BackgroundJobQueueState).jobs)) {
+    for (const entry of (candidate as BackgroundJobQueueState).jobs ?? []) {
+      if (!isRecord(entry)) continue;
+      const id = typeof entry.id === 'number' && Number.isFinite(entry.id) ? Math.max(0, Math.floor(entry.id)) : jobs.length;
+      const type = typeof entry.type === 'string' ? entry.type : 'generic';
+      const scheduledAt =
+        typeof entry.scheduledAt === 'number' && Number.isFinite(entry.scheduledAt)
+          ? Math.max(0, entry.scheduledAt)
+          : 0;
+      const payload = isRecord(entry.payload) ? { ...entry.payload } : {};
+      jobs.push({ id, type, scheduledAt, payload });
+    }
+  }
+
+  const nextJobId =
+    typeof (candidate as BackgroundJobQueueState).nextJobId === 'number' &&
+    Number.isFinite((candidate as BackgroundJobQueueState).nextJobId)
+      ? Math.max(jobs.length, Math.floor((candidate as BackgroundJobQueueState).nextJobId))
+      : Math.max(jobs.length, fallback.nextJobId);
+
+  return { nextJobId, jobs };
+}
+
+function normalizeResourceMap(candidate: unknown): Partial<Record<ResourceId, number>> {
+  if (!isRecord(candidate)) {
+    return {};
+  }
+  const entries: [ResourceId, number][] = [];
+  for (const [key, value] of Object.entries(candidate)) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      entries.push([key as ResourceId, value]);
+    }
+  }
+  return Object.fromEntries(entries);
 }
 
 function normalizeCropTileState(candidate: unknown): CropTileState | null {
@@ -490,27 +646,73 @@ function normalizeWeatherState(candidate: unknown): WeatherState {
     Number.isFinite((candidate as WeatherState).moistureDeltaPerSecond)
       ? (candidate as WeatherState).moistureDeltaPerSecond
       : fallback.moistureDeltaPerSecond;
+  const events = normalizeWeatherEvents((candidate as WeatherState).events);
+  const rngState =
+    typeof (candidate as WeatherState).rngState === 'number' && Number.isFinite((candidate as WeatherState).rngState)
+      ? (candidate as WeatherState).rngState >>> 0
+      : fallback.rngState;
 
-  return { current, duration, elapsed, moistureDeltaPerSecond: moistureDelta };
+  return { current, duration, elapsed, moistureDeltaPerSecond: moistureDelta, events, rngState };
 }
 
-function assembleV5State(save: Partial<SaveV5> & SaveV3, resourceTable: ResourcesTable): SaveV5 {
+function normalizeWeatherEvents(candidate: unknown): WeatherEventsState {
+  const fallback = createDefaultWeatherState().events;
+  if (!isRecord(candidate)) {
+    return { ...fallback, active: [] };
+  }
+
+  const nextRollIn =
+    typeof (candidate as WeatherEventsState).nextRollIn === 'number' &&
+    Number.isFinite((candidate as WeatherEventsState).nextRollIn)
+      ? Math.max(0, (candidate as WeatherEventsState).nextRollIn)
+      : fallback.nextRollIn;
+  const serial =
+    typeof (candidate as WeatherEventsState).serial === 'number' && Number.isFinite((candidate as WeatherEventsState).serial)
+      ? Math.max(0, Math.floor((candidate as WeatherEventsState).serial))
+      : fallback.serial;
+
+  const active: WeatherEventsState['active'] = [];
+  if (Array.isArray((candidate as WeatherEventsState).active)) {
+    for (const entry of (candidate as WeatherEventsState).active ?? []) {
+      if (!isRecord(entry)) continue;
+      const id = typeof entry.id === 'string' ? entry.id : `wx-${serial}`;
+      const type = typeof entry.type === 'string' ? entry.type : 'gusts';
+      const duration =
+        typeof entry.duration === 'number' && Number.isFinite(entry.duration) && entry.duration > 0
+          ? entry.duration
+          : 60;
+      const remaining =
+        typeof entry.remaining === 'number' && Number.isFinite(entry.remaining) && entry.remaining >= 0
+          ? Math.min(entry.remaining, duration)
+          : duration;
+      const intensity =
+        typeof entry.intensity === 'number' && Number.isFinite(entry.intensity) ? entry.intensity : 1;
+      active.push({ id, type: type as WeatherEventsState['active'][number]['type'], duration, remaining, intensity });
+    }
+  }
+
+  return { active, nextRollIn, serial };
+}
+
+function assembleLatestState(save: Partial<SaveV6> & SaveV3, resourceTable: ResourcesTable): SaveV6 {
   const baseState = defaultState(resourceTable);
   const resources = sanitizeResources(save.resources ?? {}, resourceTable);
   const structures = normalizeStructures(save.structures, baseState.structures);
   const buildQueue = normalizeBuildQueue(save.buildQueue);
   const constructionQueue = normalizeConstructionQueue(save.constructionQueue, buildQueue);
   const buildings = normalizeBuildingInstances(save.buildings);
-  const productionNodes = normalizeProductionNodes((save as Partial<SaveV5>).productionNodes);
-  const productionQueue = normalizeProductionQueue((save as Partial<SaveV5>).productionQueue);
-  const productionModifiers = normalizeProductionModifiers((save as Partial<SaveV5>).productionModifiers);
+  const productionNodes = normalizeProductionNodes((save as Partial<SaveV6>).productionNodes);
+  const productionQueue = normalizeProductionQueue((save as Partial<SaveV6>).productionQueue);
+  const productionModifiers = normalizeProductionModifiers((save as Partial<SaveV6>).productionModifiers);
   const resourceStorage = normalizeResourceStorage(
-    (save as Partial<SaveV5>).resourceStorage,
+    (save as Partial<SaveV6>).resourceStorage,
     resourceTable,
     resources
   );
-  const season = normalizeSeasonState((save as Partial<SaveV5>).season);
-  const homestead = normalizeHomesteadState((save as Partial<SaveV5>).homestead);
+  const season = normalizeSeasonState((save as Partial<SaveV6>).season);
+  const homestead = normalizeHomesteadState((save as Partial<SaveV6>).homestead);
+  const mail = normalizeMailState((save as Partial<SaveV6>).mail);
+  const jobQueue = normalizeJobQueueState((save as Partial<SaveV6>).jobQueue);
 
   const nodeIds = new Set<number>();
   for (const node of productionNodes) {
@@ -580,7 +782,9 @@ function assembleV5State(save: Partial<SaveV5> & SaveV3, resourceTable: Resource
     nextBuildingInstanceId,
     nextProductionNodeId,
     season,
-    homestead
+    homestead,
+    mail,
+    jobQueue
   };
 }
 
@@ -617,16 +821,20 @@ function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV3 {
 }
 
 export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameState | null {
+  if (isSaveV6(raw)) {
+    return assembleLatestState(raw, resourceTable);
+  }
+
   if (isSaveV5(raw)) {
-    return assembleV5State(raw, resourceTable);
+    return assembleLatestState(raw as unknown as Partial<SaveV6> & SaveV3, resourceTable);
   }
 
   if (isSaveV4(raw)) {
-    return assembleV5State(raw, resourceTable);
+    return assembleLatestState(raw as unknown as Partial<SaveV6> & SaveV3, resourceTable);
   }
 
   if (isSaveV3(raw)) {
-    return assembleV5State(raw, resourceTable);
+    return assembleLatestState(raw as unknown as Partial<SaveV6> & SaveV3, resourceTable);
   }
 
   if (isSaveV2(raw)) {
@@ -643,15 +851,15 @@ export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameSt
       nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
       nextBuildingInstanceId: 1
     };
-    return assembleV5State(partial, resourceTable);
+    return assembleLatestState(partial as unknown as Partial<SaveV6> & SaveV3, resourceTable);
   }
 
   if (isSaveV1(raw)) {
-    return assembleV5State(migrateV1ToV3(raw, resourceTable), resourceTable);
+    return assembleLatestState(migrateV1ToV3(raw, resourceTable) as unknown as Partial<SaveV6> & SaveV3, resourceTable);
   }
 
   if (isSaveV0(raw)) {
-    return assembleV5State(migrateV0ToV3(raw, resourceTable), resourceTable);
+    return assembleLatestState(migrateV0ToV3(raw, resourceTable) as unknown as Partial<SaveV6> & SaveV3, resourceTable);
   }
 
   return null;

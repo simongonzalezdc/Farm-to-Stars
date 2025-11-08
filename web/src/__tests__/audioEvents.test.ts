@@ -5,6 +5,7 @@ import {
   type BuildingId,
   type CropsTable,
   type GameState,
+  type LivestockTable,
   type RecipeDefinition,
   type RecipeId
 } from '../types';
@@ -43,6 +44,7 @@ describe('world audio events', () => {
   } as Record<BuildingId, BuildingDefinition>;
   const emptyRecipes = {} as Record<RecipeId, RecipeDefinition>;
   const emptyCrops = {} as CropsTable;
+  const emptyLivestock = {} as LivestockTable;
 
   it('dispatches a build completion detail when construction finishes', () => {
     const state: GameState = {
@@ -79,7 +81,7 @@ describe('world audio events', () => {
         captured = (event as CustomEvent<BuildCompleteDetail>).detail;
       },
       () => {
-        tick(state, 0.1, buildingDefs, emptyRecipes, emptyCrops);
+        tick(state, 0.1, buildingDefs, emptyRecipes, emptyCrops, emptyLivestock);
       }
     );
 
@@ -99,7 +101,7 @@ describe('world audio events', () => {
       },
       () => {
         state.resources.wood = 1.1;
-        tick(state, 0.1, buildingDefs, emptyRecipes, emptyCrops);
+        tick(state, 0.1, buildingDefs, emptyRecipes, emptyCrops, emptyLivestock);
       }
     );
 

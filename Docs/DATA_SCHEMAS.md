@@ -3,11 +3,18 @@
 ## 1) Resources — `/web/src/data/resources.json`
 ```json
 {
-  "wood":  {"display": "Wood",  "stack": 9999},
-  "stone": {"display": "Stone", "stack": 9999},
-  "water": {"display": "Water", "stack": 9999},
-  "food":  {"display": "Food",  "stack": 9999},
-  "coins": {"display": "Coins", "stack": 999999}
+  "wood":   {"display": "Wood",          "stack": 9999},
+  "stone":  {"display": "Stone",         "stack": 9999},
+  "water":  {"display": "Water",         "stack": 9999},
+  "food":   {"display": "Prepared Meals","stack": 9999},
+  "coins":  {"display": "Coins",         "stack": 999999},
+  "wheat":  {"display": "Wheat Bundles", "stack": 500},
+  "potato": {"display": "Potatoes",      "stack": 500},
+  "berries": {"display": "Berries",      "stack": 250},
+  "fiber":  {"display": "Plant Fiber",   "stack": 750},
+  "eggs":   {"display": "Farm Eggs",     "stack": 250},
+  "milk":   {"display": "Fresh Milk",    "stack": 250},
+  "letters": {"display": "Unread Mail",  "stack": 99}
 }
 ```
 
@@ -32,6 +39,32 @@
 ## 4) Saves
 ```ts
 // /web/src/types.ts (excerpt)
-export type SaveV1 = { v:1; seed:number; resources:Record<string,number> /* + world, inventory, etc. */ };
+export interface SaveV6 {
+  v: 1;
+  schemaVersion: 6;
+  seed: number;
+  resources: Resources;
+  resourceStorage: ResourceStorageState;
+  structures: Structure[];
+  buildQueue: BuildJob[];
+  constructionQueue: ConstructionJob[];
+  buildings: BuildingInstance[];
+  productionNodes: ProductionNode[];
+  productionQueue: ProductionQueueItem[];
+  productionModifiers: ProductionModifiers;
+  nextBuildId: number;
+  nextBuildingInstanceId: number;
+  season: SeasonState;
+  homestead: {
+    field: FieldState;
+    time: TimeOfDayState;
+    stamina: StaminaState;
+    weather: WeatherState & { events: WeatherEventsState };
+    livestock: LivestockHerdState;
+  };
+  mail: MailState;
+  jobQueue: BackgroundJobQueueState;
+}
 ```
-- Add migrations: `migrateV1ToV2(save:SaveV1): SaveV2` (pure mapping).
+- Migrations promote legacy saves (v0–v5) into the v6 layout, populating default livestock herds, mailboxes, and weather event
+  schedulers.
