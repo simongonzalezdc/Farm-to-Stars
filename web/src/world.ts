@@ -418,6 +418,7 @@ function processHomestead(
   const weatherEvents = updateWeatherEvents(state.homestead.weather, dt);
   state.homestead.weather.moistureDeltaPerSecond =
     weatherResult.moistureDeltaPerSecond + weatherEvents.moistureModifier;
+  events.push(...weatherEvents.events);
   const weatherDetail: HomesteadWeatherDetail = {
     weather: weatherResult.current,
     moistureDeltaPerSecond: state.homestead.weather.moistureDeltaPerSecond
@@ -432,12 +433,6 @@ function processHomestead(
   }
 
   for (const started of weatherEvents.started) {
-    events.push({
-      type: 'weather.event.started',
-      eventId: started.id,
-      eventType: started.type,
-      intensity: started.intensity
-    });
     const detail: WeatherDynamicEventDetail = {
       eventId: started.id,
       eventType: started.type,
@@ -447,7 +442,6 @@ function processHomestead(
   }
 
   for (const ended of weatherEvents.ended) {
-    events.push({ type: 'weather.event.ended', eventId: ended.id, eventType: ended.type });
     const detail: WeatherDynamicEventDetail = {
       eventId: ended.id,
       eventType: ended.type,
