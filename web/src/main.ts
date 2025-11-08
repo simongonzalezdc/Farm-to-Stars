@@ -17,6 +17,58 @@ const stoneEl = document.getElementById('stone')!;
   (document.getElementById('mute') as HTMLButtonElement).setAttribute('aria-pressed', String(m));
 });
 
+type PerformanceWithMemory = Performance & {
+  memory?: {
+    usedJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
+};
+
+class DebugOverlay {
+  private readonly container: HTMLDivElement;
+  private frameCount = 0;
+  private lastSample = performance.now();
+  private fps = 0;
+
+  constructor() {
+    this.container = document.createElement('div');
+    this.container.id = 'debug-overlay';
+    this.container.style.position = 'fixed';
+    this.container.style.right = '0.5rem';
+    this.container.style.bottom = '0.5rem';
+    this.container.style.padding = '0.25rem 0.5rem';
+    this.container.style.background = 'rgba(0, 0, 0, 0.6)';
+    this.container.style.color = '#ffffff';
+    this.container.style.fontFamily = 'monospace';
+    this.container.style.fontSize = '0.75rem';
+    this.container.style.zIndex = '1000';
+    this.container.setAttribute('aria-live', 'polite');
+    document.body.appendChild(this.container);
+  }
+
+  update(deltaMs: number) {
+    this.frameCount += 1;
+    const now = performance.now();
+    const elapsed = now - this.lastSample;
+    if (elapsed >= 500) {
+      this.fps = (this.frameCount * 1000) / elapsed;
+      this.frameCount = 0;
+      this.lastSample = now;
+    }
+
+    const memoryInfo = (performance as PerformanceWithMemory).memory;
+    const memoryText = memoryInfo
+      ? ` | Mem: ${(memoryInfo.usedJSHeapSize / 1048576).toFixed(1)} / ${(
+          memoryInfo.jsHeapSizeLimit / 1048576
+        ).toFixed(0)} MB`
+      : '';
+
+    this.container.textContent = `FPS: ${this.fps.toFixed(1)} | Frame: ${deltaMs.toFixed(2)} ms${memoryText}`;
+  }
+}
+
+const debugOverlay = new DebugOverlay();
+
 class IsoScene extends Phaser.Scene {
   state: GameState = defaultState();
   tables!: DataTables;
@@ -120,6 +172,8 @@ class IsoScene extends Phaser.Scene {
 
     // y-sort props by screen y
     this.props.list.sort((a, b) => (a as any).y - (b as any).y);
+
+    debugOverlay.update(deltaMs);
   }
 }
 

@@ -120,6 +120,7 @@ export interface ProductionQueueItem {
   duration: number;
 }
 
+export type SaveV0 = { seed: number } & Resources;
 export type SaveV1 = { v: 1; seed: number; resources: Resources };
 
 export const CURRENT_SCHEMA_VERSION = 2;
