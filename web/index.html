@@ -4,25 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAADf0lEQVR42u3byW6cVRSF0fMEdrlcbqvKrkpLYpyEOMSJEhAgGgGiUUBAFECAgHdiyvMw5nF8uHOmkdLsNVjzX/fsb/jX+vyPhlS1Pv/9AlLV+v5vDalq9favDalGAL80pKrVvZ8bUtXq7KeGVHV89mNDqjq++6wh1Qjg6QWkqqO3fmhIVUd3vm9INQL4riFVLW9/25Cqlre+aUg1AnjSkKqWp183pKrF6VcXkKoWb37ZkKoWJ180pKr5yecNqWp+87OGVDW/8WlDqhHAJw2p6vCNjxtSjQA+uoBUdXj9w4ZUdXDtg4ZUI4D3G1LVwdX3GlLV/pV3G1KNAN5pSFX7lx83pBoBPGpIVXuXHjakqr31g4ZUI4DzhlS1u7rfkKp2j+81pBoBnDWkqp2juw2pRgB3GlLVzvJ2Q6raWdxqSFWzxWlDqprNTxpS1ezwZkOq2j680ZCqtg+uN6QaAVxrSFXT/asNqWq6d6Uh1QjgUkOqmu6uG1LV1s6qIdUI4KghVW3Nlg2pajJbNKSqyfa8IVVNpgcNqWpzut+Qqja39hpS1eZktyHVCGDWkKo2NrcbUo0Apg2pamNj0pDqpQrgz3/+IoAABCAAARi/CAQgAAEIwCBEIAAEIAAEEBaAIYhAAAhAAAggLAAD4EVHIAAEIAAEIAAEYPxkRSAABCAABCAABCAABGD8xEQgAAQgAAQgAAQgAAQgAAQgAAQgAAQgAAQgAATwvPz79xP4HwEgAAEgAAEgAAEgAAEgAAEgAAEgAAEgAAEggFf9p3gH50WPXwAIQAAIQAAIQAAIQATEjF8ACEAACEAACEAEZI1fAAhAAAhABASOXwAIQAAIQAQEjl8ACOBl+RARGL8AjEMAyQGIwPgFYCQCSA5ABMYvAGMRQHIAIjB+ARiNAJIDEIHxxwcgAuMXgBEJIDkAERh/fAAiMH4BGJUAkgMQgfHHByAC448PQATGHx+ACIw/PgARGL8AjE8AyQGIwPjjAxCB8ccHIATDF4AIjF8AIjB+AYjA+AUgAuOPD0AIhi8AERi/AIRg+AIQgfELQAiGLwAhxA9fAMEhuLUAIkNwWwFEhuCWAoiLwc0EEBeD2wggKghvL4CYKLypAEAAIAAQAAgABAACAAGAAEAAIAAQAAgABAACAAGAAEAACMBDIAAQAAgABAACAAGAAEAAIAAQALwm/gOP3jWQp/FwNgAAAABJRU5ErkJggg==" />
   <title>Farm to Stars (Web)</title>
   <style>
     html, body, #app { height: 100%; margin: 0; background: #0e0e10; color: #e5e7eb; }
     .hud {
       position: fixed; left: 12px; top: 12px; padding: 12px 16px;
-      border-radius: 10px; border: 1px solid #ffffff22;
+      border-radius: 12px; border: 1px solid #1f2937;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: #111a; backdrop-filter: blur(6px);
+      background: rgba(17, 24, 39, 0.82); backdrop-filter: blur(8px);
       max-width: 360px;
-      line-height: 1.4;
+      line-height: 1.45;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.55);
     }
     .hud h2 { margin: 0 0 6px; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #cbd5f5; }
     .hud .row { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 8px; align-items: center; }
     .hud .row:last-child { margin-bottom: 0; }
     .hud span { display: inline-flex; gap: 4px; align-items: baseline; }
     .hud b { color: #f8fafc; font-weight: 600; }
-    .hud button { font-family: inherit; border-radius: 6px; border: 1px solid #ffffff33; background: #1f293780; color: #f3f4f6; padding: 4px 8px; cursor: pointer; }
-    .hud button:hover { background: #334155a6; }
-    .hud button[aria-pressed='true'] { background: #2563ebb5; border-color: #3b82f6; }
+    .hud button {
+      font-family: inherit; border-radius: 8px; border: 1px solid #334155; background: rgba(51, 65, 85, 0.8);
+      color: #f9fafb; padding: 6px 10px; cursor: pointer; transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .hud button:hover { background: rgba(71, 85, 105, 0.95); border-color: #475569; }
+    .hud button:focus-visible { outline: 3px solid #facc15; outline-offset: 2px; }
+    .hud button[aria-pressed='true'] { background: rgba(37, 99, 235, 0.85); border-color: #3b82f6; color: #0f172a; }
     .hud .feedback { font-size: 13px; color: #f9fafb; background: #1d3b5ab8; padding: 6px 8px; border-radius: 6px; }
     .hud .labels { font-size: 12px; opacity: 0.8; }
     .hud .queue { font-size: 13px; }

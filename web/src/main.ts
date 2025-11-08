@@ -2,9 +2,7 @@ import Phaser from 'phaser';
 import { gridToScreen, TILE_H, TILE_W } from './iso';
 import { defaultState, type GameState, type Structure } from './types';
 import { load, save } from './storage';
-import { enableAudio, toggleMute } from './audio';
-import { fmt, initWorld, SIM_DT, tick } from './world';
-import { enableAudio, playSfx, toggleMute } from './audio';
+import { enableAudio, toggleMute } from './audioClient';
 import {
   EVENT_RESOURCES_UPDATED,
   fmt,
@@ -47,12 +45,11 @@ const seasonEffectsEl = document.getElementById('seasonEffects')!;
 const seasonTimerEl = document.getElementById('seasonTimer')!;
 const buildButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-building]'));
 
-(document.getElementById('installAudio') as HTMLButtonElement).addEventListener(
-  'click',
-  enableAudio
-);
-(document.getElementById('mute') as HTMLButtonElement).addEventListener('click', () => {
-  const muted = toggleMute();
+(document.getElementById('installAudio') as HTMLButtonElement).addEventListener('click', () => {
+  void enableAudio();
+});
+(document.getElementById('mute') as HTMLButtonElement).addEventListener('click', async () => {
+  const muted = await toggleMute();
   (document.getElementById('mute') as HTMLButtonElement).setAttribute(
     'aria-pressed',
     String(muted)
@@ -483,6 +480,8 @@ class IsoScene extends Phaser.Scene {
     const cycleIndex = (this.state.season.cycle % SEASON_ORDER.length) + 1;
     const cycleLabel = `Cycle ${cycleIndex}/${SEASON_ORDER.length}`;
     seasonTimerEl.textContent = `${yearLabel} • ${cycleLabel} • Next in ${formatDuration(remaining)}`;
+  }
+
   destroy(fromScene?: boolean) {
     this.detachHudListener?.();
     super.destroy(fromScene);

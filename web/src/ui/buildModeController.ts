@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { playPlace } from '../audio';
+import { playInvalidPlacementSfx, playPlacementSfx } from '../audioClient';
 import { gridToScreen, screenToGrid } from '../iso';
 import {
   applyCost,
@@ -251,11 +251,13 @@ export class BuildModeController {
     if (!placement.ok) {
       this.hud.feedback.textContent = 'Cannot place there: tiles are blocked or out of bounds.';
       this.drawFootprint(x, y, def, placement.issues);
+      playInvalidPlacementSfx();
       return;
     }
 
     if (!canAfford(this.state.resources, def.cost)) {
       this.hud.feedback.textContent = 'Not enough resources for that building.';
+      playInvalidPlacementSfx();
       return;
     }
 
@@ -274,7 +276,7 @@ export class BuildModeController {
     };
     this.state.buildQueue.push(job);
     markJob(this.occupancy, x, y, def.footprint.w, def.footprint.h, this.selected, jobId);
-    playPlace();
+    playPlacementSfx();
 
     this.onJobQueued(job);
 

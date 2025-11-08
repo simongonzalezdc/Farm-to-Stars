@@ -92,6 +92,14 @@ export function playSfx(name: UiSpriteId) {
   playSprite(name);
 }
 
+export function playPlacementSfx() {
+  playSfx('place');
+}
+
+export function playInvalidPlacementSfx() {
+  playSfx('invalidPlacement');
+}
+
 const resourceNotes: Record<ResourceId, string> = {
   wood: 'D5',
   stone: 'G4',
