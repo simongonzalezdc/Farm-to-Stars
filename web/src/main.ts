@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
 import { gridToScreen, TILE_W, TILE_H } from './iso';
-import { defaultState, type GameState } from './types';
+import type { GameState } from './types';
 import { load, save } from './storage';
 import { enableAudio, toggleMute } from './audio';
+import { defaultState, hydrateState, tick, fmt, SIM_DT } from './world';
 import { tick, fmt } from './world';
 import { loadDataTables, type DataTables } from './data';
 
@@ -53,6 +54,8 @@ class IsoScene extends Phaser.Scene {
   }
 
   async create() {
+    const loaded = await load();
+    this.state = hydrateState(loaded);
     this.tables = await dataTablesPromise;
     const loaded = await load(this.tables.resources);
     this.state = loaded ?? defaultState(this.tables.resources);
@@ -100,11 +103,16 @@ class IsoScene extends Phaser.Scene {
   }
 
   update(_time: number, deltaMs: number) {
-    // fixed 10 Hz sim (you can switch to 20 Hz by changing 0.1 → 0.05)
+    // fixed 10 Hz sim (SIM_DT = 0.1s by default)
     this.accum += deltaMs / 1000;
-    while (this.accum >= 0.1) {
-      tick(this.state, 0.1);
-      this.accum -= 0.1;
+    while (this.accum >= SIM_DT) {
+      const events = tick(this.state, SIM_DT);
+      if (events.length > 0) {
+        // Surface the last event for easy debug hooks in Phaser's registry.
+        const last = events[events.length - 1];
+        this.registry.set('lastEvent', last.type);
+      }
+      this.accum -= SIM_DT;
     }
 
     woodEl.textContent = fmt(this.state.resources.wood ?? 0);
