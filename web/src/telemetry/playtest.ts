@@ -1,3 +1,5 @@
+import type { HomesteadDaySummaryEvent } from './homesteadMetrics';
+
 export interface StorageLike {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -16,6 +18,11 @@ export type PlaytestEvent =
       type: 'export.generated';
       payloadBytes: number;
       shipments: number;
+      timestamp: string;
+    }
+  | {
+      type: 'homestead.daySummary';
+      summary: HomesteadDaySummaryEvent;
       timestamp: string;
     };
 
@@ -146,6 +153,10 @@ export function recordExportGenerated(
   storage?: StorageLike
 ) {
   recordPlaytestEvent({ type: 'export.generated', payloadBytes, shipments }, storage);
+}
+
+export function recordHomesteadDaySummary(summary: HomesteadDaySummaryEvent, storage?: StorageLike) {
+  recordPlaytestEvent({ type: 'homestead.daySummary', summary }, storage);
 }
 
 export function flushPlaytestEvents(storage?: StorageLike): PlaytestEvent[] {

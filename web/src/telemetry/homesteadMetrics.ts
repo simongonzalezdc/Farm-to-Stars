@@ -14,6 +14,8 @@ export interface HomesteadDaySummaryEvent {
   stamina: {
     minRatio: number;
     exhaustedSeconds: number;
+    spent: number;
+    restCount: number;
   };
   weather: {
     type: WeatherType;
@@ -41,6 +43,9 @@ export class HomesteadMetrics {
   private exhaustedSeconds = 0;
   private lastWeatherType: WeatherType | null = null;
   private lastMoistureDelta = 0;
+  private restCount = 0;
+  private lastStamina = 0;
+  private staminaSpent = 0;
 
   constructor(options: HomesteadMetricsOptions = {}) {
     this.buffer =
@@ -53,20 +58,19 @@ export class HomesteadMetrics {
 
   reset(state: GameState) {
     this.currentDay = this.normalizeDay(state.homestead.time.day);
-    this.dayElapsed = 0;
-    this.matured = 0;
-    this.withered = 0;
-    this.productionCycles = 0;
-    this.minStaminaRatio = this.computeStaminaRatio(state);
-    this.exhaustedSeconds = 0;
-    this.lastWeatherType = state.homestead.weather.current;
-    this.lastMoistureDelta = this.toFinite(state.homestead.weather.moistureDeltaPerSecond);
+    this.resetDailyCounters(state);
   }
 
   recordTick(state: GameState, events: GameEvent[], dt: number) {
     if (this.currentDay === null) {
       this.reset(state);
     }
+
+    const staminaValue = this.getStaminaValue(state);
+    if (staminaValue + Number.EPSILON < this.lastStamina) {
+      this.staminaSpent += this.lastStamina - staminaValue;
+    }
+    this.lastStamina = staminaValue;
 
     if (dt > 0 && Number.isFinite(dt)) {
       this.dayElapsed += dt;
@@ -88,14 +92,8 @@ export class HomesteadMetrics {
           this.productionCycles += 1;
           break;
         case 'homestead.time.advanced':
-          this.finalizeDay(state);
-          this.currentDay = this.normalizeDay(event.day);
-          this.dayElapsed = 0;
-          this.matured = 0;
-          this.withered = 0;
-          this.productionCycles = 0;
-          this.minStaminaRatio = this.computeStaminaRatio(state);
-          this.exhaustedSeconds = 0;
+          this.finalizeCurrentDay(state);
+          this.startNewDay(state, event.day);
           break;
         default:
           break;
@@ -106,7 +104,16 @@ export class HomesteadMetrics {
     this.lastMoistureDelta = this.toFinite(state.homestead.weather.moistureDeltaPerSecond);
   }
 
-  private finalizeDay(state: GameState) {
+  recordManualAdvance(state: GameState, previousDay: number, nextDay: number) {
+    this.lastWeatherType = state.homestead.weather.current;
+    this.lastMoistureDelta = this.toFinite(state.homestead.weather.moistureDeltaPerSecond);
+    this.restCount += 1;
+    this.currentDay = this.normalizeDay(previousDay);
+    this.finalizeCurrentDay(state);
+    this.startNewDay(state, nextDay);
+  }
+
+  private finalizeCurrentDay(state: GameState) {
     if (this.currentDay === null) {
       return;
     }
@@ -122,7 +129,9 @@ export class HomesteadMetrics {
       },
       stamina: {
         minRatio: Number.isFinite(this.minStaminaRatio) ? this.minStaminaRatio : 0,
-        exhaustedSeconds: this.exhaustedSeconds
+        exhaustedSeconds: this.exhaustedSeconds,
+        spent: this.staminaSpent,
+        restCount: this.restCount
       },
       weather: {
         type: this.lastWeatherType ?? state.homestead.weather.current,
@@ -131,6 +140,11 @@ export class HomesteadMetrics {
       resources: { ...state.resources }
     };
     this.buffer.enqueue(payload);
+  }
+
+  private startNewDay(state: GameState, day: number) {
+    this.currentDay = this.normalizeDay(day);
+    this.resetDailyCounters(state);
   }
 
   private normalizeDay(raw: number): number {
@@ -146,6 +160,28 @@ export class HomesteadMetrics {
       return 0;
     }
     return Math.min(1, Math.max(0, current / max));
+  }
+
+  private getStaminaValue(state: GameState): number {
+    const { current } = state.homestead.stamina;
+    if (!Number.isFinite(current)) {
+      return 0;
+    }
+    return Math.max(0, current);
+  }
+
+  private resetDailyCounters(state: GameState) {
+    this.dayElapsed = 0;
+    this.matured = 0;
+    this.withered = 0;
+    this.productionCycles = 0;
+    this.minStaminaRatio = this.computeStaminaRatio(state);
+    this.exhaustedSeconds = 0;
+    this.restCount = 0;
+    this.staminaSpent = 0;
+    this.lastStamina = this.getStaminaValue(state);
+    this.lastWeatherType = state.homestead.weather.current;
+    this.lastMoistureDelta = this.toFinite(state.homestead.weather.moistureDeltaPerSecond);
   }
 
   private toFinite(value: number): number {

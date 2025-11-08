@@ -66,6 +66,7 @@ describe('save migrations', () => {
     expect(migrated?.mail.inbox).toEqual([]);
     expect(migrated?.jobQueue.jobs).toEqual([]);
     expect(migrated?.homestead.livestock.animals.length).toBeGreaterThan(0);
+    expect(migrated?.homestead.toolMastery).toEqual({});
   });
 
   it('upgrades v0 saves into the latest structure', () => {
@@ -100,6 +101,7 @@ describe('save migrations', () => {
       letters: 0
     });
     expect(migrated?.mail.scheduled).toEqual([]);
+    expect(migrated?.homestead.toolMastery).toEqual({});
   });
 
   it('falls back to default state when migration fails', () => {

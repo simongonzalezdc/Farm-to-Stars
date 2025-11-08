@@ -136,6 +136,9 @@ export class TelemetryTracker {
         case 'mail.delivered':
           this.addRecentEvent(`${this.formatClock(state)} mail`);
           break;
+        case 'tool.perk.unlocked':
+          this.addRecentEvent(`${this.formatClock(state)} perk+: ${event.perkId}`);
+          break;
         default:
           break;
       }

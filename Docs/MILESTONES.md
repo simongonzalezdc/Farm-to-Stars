@@ -12,9 +12,11 @@
 loop, and forecast-driven moisture events are wired into the Homestead simulation._
 - [x] **Week 7:** Expand Homestead content set (crops, tools, starter structures, inventory hooks). _Complete — dynamic
 inventory HUD, tool/seed bars, and tent/well/crate visual overrides now pull straight from the Homestead data tables._
-- [ ] **Week 8:** Extend save schema + migrations, hook UI/UX for new interactions.
-- [ ] **Week 9:** Balance Homestead pacing, tune weather, add audio/visual polish.
-- [ ] **Week 10:** Regression sweep, QA checklist updates, and playtest instrumentation for Homestead.
+- [x] **Week 8:** Extend save schema + migrations, hook UI/UX for new interactions. _Complete — schema v7 persists tool mastery progress and migration paths while perk unlock feedback now survives reloads._
+- [x] **Week 9:** Balance Homestead pacing, tune weather, add audio/visual polish. _Complete — 13-minute days, stamina tuning, richer weather audio, and HUD glow bring the Homestead loop to life._
+- [x] **Week 10:** Regression sweep, QA checklist updates, and playtest instrumentation for Homestead. _Complete — daily telemetry now flows into the playtest buffer alongside refreshed QA checklists and Homestead pacing scenarios._
+
+**Next Step — Wave Delta Prep:** With the Homestead arc wrapped, focus shifts to the guarded Week 12 Wave Delta sprint: harden the export prototype, finish bug bashes, and package integration notes for Township leads as outlined in the Build Guide (§4.1.2). The following phase then ramps Township proper (Weeks 13–24) with city-scale simulation, HUD, and content bundles.
 
 ## Leadership Summary — QA Enablement Additions
 
