@@ -3,6 +3,7 @@ import { migrateOrDefault, migrateSave } from '../migrations';
 import {
   CURRENT_SCHEMA_VERSION,
   createDefaultSeasonState,
+  defaultState,
   type ResourcesTable
 } from '../types';
 
@@ -30,24 +31,29 @@ describe('save migrations', () => {
       RESOURCE_TABLE
     );
 
+    expect(migrated).not.toBeNull();
     expect(migrated).toMatchObject({
       seed: 42,
-      resources: { wood: 10, stone: 0, food: 3, coins: 0 },
       schemaVersion: CURRENT_SCHEMA_VERSION,
       season: createDefaultSeasonState()
-      resources: { wood: 10, stone: 0, water: 0, food: 3, coins: 0 },
-      resourceStorage: {
-        wood: { capacity: 9999, current: 10 },
-        stone: { capacity: 9999, current: 0 },
-        water: { capacity: 9999, current: 0 }
-      },
-      schemaVersion: CURRENT_SCHEMA_VERSION,
-      productionNodes: [],
-      productionQueue: []
     });
+    expect(migrated?.resources).toEqual({
+      wood: 10,
+      stone: 0,
+      water: 0,
+      food: 3,
+      coins: 0
+    });
+    expect(migrated?.resourceStorage).toMatchObject({
+      wood: { capacity: 9999, current: 10 },
+      stone: { capacity: 9999, current: 0 },
+      water: { capacity: 9999, current: 0 }
+    });
+    expect(migrated?.productionNodes).toEqual([]);
+    expect(migrated?.productionQueue).toEqual([]);
   });
 
-  it('upgrades v0 saves into v2 structure', () => {
+  it('upgrades v0 saves into the latest structure', () => {
     const migrated = migrateSave(
       {
         seed: 21,
@@ -59,19 +65,23 @@ describe('save migrations', () => {
       RESOURCE_TABLE
     );
 
+    expect(migrated).not.toBeNull();
     expect(migrated).toMatchObject({
       seed: 21,
-      resources: { wood: 5, stone: 6, food: 7, coins: 8 },
       schemaVersion: CURRENT_SCHEMA_VERSION,
       season: createDefaultSeasonState()
-      resources: { wood: 5, stone: 6, water: 0, food: 7, coins: 8 },
-      schemaVersion: CURRENT_SCHEMA_VERSION
+    });
+    expect(migrated?.resources).toEqual({
+      wood: 5,
+      stone: 6,
+      water: 0,
+      food: 7,
+      coins: 8
     });
   });
 
   it('falls back to default state when migration fails', () => {
     const migrated = migrateOrDefault({ wrong: true }, RESOURCE_TABLE);
-    expect(migrated.v).toBe(1);
-    expect(migrated.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(migrated).toEqual(defaultState(RESOURCE_TABLE));
   });
 });

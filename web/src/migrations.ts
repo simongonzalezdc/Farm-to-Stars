@@ -22,7 +22,6 @@ import {
   type SaveV3,
   type SaveV4,
   type SeasonState
-  type SaveV4
 } from './types';
 import { getSeasonDefinition, isSeasonId } from './config/seasons';
 
@@ -70,29 +69,52 @@ function isSaveV0(candidate: unknown): candidate is SaveV0 {
   return LEGACY_RESOURCE_IDS.every((id) => typeof candidate[id] === 'number');
 }
 
-function normalizeStructures(candidate: SaveV3['structures'] | unknown): SaveV3['structures'] {
+function cloneStructure(structure: SaveV3['structures'][number]): SaveV3['structures'][number] {
+  return {
+    ...structure,
+    footprint: { ...structure.footprint }
+  };
+}
+
+function normalizeStructures(
+  candidate: SaveV3['structures'] | unknown,
+  fallback: SaveV3['structures']
+): SaveV3['structures'] {
+  const baseFallback = fallback.length > 0
+    ? cloneStructure(fallback[0])
+    : { id: 0, type: 'cottage', x: 0, y: 0, footprint: { w: 1, h: 1 } };
+
   if (!Array.isArray(candidate)) {
-    return defaultState().structures;
+    return fallback.map(cloneStructure);
   }
-  return candidate.map((structure, index) => ({
-    id: typeof structure?.id === 'number' ? structure.id : index,
-    type: structure?.type === 'cottage' ? 'cottage' : 'cottage',
-    x: typeof structure?.x === 'number' ? structure.x : 0,
-    y: typeof structure?.y === 'number' ? structure.y : 0,
-    footprint:
-      structure && typeof structure === 'object' && structure.footprint
+
+  return candidate.map((structure, index) => {
+    const source = fallback[index] ? cloneStructure(fallback[index]) : { ...baseFallback, id: index };
+
+    const id =
+      typeof structure?.id === 'number' && Number.isFinite(structure.id) ? structure.id : source.id ?? index;
+    const type = typeof structure?.type === 'string' ? structure.type : source.type ?? 'cottage';
+    const x = typeof structure?.x === 'number' && Number.isFinite(structure.x) ? structure.x : source.x ?? 0;
+    const y = typeof structure?.y === 'number' && Number.isFinite(structure.y) ? structure.y : source.y ?? 0;
+
+    const footprint =
+      structure && typeof structure === 'object' && 'footprint' in structure && structure.footprint
         ? {
             w:
-              typeof structure.footprint.w === 'number' && Number.isFinite(structure.footprint.w)
+              typeof structure.footprint.w === 'number' && Number.isFinite(structure.footprint.w) &&
+              structure.footprint.w > 0
                 ? structure.footprint.w
-                : 1,
+                : source.footprint.w,
             h:
-              typeof structure.footprint.h === 'number' && Number.isFinite(structure.footprint.h)
+              typeof structure.footprint.h === 'number' && Number.isFinite(structure.footprint.h) &&
+              structure.footprint.h > 0
                 ? structure.footprint.h
-                : 1
+                : source.footprint.h
           }
-        : { w: 1, h: 1 }
-  }));
+        : { ...source.footprint };
+
+    return { id, type, x, y, footprint };
+  });
 }
 
 function normalizeBuildQueue(candidate: SaveV3['buildQueue'] | unknown): SaveV3['buildQueue'] {
@@ -101,7 +123,7 @@ function normalizeBuildQueue(candidate: SaveV3['buildQueue'] | unknown): SaveV3[
   }
   return candidate.map((job, index) => ({
     id: typeof job?.id === 'number' ? job.id : index,
-    type: job?.type === 'cottage' ? 'cottage' : 'cottage',
+    type: typeof job?.type === 'string' ? job.type : 'cottage',
     x: typeof job?.x === 'number' ? job.x : 0,
     y: typeof job?.y === 'number' ? job.y : 0,
     footprint:
@@ -111,10 +133,26 @@ function normalizeBuildQueue(candidate: SaveV3['buildQueue'] | unknown): SaveV3[
             h: typeof job.footprint.h === 'number' ? job.footprint.h : 1
           }
         : { w: 1, h: 1 },
-    duration: typeof job?.duration === 'number' ? job.duration : 10,
-    remaining: typeof job?.remaining === 'number' ? job.remaining : 10,
+    duration:
+      typeof job?.duration === 'number' && Number.isFinite(job.duration) && job.duration >= 0
+        ? job.duration
+        : 10,
+    remaining:
+      typeof job?.remaining === 'number' && Number.isFinite(job.remaining) && job.remaining >= 0
+        ? job.remaining
+        : 10,
     status: job?.status === 'building' ? 'building' : 'queued'
   }));
+}
+
+function convertBuildJobToConstructionJob(job: BuildJob): ConstructionJob {
+  return {
+    id: job.id,
+    buildingId: job.type,
+    duration: job.duration,
+    remaining: job.remaining,
+    footprint: job.footprint
+  };
 }
 
 function normalizeConstructionQueue(
@@ -181,20 +219,25 @@ function normalizeSeasonState(candidate: unknown): SeasonState {
   const active = isSeasonId(rawActive) ? rawActive : fallback.active;
   const definition = getSeasonDefinition(active);
 
-  const rawElapsed = typeof candidate.elapsed === 'number' && Number.isFinite(candidate.elapsed)
-    ? candidate.elapsed
-    : fallback.elapsed;
+  const rawElapsed =
+    typeof candidate.elapsed === 'number' && Number.isFinite(candidate.elapsed)
+      ? candidate.elapsed
+      : fallback.elapsed;
   const elapsed = Math.max(0, Math.min(rawElapsed, definition.durationSeconds));
 
-  const rawCycle = typeof candidate.cycle === 'number' && Number.isFinite(candidate.cycle)
-    ? Math.max(0, Math.floor(candidate.cycle))
-    : fallback.cycle;
+  const rawCycle =
+    typeof candidate.cycle === 'number' && Number.isFinite(candidate.cycle)
+      ? Math.max(0, Math.floor(candidate.cycle))
+      : fallback.cycle;
 
-  const rawYear = typeof candidate.year === 'number' && Number.isFinite(candidate.year)
-    ? Math.max(0, Math.floor(candidate.year))
-    : fallback.year;
+  const rawYear =
+    typeof candidate.year === 'number' && Number.isFinite(candidate.year)
+      ? Math.max(0, Math.floor(candidate.year))
+      : fallback.year;
 
   return clampSeasonElapsed({ active, elapsed, cycle: rawCycle, year: rawYear });
+}
+
 function normalizeProductionNodes(candidate: unknown): ProductionNode[] {
   if (!Array.isArray(candidate)) {
     return [];
@@ -282,21 +325,10 @@ function normalizeResourceStorage(
   return storage;
 }
 
-function convertBuildJobToConstructionJob(job: BuildJob): ConstructionJob {
-  return {
-    id: job.id,
-    buildingId: job.type,
-    duration: job.duration,
-    remaining: job.remaining,
-    footprint: job.footprint
-  };
-}
-
-function migrateV1ToV3(save: SaveV1, resourceTable: ResourcesTable): SaveV4 {
-  const base = defaultState(resourceTable);
 function assembleV4State(save: Partial<SaveV4> & SaveV3, resourceTable: ResourcesTable): SaveV4 {
+  const baseState = defaultState(resourceTable);
   const resources = sanitizeResources(save.resources ?? {}, resourceTable);
-  const structures = normalizeStructures(save.structures);
+  const structures = normalizeStructures(save.structures, baseState.structures);
   const buildQueue = normalizeBuildQueue(save.buildQueue);
   const constructionQueue = normalizeConstructionQueue(save.constructionQueue, buildQueue);
   const buildings = normalizeBuildingInstances(save.buildings);
@@ -308,8 +340,13 @@ function assembleV4State(save: Partial<SaveV4> & SaveV3, resourceTable: Resource
     resourceTable,
     resources
   );
+  const season = normalizeSeasonState((save as Partial<SaveV4>).season);
 
-  const nodeIds = new Set(productionNodes.map((node) => node.id));
+  const nodeIds = new Set<number>();
+  for (const node of productionNodes) {
+    nodeIds.add(node.id);
+  }
+
   let nextProductionNodeId =
     typeof (save as Partial<SaveV4>).nextProductionNodeId === 'number' &&
     Number.isFinite((save as Partial<SaveV4>).nextProductionNodeId)
@@ -326,9 +363,9 @@ function assembleV4State(save: Partial<SaveV4> & SaveV3, resourceTable: Resource
     }
     const nodeId = nextProductionNodeId++;
     productionNodes.push({ id: nodeId, recipeId: building.recipeId, progress: 0, active: false });
-    nodeIds.add(nodeId);
     productionQueue.push({ nodeId, recipeId: building.recipeId });
     building.productionNodeId = nodeId;
+    nodeIds.add(nodeId);
   }
 
   const validNodeIds = new Set(productionNodes.map((node) => node.id));
@@ -346,6 +383,16 @@ function assembleV4State(save: Partial<SaveV4> & SaveV3, resourceTable: Resource
     resourceStorage[key].current = Math.min(Math.max(0, current), cap);
   }
 
+  const nextBuildId =
+    typeof save.nextBuildId === 'number' && Number.isFinite(save.nextBuildId)
+      ? save.nextBuildId
+      : structures.reduce((max, structure) => Math.max(max, structure.id), 0) + 1;
+
+  const nextBuildingInstanceId =
+    typeof save.nextBuildingInstanceId === 'number' && Number.isFinite(save.nextBuildingInstanceId)
+      ? save.nextBuildingInstanceId
+      : buildings.reduce((max, building) => Math.max(max, building.id), 0) + 1;
+
   return {
     v: 1,
     schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -359,12 +406,10 @@ function assembleV4State(save: Partial<SaveV4> & SaveV3, resourceTable: Resource
     productionNodes,
     productionQueue: filteredQueue,
     productionModifiers,
-    nextBuildId: typeof save.nextBuildId === 'number' && Number.isFinite(save.nextBuildId) ? save.nextBuildId : 1,
-    nextBuildingInstanceId:
-      typeof save.nextBuildingInstanceId === 'number' && Number.isFinite(save.nextBuildingInstanceId)
-        ? save.nextBuildingInstanceId
-        : 1,
-    nextProductionNodeId
+    nextBuildId,
+    nextBuildingInstanceId,
+    nextProductionNodeId,
+    season
   };
 }
 
@@ -384,8 +429,6 @@ function migrateV1ToV3(save: SaveV1, resourceTable: ResourcesTable): SaveV3 {
   };
 }
 
-function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV4 {
-  const base = defaultState(resourceTable);
 function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV3 {
   const baseStructures = defaultState(resourceTable).structures;
   return {
@@ -404,39 +447,6 @@ function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV3 {
 
 export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameState | null {
   if (isSaveV4(raw)) {
-    const buildQueue = normalizeBuildQueue(raw.buildQueue);
-    return {
-      v: 1,
-      schemaVersion: CURRENT_SCHEMA_VERSION,
-      seed: typeof raw.seed === 'number' ? raw.seed : 0,
-      resources: sanitizeResources(raw.resources ?? {}, resourceTable),
-      structures: normalizeStructures(raw.structures),
-      buildQueue,
-      constructionQueue: normalizeConstructionQueue(raw.constructionQueue, buildQueue),
-      buildings: normalizeBuildingInstances(raw.buildings),
-      nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
-      nextBuildingInstanceId:
-        typeof raw.nextBuildingInstanceId === 'number' ? raw.nextBuildingInstanceId : 1,
-      season: normalizeSeasonState(raw.season)
-    };
-  }
-
-  if (isSaveV3(raw)) {
-    const buildQueue = normalizeBuildQueue(raw.buildQueue);
-    return {
-      v: 1,
-      schemaVersion: CURRENT_SCHEMA_VERSION,
-      seed: typeof raw.seed === 'number' ? raw.seed : 0,
-      resources: sanitizeResources(raw.resources ?? {}, resourceTable),
-      structures: normalizeStructures(raw.structures),
-      buildQueue,
-      constructionQueue: normalizeConstructionQueue(raw.constructionQueue, buildQueue),
-      buildings: normalizeBuildingInstances(raw.buildings),
-      nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
-      nextBuildingInstanceId:
-        typeof raw.nextBuildingInstanceId === 'number' ? raw.nextBuildingInstanceId : 1,
-      season: createDefaultSeasonState()
-    };
     return assembleV4State(raw, resourceTable);
   }
 
@@ -454,8 +464,6 @@ export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameSt
       structures: normalizeStructures(raw.structures),
       buildQueue,
       constructionQueue: buildQueue.map(convertBuildJobToConstructionJob),
-      nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
-      season: createDefaultSeasonState()
       buildings: [],
       nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
       nextBuildingInstanceId: 1
@@ -464,13 +472,6 @@ export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameSt
   }
 
   if (isSaveV1(raw)) {
-    const migrated = migrateV1ToV3(raw, resourceTable);
-    return { ...migrated, season: createDefaultSeasonState(), schemaVersion: CURRENT_SCHEMA_VERSION };
-  }
-
-  if (isSaveV0(raw)) {
-    const migrated = migrateV0ToV3(raw, resourceTable);
-    return { ...migrated, season: createDefaultSeasonState(), schemaVersion: CURRENT_SCHEMA_VERSION };
     return assembleV4State(migrateV1ToV3(raw, resourceTable), resourceTable);
   }
 
