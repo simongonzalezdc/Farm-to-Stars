@@ -1,6 +1,15 @@
 import Phaser from 'phaser';
 import { gridToScreen, TILE_H, TILE_W } from './iso';
-import { defaultState, type GameState, type Structure } from './types';
+import {
+  defaultState,
+  type BuildingDefinition,
+  type BuildingId,
+  type CropId,
+  type GameState,
+  type ResourceId,
+  type Structure,
+  type ToolId
+} from './types';
 import { load, save } from './storage';
 import { enableAudio, toggleMute } from './audio';
 import {
@@ -13,7 +22,7 @@ import {
   type ResourcesUpdatedDetail
 } from './world';
 import { setupPwaInstallPrompt } from './pwa/installPrompt';
-import { getUiBuildingDefinition } from './buildings';
+import { getUiBuildingDefinition, getUiBuildingDefinitions } from './buildings';
 import {
   getSeasonDefinition,
   SEASON_ORDER,
@@ -37,8 +46,7 @@ import { getStaminaRatio } from './state/stamina';
 
 const dataTablesPromise = loadDataTables();
 
-const woodEl = document.getElementById('wood')!;
-const stoneEl = document.getElementById('stone')!;
+const resourceRow = document.getElementById('resourceRow') as HTMLDivElement;
 const queueEl = document.getElementById('buildQueue')!;
 const queueDetailsEl = document.getElementById('queueDetails')!;
 const feedbackEl = document.getElementById('buildFeedback')!;
@@ -47,16 +55,37 @@ const modeEl = document.getElementById('modeIndicator')!;
 const seasonNameEl = document.getElementById('seasonName')!;
 const seasonEffectsEl = document.getElementById('seasonEffects')!;
 const seasonTimerEl = document.getElementById('seasonTimer')!;
-const buildButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-building]'));
+const buildOptionsContainer = document.getElementById('buildOptions') as HTMLDivElement;
 const installButton = document.getElementById('installApp') as HTMLButtonElement | null;
 const homesteadDayEl = document.getElementById('homesteadDay')!;
 const homesteadClockEl = document.getElementById('homesteadClock')!;
 const homesteadStaminaEl = document.getElementById('homesteadStamina')!;
 const homesteadWeatherEl = document.getElementById('homesteadWeather')!;
 const homesteadFeedbackEl = document.getElementById('homesteadFeedback')!;
-const toolButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tool]'));
-const seedButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-crop]'));
-const restButton = document.getElementById('restButton') as HTMLButtonElement | null;
+const toolbeltContainer = document.getElementById('toolbelt') as HTMLDivElement;
+const seedBarContainer = document.getElementById('seedBar') as HTMLDivElement;
+
+const resourceElements = new Map<ResourceId, HTMLSpanElement>();
+let buildButtons: HTMLButtonElement[] = [];
+let toolButtons: HTMLButtonElement[] = [];
+let seedButtons: HTMLButtonElement[] = [];
+let restButton: HTMLButtonElement | null = null;
+
+const RESOURCE_ORDER: ResourceId[] = [
+  'wood',
+  'stone',
+  'water',
+  'food',
+  'coins',
+  'fiber',
+  'wheat',
+  'potato',
+  'berries'
+];
+
+const HOMESTEAD_BUILDING_ORDER: BuildingId[] = ['plot', 'tent', 'well', 'crate', 'road', 'cottage', 'market'];
+const HOMESTEAD_TOOL_ORDER: ToolId[] = ['hoe', 'wateringCan', 'sickle'];
+const HOMESTEAD_CROP_ORDER: CropId[] = ['wheat', 'potato', 'berry'];
 
 (document.getElementById('installAudio') as HTMLButtonElement).addEventListener('click', () => {
   void enableAudio();
@@ -72,6 +101,128 @@ const restButton = document.getElementById('restButton') as HTMLButtonElement | 
 if (installButton) {
   setupPwaInstallPrompt(installButton);
 }
+
+function createToggleButton(label: string): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  button.setAttribute('aria-pressed', 'false');
+  return button;
+}
+
+function createActionButton(label: string): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  return button;
+}
+
+function populateResourceHud(tables: DataTables) {
+  resourceElements.clear();
+  resourceRow.innerHTML = '';
+
+  const ordered = computeResourceOrder(tables.resources);
+  for (const resourceId of ordered) {
+    const definition = tables.resources[resourceId];
+    if (!definition) continue;
+    const span = document.createElement('span');
+    span.dataset.resource = resourceId;
+
+    const label = document.createElement('span');
+    label.textContent = `${definition.display}:`;
+    const value = document.createElement('b');
+    value.textContent = '0';
+
+    span.append(label, value);
+    resourceRow.appendChild(span);
+    resourceElements.set(resourceId, value);
+  }
+}
+
+function computeResourceOrder(resources: DataTables['resources']): ResourceId[] {
+  const known = RESOURCE_ORDER.filter((id) => resources[id] !== undefined);
+  const extras = Object.keys(resources).filter((key) => !known.includes(key as ResourceId));
+  return [...known, ...(extras as ResourceId[])];
+}
+
+function populateBuildButtons(tables: DataTables) {
+  buildButtons = [];
+  buildOptionsContainer.innerHTML = '';
+  const definitions = getUiBuildingDefinitions();
+  const ordered = (() => {
+    const known = HOMESTEAD_BUILDING_ORDER.filter((id) => definitions[id] !== undefined);
+    const extras = Object.keys(tables.buildings).filter((key) => !known.includes(key as BuildingId));
+    return [...known, ...(extras as BuildingId[])];
+  })();
+
+  for (const buildingId of ordered) {
+    const definition = definitions[buildingId];
+    if (!definition) continue;
+    const button = createToggleButton(definition.label);
+    button.dataset.building = buildingId;
+    buildOptionsContainer.appendChild(button);
+    buildButtons.push(button);
+  }
+}
+
+function populateToolbelt(tables: DataTables) {
+  toolButtons = [];
+  toolbeltContainer.innerHTML = '';
+  const tools = tables.tools;
+  const ordered = (() => {
+    const known = HOMESTEAD_TOOL_ORDER.filter((id) => tools[id] !== undefined);
+    const extras = Object.keys(tools).filter((key) => !known.includes(key as ToolId));
+    return [...known, ...(extras as ToolId[])];
+  })();
+
+  for (const toolId of ordered) {
+    const definition = tools[toolId];
+    if (!definition) continue;
+    const button = createToggleButton(definition.label);
+    button.dataset.tool = toolId;
+    toolbeltContainer.appendChild(button);
+    toolButtons.push(button);
+  }
+
+  restButton = createActionButton('Rest Until Dawn');
+  restButton.id = 'restButton';
+  toolbeltContainer.appendChild(restButton);
+}
+
+function populateSeedButtons(tables: DataTables) {
+  seedButtons = [];
+  seedBarContainer.innerHTML = '';
+  const crops = tables.crops;
+  const ordered = (() => {
+    const known = HOMESTEAD_CROP_ORDER.filter((id) => crops[id] !== undefined);
+    const extras = Object.keys(crops).filter((key) => !known.includes(key as CropId));
+    return [...known, ...(extras as CropId[])];
+  })();
+
+  for (const cropId of ordered) {
+    const definition = crops[cropId];
+    if (!definition) continue;
+    const button = createToggleButton(`Plant ${definition.label}`);
+    button.dataset.crop = cropId;
+    seedBarContainer.appendChild(button);
+    seedButtons.push(button);
+  }
+}
+
+function updateResourceDisplay(resources: GameState['resources']) {
+  for (const [resourceId, element] of resourceElements) {
+    element.textContent = fmt(resources[resourceId] ?? 0);
+  }
+}
+
+function prepareHud(tables: DataTables) {
+  populateResourceHud(tables);
+  populateBuildButtons(tables);
+  populateToolbelt(tables);
+  populateSeedButtons(tables);
+}
+
+type WorldBuildingDefinition = Pick<BuildingDefinition, 'id' | 'label' | 'buildTime' | 'footprint'>;
 
 type PerformanceWithMemory = Performance & {
   memory?: {
@@ -178,6 +329,36 @@ class IsoScene extends Phaser.Scene {
     g.generateTexture('prop:cottage', 52, 36);
 
     g.clear();
+    g.fillStyle(0x3b82f6, 1);
+    g.fillPoints(
+      [
+        { x: 24, y: 0 },
+        { x: 46, y: 28 },
+        { x: 2, y: 28 }
+      ],
+      true
+    );
+    g.fillStyle(0x1d4ed8, 1);
+    g.fillRect(21, 16, 6, 12);
+    g.generateTexture('prop:tent', 48, 32);
+
+    g.clear();
+    g.fillStyle(0x64748b, 1);
+    g.fillCircle(18, 18, 16);
+    g.fillStyle(0x1e293b, 1);
+    g.fillCircle(18, 18, 10);
+    g.lineStyle(3, 0x94a3b8, 0.9);
+    g.strokeCircle(18, 18, 12);
+    g.generateTexture('prop:well', 36, 36);
+
+    g.clear();
+    g.fillStyle(0x92400e, 1);
+    g.fillRoundedRect(0, 0, 40, 30, 6);
+    g.lineStyle(3, 0xfbbf24, 0.85);
+    g.strokeRoundedRect(0, 0, 40, 30, 6);
+    g.generateTexture('prop:crate', 40, 30);
+
+    g.clear();
     g.lineStyle(3, 0x46ff82, 0.9);
     g.strokePoints(
       [
@@ -210,7 +391,7 @@ class IsoScene extends Phaser.Scene {
     this.state = loaded ?? defaultState(this.tables.resources);
 
     this.buildingDefs = Object.fromEntries(
-      Object.values(BUILDINGS).map((def) => [
+      Object.values(this.tables.buildings).map((def) => [
         def.id as BuildingId,
         {
           id: def.id,
@@ -353,18 +534,17 @@ class IsoScene extends Phaser.Scene {
     });
 
     this.syncSeasonState(true);
-    const updateHud = (resources: GameState['resources']) => {
-      woodEl.textContent = fmt(resources.wood ?? 0);
-      stoneEl.textContent = fmt(resources.stone ?? 0);
+    const updateResourcesHud = (resources: GameState['resources']) => {
+      updateResourceDisplay(resources);
     };
 
     const listener = (event: Event) => {
       const detail = (event as CustomEvent<ResourcesUpdatedDetail>).detail;
-      updateHud(detail.resources);
+      updateResourcesHud(detail.resources);
     };
     gameEvents.addEventListener(EVENT_RESOURCES_UPDATED, listener);
     this.detachHudListener = () => gameEvents.removeEventListener(EVENT_RESOURCES_UPDATED, listener);
-    updateHud(this.state.resources);
+    updateResourcesHud(this.state.resources);
   }
 
   update(_time: number, deltaMs: number) {
@@ -386,8 +566,7 @@ class IsoScene extends Phaser.Scene {
 
     debugOverlay.update(deltaMs);
 
-    woodEl.textContent = fmt(this.state.resources.wood ?? 0);
-    stoneEl.textContent = fmt(this.state.resources.stone ?? 0);
+    updateResourceDisplay(this.state.resources);
 
     this.syncSeasonState();
     this.homestead.updateField();
@@ -569,7 +748,8 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 async function boot() {
-  await dataTablesPromise;
+  const tables = await dataTablesPromise;
+  prepareHud(tables);
   new Phaser.Game(config);
 }
 

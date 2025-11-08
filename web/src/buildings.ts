@@ -12,7 +12,10 @@ const VISUAL_OVERRIDES: Partial<Record<BuildingType, Pick<UiBuildingDefinition, 
   road: { texture: 'tile:road' },
   plot: { texture: 'tile:ground' },
   cottage: { texture: 'prop:cottage', anchorOffset: 8, elevation: 8 },
-  market: { texture: 'prop:cottage', anchorOffset: 8, elevation: 8 }
+  market: { texture: 'prop:cottage', anchorOffset: 8, elevation: 8 },
+  tent: { texture: 'prop:tent', anchorOffset: 10, elevation: 6 },
+  well: { texture: 'prop:well', anchorOffset: 6, elevation: 4 },
+  crate: { texture: 'prop:crate', anchorOffset: 6, elevation: 4 }
 };
 
 let cachedUiDefinitions: Record<BuildingType, UiBuildingDefinition> | null = null;
