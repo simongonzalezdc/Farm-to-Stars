@@ -1,0 +1,18 @@
+{
+  "v": 1,
+  "schemaVersion": 4,
+  "seed": 77,
+  "resources": { "wood": 2, "stone": 2, "food": 1, "coins": 0 },
+  "structures": [],
+  "buildQueue": [],
+  "constructionQueue": [],
+  "buildings": [],
+  "productionNodes": [],
+  "productionQueue": [],
+  "productionModifiers": { "speedMultiplier": 1, "outputMultiplier": 1 },
+  "resourceStorage": {},
+  "nextBuildId": 1,
+  "nextBuildingInstanceId": 1,
+  "season": { "active": "spring", "elapsed": 0, "cycle": 0, "year": 0 },
+  "nextProductionNodeId": 1
+}

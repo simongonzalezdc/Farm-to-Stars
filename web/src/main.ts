@@ -657,7 +657,8 @@ class IsoScene extends Phaser.Scene {
         SIM_DT,
         this.buildingDefs,
         this.tables.recipes,
-        this.tables.crops
+        this.tables.crops,
+        this.tables.livestock
       );
       this.telemetry.recordTick(this.state, events, SIM_DT);
       if (events.length > 0) {

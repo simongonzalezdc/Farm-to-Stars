@@ -19,7 +19,13 @@ const RESOURCE_TABLE: ResourcesTable = {
   stone: { display: 'Stone', stack: 9999 },
   water: { display: 'Water', stack: 9999 },
   food: { display: 'Food', stack: 9999 },
-  coins: { display: 'Coins', stack: 999999 }
+  coins: { display: 'Coins', stack: 999999 },
+  wheat: { display: 'Wheat', stack: 500 },
+  berries: { display: 'Berries', stack: 250 },
+  fiber: { display: 'Fiber', stack: 750 },
+  eggs: { display: 'Eggs', stack: 250 },
+  milk: { display: 'Milk', stack: 250 },
+  letters: { display: 'Mail', stack: 99 }
 };
 
 describe('storage', () => {
@@ -41,6 +47,9 @@ describe('storage', () => {
     expect(raw).toEqual(state);
 
     const loaded = await load(RESOURCE_TABLE);
+    for (const [resource, slot] of Object.entries(state.resourceStorage)) {
+      slot.current = state.resources[resource] ?? 0;
+    }
     expect(loaded).toEqual(state);
   });
 
@@ -61,8 +70,10 @@ describe('storage', () => {
       wood: 10,
       stone: 5,
       food: 2,
-      coins: 1
+      coins: 1,
+      wheat: 0
     };
+    expected.resourceStorage.wheat.current = 0;
     expected.resourceStorage.wood.current = 10;
     expected.resourceStorage.stone.current = 5;
     expected.resourceStorage.food.current = 2;

@@ -107,6 +107,22 @@ export class TelemetryTracker {
           this.addRecentEvent(`${this.formatClock(state)} prod: ${event.recipeId}`);
           this.accumulateOutputs(event.outputs ?? {});
           break;
+        case 'livestock.produce':
+          this.addRecentEvent(`${this.formatClock(state)} herd+: ${event.speciesId}`);
+          this.accumulateOutputs({ [event.resource]: event.amount });
+          break;
+        case 'livestock.starved':
+          this.addRecentEvent(`${this.formatClock(state)} herd-: ${event.speciesId}`);
+          break;
+        case 'weather.event.started':
+          this.addRecentEvent(`${this.formatClock(state)} wx+: ${event.eventType}`);
+          break;
+        case 'weather.event.ended':
+          this.addRecentEvent(`${this.formatClock(state)} wx-: ${event.eventType}`);
+          break;
+        case 'mail.delivered':
+          this.addRecentEvent(`${this.formatClock(state)} mail`);
+          break;
         default:
           break;
       }

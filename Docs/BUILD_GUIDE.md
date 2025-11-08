@@ -23,7 +23,7 @@
 **Goal:** Polish the farm-life experience into a content-complete, replayable loop that seeds Township progression.
 
 #### 4.1.1 Parallel task board
-Each task bundle below is designed to be executed on an isolated branch and merged independently.  Shared interfaces are frozen up front so teams can work simultaneously without rebasing churn.
+Each task bundle below is designed to be executed on an isolated branch and merged independently.  Shared interfaces are frozen up front so teams can work simultaneously without rebasing churn.  The detailed task cards and "definition of ready" checklists for every bundle live in `Docs/HOMESTEAD_PARALLEL_TASKS.md` to help coordinators spin up parallel crews immediately.
 
 | Bundle | Scope | Key Assets/Files | Cross-Team Contract |
 | --- | --- | --- | --- |
