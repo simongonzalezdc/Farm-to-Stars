@@ -22,6 +22,8 @@ export interface BuildingDefinition {
   footprint: Footprint;
   recipeId?: RecipeId;
   effects?: BuildingEffects;
+  cost?: Partial<Resources>;
+  category?: string;
 }
 
 export type BuildingsTable = Record<BuildingId, BuildingDefinition>;
@@ -41,7 +43,7 @@ export type RecipesTable = Record<RecipeId, RecipeDefinition>;
 export type Resources = Record<ResourceId, number>;
 export type ResourceCaps = Partial<Record<ResourceId, number>>;
 
-export type BuildingType = 'cottage';
+export type BuildingType = BuildingId;
 
 export interface Footprint {
   w: number;
@@ -148,7 +150,7 @@ export function defaultState(resourceTable?: ResourcesTable): GameState {
         type: 'cottage',
         x: 10,
         y: 10,
-        footprint: { w: 1, h: 1 }
+        footprint: { w: 2, h: 2 }
       }
     ],
     buildQueue: [],
