@@ -98,6 +98,44 @@ This matrix expands the Wave Alpha/Alpha+ alignment from `Docs/BUILD_GUIDE.md` i
   4. Summarize findings in milestone report appended to `Docs/MILESTONES.md`.
 - **Integration Hand-off:** Feed prioritized bug list back to engineering bundles and leadership review.
 
+## Wave Delta · Hardening & Playtest Prep
+
+### D1 — Bug Bash & Stabilization
+- **Definition of Ready:** Wave Beta features merged, Q1 automation green, triage board populated with priority issues.
+- **Task Cards:**
+  1. Run cross-discipline bug bash sessions, logging findings against `Q2-` tags.
+  2. Prioritize and resolve gameplay, UX, and audio defects surfaced in Q1/Q2 using shared repro templates.
+  3. Patch localization copy, VO timing, and HUD polish items flagged during bug bash.
+  4. Maintain release candidate branch with nightly cherry-picks and smoke verifications.
+- **Integration Hand-off:** Provide signed-off bug bash summary and RC build notes to D2/D3 leads.
+
+### D2 — Performance & Stability Pass
+- **Definition of Ready:** RC branch available, telemetry dashboards online, profiling captures from Q1 soak runs archived.
+- **Task Cards:**
+  1. Profile low-end device builds via `npm run profile:homestead` and capture frame-time/perf traces.
+  2. Optimize hot simulation loops (`web/src/world.ts`, `web/src/sim/*`) and HUD rendering hotspots identified in traces.
+  3. Validate memory usage and GC churn with long-session benchmarks, documenting results in `Docs/TEST_PLAN.md`.
+  4. Re-run soak and migration suites post-optimization to confirm no regressions.
+- **Integration Hand-off:** Publish perf report and updated telemetry thresholds to D3 and leadership.
+
+### D3 — Playtest Ops & Build Packaging
+- **Definition of Ready:** RC build stable, perf targets signed off, playtest scenarios finalized by Q2.
+- **Task Cards:**
+  1. Script hosted playtest build using `web/scripts/release/buildPlaytest.mjs` with CDN upload automation.
+  2. Draft player onboarding packet: controls quickstart, feature overview, known issues, and feedback survey links in `Docs/PLAYTEST_BRIEF.md`.
+  3. Configure telemetry flags and anonymized log routing for external playtests, ensuring opt-in prompts in HUD.
+  4. Schedule moderated sessions and async survey cadence, logging participant roster in shared tracker.
+- **Integration Hand-off:** Deliver playtest build URL, onboarding materials, and telemetry dashboard access to stakeholders.
+
+### D4 — Homestead→Township Export Prototype
+- **Definition of Ready:** Homestead progression features signed off, schema v6 migrations stable, Township import spec available (`Docs/BUILD_GUIDE.md`).
+- **Task Cards:**
+  1. Implement export snapshot generator in `web/src/sim/export/homesteadToTownship.ts` with unit coverage.
+  2. Validate export payload against Township import schema stub in `web/content/township/import.json`.
+  3. Surface export trigger in build menu UI with gated feature flag for internal QA.
+  4. Document export workflow and edge cases in `Docs/DATA_SCHEMAS.md` and `Docs/TEST_PLAN.md` appendices.
+- **Integration Hand-off:** Provide export payload samples and validation checklist to Township phase leads.
+
 ## Usage Notes
 - Track each card in the shared sprint board and tag with the bundle code (e.g., `S1-2`).
 - Maintain frozen interfaces for active wave; escalations go through daily sync.

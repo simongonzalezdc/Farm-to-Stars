@@ -27,7 +27,6 @@ import {
   type FieldState,
   type GameState,
   type HomesteadState,
-  type ToolMasteryState,
   type LivestockHerdState,
   type MailState,
   type ProductionModifiers,
@@ -66,16 +65,6 @@ function sanitizeResources(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
-}
-
-function coerceOrientation(value: unknown, fallback: Orientation = 0): Orientation {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    const normalized = ((Math.trunc(value) % 4) + 4) % 4;
-    if (normalized === 0 || normalized === 1 || normalized === 2 || normalized === 3) {
-      return normalized as Orientation;
-    }
-  }
-  return fallback;
 }
 
 function isSaveV6(candidate: unknown): candidate is SaveV6 {
@@ -389,45 +378,8 @@ function normalizeHomesteadState(candidate: unknown): HomesteadState {
   const stamina = normalizeStaminaState((candidate as { stamina?: unknown }).stamina);
   const weather = normalizeWeatherState((candidate as { weather?: unknown }).weather);
   const livestock = normalizeLivestockState((candidate as { livestock?: unknown }).livestock);
-  const toolMastery = normalizeToolMastery((candidate as { toolMastery?: unknown }).toolMastery);
 
-  return { field, time, stamina, weather, livestock, toolMastery };
-}
-
-function normalizeToolMastery(candidate: unknown): ToolMasteryState {
-  const mastery: ToolMasteryState = {};
-  if (!isRecord(candidate)) {
-    return mastery;
-  }
-
-  for (const [key, value] of Object.entries(candidate)) {
-    if (!isRecord(value)) {
-      continue;
-    }
-
-    const usesRaw = (value as { uses?: unknown }).uses;
-    const uses =
-      typeof usesRaw === 'number' && Number.isFinite(usesRaw)
-        ? Math.max(0, Math.floor(usesRaw))
-        : 0;
-
-    const unlockedRaw = (value as { unlocked?: unknown }).unlocked;
-    const unlocked: ToolPerkId[] = [];
-    if (Array.isArray(unlockedRaw)) {
-      for (const entry of unlockedRaw) {
-        if (typeof entry === 'string') {
-          unlocked.push(entry as ToolPerkId);
-        }
-      }
-    }
-
-    mastery[key as ToolId] = {
-      uses,
-      unlocked: Array.from(new Set(unlocked))
-    };
-  }
-
-  return mastery;
+  return { field, time, stamina, weather, livestock };
 }
 
 function normalizeFieldState(candidate: unknown, fallback: FieldState): FieldState {

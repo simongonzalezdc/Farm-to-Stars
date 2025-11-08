@@ -6,7 +6,11 @@ import type {
   LivestockTable,
   ResourceId
 } from '../../types';
-import type { LivestockTickResult } from '../events';
+
+interface LivestockTickResult {
+  events: GameEvent[];
+  feedConsumed: Partial<Record<ResourceId, number>>;
+}
 
 const EPSILON = 1e-6;
 

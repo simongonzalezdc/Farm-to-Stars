@@ -15,7 +15,7 @@
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier --check \"src/**/*.{ts,tsx}\"",
     "format:fix": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "migrate": "node --loader ./scripts/migrate/ts-loader.mjs ./scripts/migrate/run.ts"
+    "migrate": "node scripts/migrate/run.mjs"
   },
   "dependencies": {
     "phaser": "^3.80.0",

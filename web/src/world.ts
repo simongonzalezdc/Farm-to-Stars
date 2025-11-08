@@ -30,8 +30,6 @@ import type {
   ResourceId,
   Resources,
   Structure,
-  ToolId,
-  ToolPerkId,
   WeatherEventType,
   WeatherType
 } from './types';
@@ -48,7 +46,6 @@ export const EVENT_LIVESTOCK_STARVED = 'world.livestock.starved';
 export const EVENT_WEATHER_EVENT_STARTED = 'world.weather.event.started';
 export const EVENT_WEATHER_EVENT_ENDED = 'world.weather.event.ended';
 export const EVENT_MAIL_DELIVERED = 'world.mail.delivered';
-export const EVENT_TOOL_PERK_UNLOCKED = 'world.tool.perk.unlocked';
 
 export interface ResourceProducedDetail {
   resource: ResourceId;
@@ -109,15 +106,6 @@ export interface WeatherDynamicEventDetail {
 
 export interface MailDeliveredDetail {
   message: MailMessage;
-}
-
-export interface ToolPerkUnlockedDetail {
-  perkId: ToolPerkId;
-  toolId: ToolId;
-  title: string;
-  headline: string;
-  milestoneCount: number;
-  milestoneLabel: string;
 }
 
 export const gameEvents = new EventTarget();
@@ -434,7 +422,6 @@ function processHomestead(
   const weatherEvents = updateWeatherEvents(state.homestead.weather, dt);
   state.homestead.weather.moistureDeltaPerSecond =
     weatherResult.moistureDeltaPerSecond + weatherEvents.moistureModifier;
-  events.push(...weatherEvents.events);
   const weatherDetail: HomesteadWeatherDetail = {
     weather: weatherResult.current,
     moistureDeltaPerSecond: state.homestead.weather.moistureDeltaPerSecond
@@ -449,6 +436,12 @@ function processHomestead(
   }
 
   for (const started of weatherEvents.started) {
+    events.push({
+      type: 'weather.event.started',
+      eventId: started.id,
+      eventType: started.type,
+      intensity: started.intensity
+    });
     const detail: WeatherDynamicEventDetail = {
       eventId: started.id,
       eventType: started.type,
@@ -458,6 +451,7 @@ function processHomestead(
   }
 
   for (const ended of weatherEvents.ended) {
+    events.push({ type: 'weather.event.ended', eventId: ended.id, eventType: ended.type });
     const detail: WeatherDynamicEventDetail = {
       eventId: ended.id,
       eventType: ended.type,

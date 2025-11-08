@@ -1,12 +1,11 @@
-import type {
-  GameEvent,
-  WeatherEventInstance,
-  WeatherEventType,
-  WeatherState,
-  WeatherType
-} from '../../types';
-import type { WeatherEventUpdateResult } from '../events';
+import type { WeatherEventInstance, WeatherEventType, WeatherState, WeatherType } from '../../types';
 import { nextRandom, randomBetween } from '../random';
+
+export interface WeatherEventUpdateResult {
+  started: WeatherEventInstance[];
+  ended: WeatherEventInstance[];
+  moistureModifier: number;
+}
 
 interface WeatherEventDefinition {
   type: WeatherEventType;
@@ -63,68 +62,40 @@ const EVENT_DEFINITIONS: Record<WeatherType, WeatherEventDefinition[]> = {
 };
 
 export function updateWeatherEvents(state: WeatherState, dt: number): WeatherEventUpdateResult {
+  if (dt <= 0) {
+    return { started: [], ended: [], moistureModifier: computeMoistureModifier(state) };
+  }
+
   const started: WeatherEventInstance[] = [];
   const ended: WeatherEventInstance[] = [];
-  const events: GameEvent[] = [];
 
-  if (dt <= 0) {
-    return { started, ended, events, moistureModifier: computeMoistureModifier(state) };
-  }
-
-  settleEndedEvents(state, ended, events);
-
-  let remaining = dt;
-  state.events.nextRollIn = Math.max(0, state.events.nextRollIn);
-
-  while (remaining > EPSILON) {
-    if (state.events.nextRollIn <= EPSILON) {
-      const spawned = attemptSpawnEvent(state);
-      if (spawned) {
-        started.push(spawned);
-        events.push({
-          type: 'weather.event.started',
-          eventId: spawned.id,
-          eventType: spawned.type,
-          intensity: spawned.intensity
-        });
-      }
-      resetRollTimer(state);
-      continue;
-    }
-
-    const timeToNextEnd = getTimeToNextEventEnd(state);
-    let step = remaining;
-    if (state.events.nextRollIn < Number.POSITIVE_INFINITY) {
-      step = Math.min(step, state.events.nextRollIn);
-    }
-    if (timeToNextEnd < Number.POSITIVE_INFINITY) {
-      step = Math.min(step, timeToNextEnd);
-    }
-
-    if (step <= EPSILON) {
-      break;
-    }
-
-    advanceActiveEvents(state, step, ended, events);
-    remaining -= step;
-
-    if (state.events.nextRollIn < Number.POSITIVE_INFINITY) {
-      state.events.nextRollIn = Math.max(0, state.events.nextRollIn - step);
+  for (let i = state.events.active.length - 1; i >= 0; i -= 1) {
+    const event = state.events.active[i];
+    event.remaining -= dt;
+    if (event.remaining <= EPSILON) {
+      state.events.active.splice(i, 1);
+      ended.push(event);
     }
   }
 
-  return { started, ended, events, moistureModifier: computeMoistureModifier(state) };
+  state.events.nextRollIn -= dt;
+  if (state.events.nextRollIn <= 0) {
+    attemptSpawnEvent(state, started);
+    resetRollTimer(state);
+  }
+
+  return { started, ended, moistureModifier: computeMoistureModifier(state) };
 }
 
-function attemptSpawnEvent(state: WeatherState): WeatherEventInstance | null {
+function attemptSpawnEvent(state: WeatherState, started: WeatherEventInstance[]) {
   const candidates = EVENT_DEFINITIONS[state.current];
   if (!candidates || candidates.length === 0) {
-    return null;
+    return;
   }
 
   const totalWeight = candidates.reduce((sum, def) => sum + Math.max(def.weight, 0), 0);
   if (totalWeight <= EPSILON) {
-    return null;
+    return;
   }
 
   const roll = nextRandom(state) * totalWeight;
@@ -139,11 +110,11 @@ function attemptSpawnEvent(state: WeatherState): WeatherEventInstance | null {
   }
 
   if (!chosen) {
-    return null;
+    return;
   }
 
   if (state.events.active.some((event) => event.type === chosen.type)) {
-    return null;
+    return;
   }
 
   const duration = Math.max(chosen.minDuration, randomBetween(state, chosen.minDuration, chosen.maxDuration));
@@ -158,54 +129,7 @@ function attemptSpawnEvent(state: WeatherState): WeatherEventInstance | null {
     intensity
   };
   state.events.active.push(instance);
-  return instance;
-}
-
-function advanceActiveEvents(
-  state: WeatherState,
-  elapsed: number,
-  ended: WeatherEventInstance[],
-  events: GameEvent[]
-) {
-  if (elapsed <= EPSILON) {
-    settleEndedEvents(state, ended, events);
-    return;
-  }
-
-  for (const event of state.events.active) {
-    event.remaining -= elapsed;
-  }
-  settleEndedEvents(state, ended, events);
-}
-
-function settleEndedEvents(
-  state: WeatherState,
-  ended: WeatherEventInstance[],
-  events: GameEvent[]
-) {
-  for (let i = state.events.active.length - 1; i >= 0; i -= 1) {
-    const event = state.events.active[i];
-    if (event.remaining <= EPSILON) {
-      state.events.active.splice(i, 1);
-      ended.push(event);
-      events.push({
-        type: 'weather.event.ended',
-        eventId: event.id,
-        eventType: event.type
-      });
-    }
-  }
-}
-
-function getTimeToNextEventEnd(state: WeatherState): number {
-  let soonest = Number.POSITIVE_INFINITY;
-  for (const event of state.events.active) {
-    if (event.remaining <= EPSILON) {
-      return 0;
-    }
-    soonest = Math.min(soonest, event.remaining);
-  }
-  return soonest;
+  started.push(instance);
 }
 
 function resetRollTimer(state: WeatherState) {
