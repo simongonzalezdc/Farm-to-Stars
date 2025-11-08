@@ -19,7 +19,8 @@ describe('processConstruction', () => {
       buildingId: 'cottage',
       duration: 5,
       remaining: 5,
-      footprint: { w: 1, h: 1 }
+      footprint: { w: 1, h: 1 },
+      orientation: 0
     });
 
     const result = processConstruction(state, 1, buildingDefs);
@@ -36,7 +37,8 @@ describe('processConstruction', () => {
       buildingId: 'cottage',
       duration: 1,
       remaining: 0.5,
-      footprint: { w: 1, h: 1 }
+      footprint: { w: 1, h: 1 },
+      orientation: 0
     });
 
     const result = processConstruction(state, 1, buildingDefs);
@@ -55,7 +57,8 @@ describe('processConstruction', () => {
       buildingId: 'unknown',
       duration: 1,
       remaining: 0,
-      footprint: { w: 1, h: 1 }
+      footprint: { w: 1, h: 1 },
+      orientation: 0
     });
 
     const result = processConstruction(state, 0, buildingDefs);
@@ -74,7 +77,8 @@ describe('processConstruction', () => {
       buildingId: 'cottage',
       duration: 10,
       remaining: 10,
-      footprint: { w: 1, h: 1 }
+      footprint: { w: 1, h: 1 },
+      orientation: 0
     });
 
     processConstruction(state, 1, buildingDefs, { speedMultiplier: 2 });

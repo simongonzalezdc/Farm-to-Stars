@@ -16,6 +16,7 @@ import { MAP_HEIGHT, MAP_WIDTH } from '../maps/tilemap';
 import { plantCrop, harvestCrop, tillSoil } from '../systems/cropLifecycle';
 import { spendStamina, applyRest } from '../state/stamina';
 import { resetForNewDay } from '../state/time';
+import { getToolPerkModifiersFromState, recordToolUse } from '../sim/tools/perks';
 
 type FeedbackTone = 'info' | 'warn' | 'error' | 'success';
 
@@ -283,17 +284,37 @@ export class HomesteadController {
     if (!tool) {
       return;
     }
-    if (!spendStamina(this.state.homestead.stamina, { cost: tool.staminaCost })) {
-      this.setFeedback('Too exhausted to use that tool. Rest to recover stamina.', 'warn');
+    const modifiers = getToolPerkModifiersFromState(this.state, toolId);
+    const rawCost = tool.staminaCost * modifiers.staminaCostMultiplier + modifiers.staminaCostDelta;
+    const staminaCost = Math.max(0, Math.round(rawCost * 100) / 100);
+    if (!spendStamina(this.state.homestead.stamina, { cost: staminaCost })) {
+      const costLabel = Number.isInteger(staminaCost)
+        ? String(Math.round(staminaCost))
+        : staminaCost.toFixed(1);
+      this.setFeedback(
+        `Too exhausted to use that tool. This action currently costs ${costLabel} stamina. Rest to recover.`,
+        'warn'
+      );
       playInvalidPlacement();
       return;
     }
 
+    let handled = false;
+    let message = '';
+    let tone: FeedbackTone = 'success';
+
     switch (toolId) {
       case 'hoe': {
-        tillSoil(this.state.homestead.field, x, y, Math.max(0.3, this.state.homestead.field.tiles[tileKey(x, y)]?.moisture ?? 0.3));
-        this.setFeedback('Soil tilled and ready for planting.', 'success');
+        tillSoil(
+          this.state.homestead.field,
+          x,
+          y,
+          Math.max(0.3, this.state.homestead.field.tiles[tileKey(x, y)]?.moisture ?? 0.3)
+        );
+        message = 'Soil tilled and ready for planting.';
+        tone = 'success';
         playPlace();
+        handled = true;
         break;
       }
       case 'wateringCan': {
@@ -301,12 +322,15 @@ export class HomesteadController {
         if (!tile?.tilled) {
           this.setFeedback('Till the soil before watering.', 'warn');
           playInvalidPlacement();
-          break;
+          return;
         }
-        const delta = tool.moistureDelta ?? 0.2;
+        const baseDelta = tool.moistureDelta ?? 0.2;
+        const delta = baseDelta + modifiers.moistureDeltaBonus;
         tile.moisture = clamp01(tile.moisture + delta);
-        this.setFeedback('Moisture restored.', 'success');
+        message = 'Moisture restored.';
+        tone = 'success';
         playPlace();
+        handled = true;
         break;
       }
       case 'sickle': {
@@ -314,15 +338,20 @@ export class HomesteadController {
         if (!harvested) {
           this.setFeedback('Nothing ready to harvest on that tile.', 'warn');
           playInvalidPlacement();
-          break;
+          return;
         }
         const def = this.crops[harvested.cropId];
         for (const [resource, amount] of Object.entries(def?.yields ?? {})) {
+          const baseAmount = amount ?? 0;
+          const multiplier = Math.max(1, modifiers.yieldMultiplier);
+          const scaled = multiplier > 1 ? Math.max(baseAmount, Math.round(baseAmount * multiplier)) : baseAmount;
           const current = this.state.resources[resource] ?? 0;
-          this.state.resources[resource] = current + amount;
+          this.state.resources[resource] = current + scaled;
         }
-        this.setFeedback('Harvest collected and stored.', 'success');
+        message = 'Harvest collected and stored.';
+        tone = 'success';
         playPlace();
+        handled = true;
         break;
       }
       default:
@@ -330,7 +359,25 @@ export class HomesteadController {
         playInvalidPlacement();
         break;
     }
+    if (!handled) {
+      return;
+    }
+
     this.updateField();
+    this.showToolOutcome(toolId, message, tone);
+  }
+
+  private showToolOutcome(toolId: ToolId, baseMessage: string, tone: FeedbackTone) {
+    const result = recordToolUse(this.state, toolId);
+    if (result.unlocked.length === 0) {
+      this.setFeedback(baseMessage, tone);
+      return;
+    }
+
+    const highlights = result.unlocked
+      .map((perk) => `${perk.title}: ${perk.headline}`)
+      .join(' • ');
+    this.setFeedback(`${baseMessage} ✨ ${highlights}`, 'success');
   }
 
   private handlePlant(x: number, y: number, cropId: CropId) {

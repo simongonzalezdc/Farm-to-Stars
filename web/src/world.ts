@@ -140,7 +140,8 @@ export function initWorld(state: GameState) {
       buildingId: job.type as BuildingId,
       duration,
       remaining,
-      footprint: job.footprint
+      footprint: job.footprint,
+      orientation: job.orientation
     };
     state.constructionQueue.push(constructionJob);
     activeConstructionIds.add(job.id);
@@ -227,7 +228,8 @@ export function tick(
       buildingId: job.type,
       duration,
       remaining,
-      footprint: job.footprint
+      footprint: job.footprint,
+      orientation: job.orientation
     };
     state.constructionQueue.push(constructionJob);
     existingConstructionIds.add(job.id);
@@ -264,7 +266,8 @@ export function tick(
           type: job.type,
           x: job.x,
           y: job.y,
-          footprint: job.footprint
+          footprint: job.footprint,
+          orientation: job.orientation
         }
       };
       gameEvents.dispatchEvent(new CustomEvent(EVENT_BUILD_COMPLETE, { detail }));
@@ -276,7 +279,8 @@ export function tick(
       type: job.type,
       x: job.x,
       y: job.y,
-      footprint: job.footprint
+      footprint: job.footprint,
+      orientation: job.orientation
     };
     state.structures.push(structure);
     events.push({ type: 'construction.completed', building: structure });
