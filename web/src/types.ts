@@ -106,6 +106,8 @@ export interface SeasonState {
   cycle: number;
   /** Completed yearly loops (each loop is a full season order). */
   year: number;
+}
+
 export interface ProductionQueueItem {
   nodeId: number;
   recipeId: RecipeId;
@@ -119,7 +121,7 @@ export interface ProductionModifiers {
 export type GameEvent =
   | { type: 'construction.completed'; building: Structure }
   | { type: 'resource.collected'; resource: ResourceId; amount: number }
-  | { type: 'season.changed'; season: SeasonId };
+  | { type: 'season.changed'; season: SeasonId }
   | { type: 'production.cycle'; nodeId: number; recipeId: RecipeId; outputs: RecipeIO };
 
 export const CURRENT_SCHEMA_VERSION = 4;
@@ -197,9 +199,9 @@ export function clampSeasonElapsed(state: SeasonState): SeasonState {
     Math.min(state.elapsed, Number.isFinite(definition.durationSeconds) ? definition.durationSeconds : state.elapsed)
   );
   return { ...state, elapsed: clampedElapsed };
-export function createEmptyResourceStorage(
-  resourceTable?: ResourcesTable
-): ResourceStorageState {
+}
+
+export function createEmptyResourceStorage(resourceTable?: ResourcesTable): ResourceStorageState {
   if (!resourceTable) {
     return LEGACY_RESOURCE_IDS.reduce<ResourceStorageState>((acc, id) => {
       acc[id] = { current: 0, capacity: Number.POSITIVE_INFINITY };
@@ -238,7 +240,7 @@ export function defaultState(resourceTable?: ResourcesTable): GameState {
     productionModifiers: { speedMultiplier: 1, outputMultiplier: 1 },
     nextBuildId: 1,
     nextBuildingInstanceId: 1,
-    season: createDefaultSeasonState()
+    season: createDefaultSeasonState(),
     nextProductionNodeId: 1
   };
 }
