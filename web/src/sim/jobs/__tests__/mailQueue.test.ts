@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { processMailQueue } from '../mailQueue';
+import { ensureDailyMail, processMailQueue } from '../mailQueue';
 import { defaultState, type ResourcesTable } from '../../../types';
+
+const clone = <T>(value: T): T =>
+  typeof structuredClone === 'function'
+    ? structuredClone(value)
+    : (JSON.parse(JSON.stringify(value)) as T);
 
 const RESOURCES: ResourcesTable = {
   food: { display: 'Food', stack: 9999 },
@@ -10,6 +15,32 @@ const RESOURCES: ResourcesTable = {
 };
 
 describe('mail queue worker', () => {
+  it('generates deterministic daily mail jobs', () => {
+    const state = defaultState(RESOURCES);
+    state.seed = 0x12345678;
+    state.homestead.time.day = 5;
+
+    ensureDailyMail(state);
+    const firstSnapshot = {
+      scheduled: clone(state.mail.scheduled),
+      jobs: clone(state.jobQueue.jobs),
+      lastGeneratedDay: state.mail.lastGeneratedDay
+    };
+
+    ensureDailyMail(state);
+    expect(state.mail.scheduled.length).toBe(firstSnapshot.scheduled.length);
+    expect(state.jobQueue.jobs.length).toBe(firstSnapshot.jobs.length);
+    expect(state.mail.lastGeneratedDay).toBe(firstSnapshot.lastGeneratedDay);
+
+    const replay = defaultState(RESOURCES);
+    replay.seed = 0x12345678;
+    replay.homestead.time.day = 5;
+    ensureDailyMail(replay);
+
+    expect(replay.mail.scheduled).toEqual(firstSnapshot.scheduled);
+    expect(replay.jobQueue.jobs).toEqual(firstSnapshot.jobs);
+  });
+
   it('delivers scheduled mail and attachments', () => {
     const state = defaultState(RESOURCES);
     state.resources.coins = 0;
