@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import '../styles/build.scss';
 import { gridToScreen, TILE_H, TILE_W } from './iso';
 import {
   defaultState,
@@ -373,7 +374,8 @@ class IsoScene extends Phaser.Scene {
         buildingId: job.type,
         duration,
         remaining,
-        footprint
+        footprint,
+        orientation: job.orientation
       };
       this.state.constructionQueue.push(constructionJob);
       constructionById.set(job.id, constructionJob);
@@ -548,6 +550,7 @@ class IsoScene extends Phaser.Scene {
     const sprite = this.add
       .image(x, y - (def.anchorOffset ?? 0), def.texture)
       .setOrigin(0.5, def.anchorOffset !== undefined ? 1.0 : 0.5);
+    sprite.setRotation((Math.PI / 2) * (structure.orientation ?? 0));
     this.props.add(sprite);
     this.structureSprites.set(structure.id, sprite);
   }
