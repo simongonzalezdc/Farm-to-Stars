@@ -1,5 +1,6 @@
 import { deriveSeed } from '../random';
 import type {
+  BuildingsTable,
   GameState,
   LivestockId,
   ResourceId,
@@ -7,12 +8,15 @@ import type {
   Structure,
   WeatherType
 } from '../../types';
+import { getDataTables } from '../../data';
 
 export interface TownshipExportOptions {
   /** Optional salt applied when deriving the export seed. Defaults to the current in-game day. */
   salt?: number;
   /** When true, include delivered mail attachments in the outgoing shipment manifest. */
   includeMailAttachments?: boolean;
+  /** Optional override for building definitions used to categorise farm structures. */
+  buildings?: BuildingsTable;
 }
 
 export interface TownshipExportShipment {
@@ -92,7 +96,8 @@ export function exportHomesteadToTownship(
   const livestock = summariseLivestock(state);
   const resources = normaliseResources(state.resources);
 
-  const agriculture = buildAgricultureDistricts(structures, resources, seed);
+  const buildings = resolveBuildingsTable(options.buildings);
+  const agriculture = buildAgricultureDistricts(structures, resources, seed, buildings);
   const shipments = buildShipments(resources, state, options.includeMailAttachments ?? true);
 
   const stamina = state.homestead.stamina;
@@ -154,9 +159,11 @@ function normaliseResources(resources: Record<ResourceId, number>): Record<Resou
 function buildAgricultureDistricts(
   structures: TownshipStructureFootprint[],
   resources: Record<ResourceId, number>,
-  seed: number
+  seed: number,
+  buildings: BuildingsTable | null
 ): TownshipAgricultureDistrict[] {
-  const plots = structures.reduce((total, structure) => total + structure.width * structure.height, 0);
+  const farmStructures = structures.filter((structure) => isFarmStructure(structure, buildings));
+  const plots = farmStructures.reduce((total, structure) => total + structure.width * structure.height, 0);
   if (plots <= 0) {
     return [];
   }
@@ -223,4 +230,31 @@ function coalesceShipments(shipments: TownshipExportShipment[]): TownshipExportS
     resourceId,
     amount: Math.floor(amount)
   }));
+}
+
+let cachedBuildings: BuildingsTable | null | undefined;
+
+function resolveBuildingsTable(override?: BuildingsTable): BuildingsTable | null {
+  if (override) {
+    return override;
+  }
+  if (cachedBuildings !== undefined) {
+    return cachedBuildings;
+  }
+  try {
+    cachedBuildings = getDataTables().buildings;
+  } catch (err) {
+    cachedBuildings = null;
+  }
+  return cachedBuildings;
+}
+
+function isFarmStructure(structure: TownshipStructureFootprint, buildings: BuildingsTable | null): boolean {
+  if (buildings) {
+    const definition = buildings[structure.type];
+    if (definition?.category) {
+      return definition.category === 'farm' || definition.category.startsWith('farm.');
+    }
+  }
+  return structure.type === 'plot';
 }
