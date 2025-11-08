@@ -6,6 +6,7 @@ import { enableAudio, toggleMute } from './audio';
 import { fmt, initWorld, SIM_DT, tick } from './world';
 import { getUiBuildingDefinition } from './buildings';
 import {
+  clearArea,
   createOccupancyMap,
   markJob,
   markStructure,
@@ -170,6 +171,43 @@ class IsoScene extends Phaser.Scene {
     const loaded = await load(this.tables.resources);
     this.state = loaded ?? defaultState(this.tables.resources);
 
+    this.buildingDefs = Object.fromEntries(
+      Object.values(BUILDINGS).map((def) => [
+        def.id as BuildingId,
+        {
+          id: def.id,
+          label: def.label,
+          buildTime: def.buildTime,
+          footprint: def.footprint
+        } satisfies WorldBuildingDefinition
+      ])
+    ) as Record<BuildingId, WorldBuildingDefinition>;
+
+    const constructionById = new Map(this.state.constructionQueue.map((job) => [job.id, job]));
+    for (const job of this.state.buildQueue) {
+      const existing = constructionById.get(job.id);
+      if (existing) {
+        job.duration = existing.duration;
+        job.remaining = existing.remaining;
+        continue;
+      }
+      const fallbackDef = this.buildingDefs[job.type as BuildingId];
+      const duration = fallbackDef?.buildTime ?? job.duration;
+      const remaining = Math.min(job.remaining, duration);
+      const footprint = fallbackDef?.footprint ?? job.footprint;
+      const constructionJob = {
+        id: job.id,
+        buildingId: job.type,
+        duration,
+        remaining,
+        footprint
+      };
+      this.state.constructionQueue.push(constructionJob);
+      constructionById.set(job.id, constructionJob);
+      job.duration = duration;
+      job.remaining = remaining;
+    }
+
     initWorld(this.state);
     this.occupancy = createOccupancyMap();
 
@@ -207,7 +245,7 @@ class IsoScene extends Phaser.Scene {
 
     for (const job of this.state.buildQueue) {
       markJob(this.occupancy, job.x, job.y, job.footprint.w, job.footprint.h, job.type, job.id);
-      this.addJobMarker(job.id, job.x, job.y);
+      this.addJobMarker(job);
     }
 
     this.refreshQueueHud();
@@ -253,7 +291,7 @@ class IsoScene extends Phaser.Scene {
   update(_time: number, deltaMs: number) {
     this.accum += deltaMs / 1000;
     while (this.accum >= SIM_DT) {
-      const events = tick(this.state, SIM_DT);
+      const events = tick(this.state, SIM_DT, this.buildingDefs);
       if (events.length > 0) {
         const last = events[events.length - 1];
         this.registry.set('lastEvent', last.type);
@@ -272,8 +310,8 @@ class IsoScene extends Phaser.Scene {
       return aImg.y - bImg.y;
     });
 
-    this.syncStructures();
     this.syncJobMarkers();
+    this.syncStructures();
     this.refreshQueueHud();
   }
 
@@ -304,30 +342,41 @@ class IsoScene extends Phaser.Scene {
     }
   }
 
-  private addJobMarker(jobId: number, x: number, y: number) {
-    const { x: sx, y: sy } = gridToScreen(x, y, 0);
-    const marker = this.add.image(sx, sy, 'tile:outline:valid').setOrigin(0.5, 0.5).setAlpha(0.5);
+  private addJobMarker(job: BuildJob) {
+    const { x: sx, y: sy } = gridToScreen(job.x, job.y, 0);
+    const marker = this.add
+      .image(sx, sy, 'tile:outline:valid')
+      .setOrigin(0.5, 0.5)
+      .setAlpha(0.5);
     this.overlays.add(marker);
     marker.setDepth(500);
-    this.jobMarkers.set(jobId, marker);
+    this.jobMarkers.set(job.id, {
+      marker,
+      x: job.x,
+      y: job.y,
+      w: job.footprint.w,
+      h: job.footprint.h
+    });
   }
 
   private syncJobMarkers() {
     const activeIds = new Set(this.state.buildQueue.map((j) => j.id));
-    for (const [id, marker] of this.jobMarkers.entries()) {
+    for (const [id, entry] of this.jobMarkers.entries()) {
       if (!activeIds.has(id)) {
-        marker.destroy();
+        entry.marker.destroy();
+        clearArea(this.occupancy, entry.x, entry.y, entry.w, entry.h);
         this.jobMarkers.delete(id);
       }
     }
     for (const job of this.state.buildQueue) {
-      const marker = this.jobMarkers.get(job.id);
-      if (!marker) {
-        this.addJobMarker(job.id, job.x, job.y);
+      const entry = this.jobMarkers.get(job.id);
+      if (!entry) {
+        this.addJobMarker(job);
         continue;
       }
-      const progress = Phaser.Math.Clamp(1 - job.remaining / job.duration, 0, 1);
-      marker.setAlpha(0.3 + 0.5 * progress);
+      const progress =
+        job.duration > 0 ? Phaser.Math.Clamp(1 - job.remaining / job.duration, 0, 1) : 1;
+      entry.marker.setAlpha(0.3 + 0.5 * progress);
     }
   }
 

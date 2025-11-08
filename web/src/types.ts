@@ -77,8 +77,11 @@ export interface BuildingInstance {
 }
 
 export interface ConstructionJob {
+  id: number;
   buildingId: BuildingId;
+  duration: number;
   remaining: number;
+  footprint: Footprint;
 }
 
 export interface ProductionNode {
@@ -92,7 +95,7 @@ export type GameEvent =
   | { type: 'construction.completed'; building: Structure }
   | { type: 'resource.collected'; resource: ResourceId; amount: number };
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 export type SaveV0 = { seed: number } & Record<ResourceId, number>;
 
@@ -103,13 +106,23 @@ export interface SaveV1 {
 }
 
 export interface SaveV2 extends SaveV1 {
-  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  schemaVersion: 2;
   structures: Structure[];
   buildQueue: BuildJob[];
   nextBuildId: number;
 }
 
-export type GameState = SaveV2;
+export interface SaveV3 extends SaveV1 {
+  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  structures: Structure[];
+  buildQueue: BuildJob[];
+  constructionQueue: ConstructionJob[];
+  buildings: BuildingInstance[];
+  nextBuildId: number;
+  nextBuildingInstanceId: number;
+}
+
+export type GameState = SaveV3;
 
 export const LEGACY_RESOURCE_IDS: ResourceId[] = ['wood', 'stone', 'food', 'coins'];
 
@@ -141,6 +154,9 @@ export function defaultState(resourceTable?: ResourcesTable): GameState {
       }
     ],
     buildQueue: [],
-    nextBuildId: 1
+    constructionQueue: [],
+    buildings: [],
+    nextBuildId: 1,
+    nextBuildingInstanceId: 1
   };
 }

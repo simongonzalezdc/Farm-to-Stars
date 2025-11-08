@@ -3,13 +3,16 @@ import {
   createEmptyResources,
   defaultState,
   LEGACY_RESOURCE_IDS,
+  type BuildJob,
+  type ConstructionJob,
   type GameState,
   type Resources,
   type ResourceId,
   type ResourcesTable,
   type SaveV0,
   type SaveV1,
-  type SaveV2
+  type SaveV2,
+  type SaveV3
 } from './types';
 
 function sanitizeResources(
@@ -28,9 +31,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function isSaveV2(candidate: unknown): candidate is SaveV2 {
+function isSaveV3(candidate: unknown): candidate is SaveV3 {
   if (!isRecord(candidate)) return false;
   return candidate.v === 1 && candidate.schemaVersion === CURRENT_SCHEMA_VERSION;
+}
+
+function isSaveV2(candidate: unknown): candidate is SaveV2 {
+  if (!isRecord(candidate)) return false;
+  return candidate.v === 1 && candidate.schemaVersion === 2;
 }
 
 function isSaveV1(candidate: unknown): candidate is SaveV1 {
@@ -46,7 +54,7 @@ function isSaveV0(candidate: unknown): candidate is SaveV0 {
   return LEGACY_RESOURCE_IDS.every((id) => typeof candidate[id] === 'number');
 }
 
-function normalizeStructures(candidate: SaveV2['structures'] | unknown): SaveV2['structures'] {
+function normalizeStructures(candidate: SaveV3['structures'] | unknown): SaveV3['structures'] {
   if (!Array.isArray(candidate)) {
     return defaultState().structures;
   }
@@ -71,7 +79,7 @@ function normalizeStructures(candidate: SaveV2['structures'] | unknown): SaveV2[
   }));
 }
 
-function normalizeBuildQueue(candidate: SaveV2['buildQueue'] | unknown): SaveV2['buildQueue'] {
+function normalizeBuildQueue(candidate: SaveV3['buildQueue'] | unknown): SaveV3['buildQueue'] {
   if (!Array.isArray(candidate)) {
     return [];
   }
@@ -93,7 +101,71 @@ function normalizeBuildQueue(candidate: SaveV2['buildQueue'] | unknown): SaveV2[
   }));
 }
 
-function migrateV1ToV2(save: SaveV1, resourceTable: ResourcesTable): SaveV2 {
+function normalizeConstructionQueue(
+  candidate: SaveV3['constructionQueue'] | unknown,
+  buildQueueFallback: BuildJob[]
+): SaveV3['constructionQueue'] {
+  if (!Array.isArray(candidate)) {
+    return buildQueueFallback.map(convertBuildJobToConstructionJob);
+  }
+
+  return candidate.map((job, index) => ({
+    id: typeof job?.id === 'number' ? job.id : buildQueueFallback[index]?.id ?? index,
+    buildingId:
+      typeof job?.buildingId === 'string'
+        ? job.buildingId
+        : buildQueueFallback[index]?.type ?? 'cottage',
+    duration:
+      typeof job?.duration === 'number' && Number.isFinite(job.duration)
+        ? job.duration
+        : buildQueueFallback[index]?.duration ?? 0,
+    remaining:
+      typeof job?.remaining === 'number' && Number.isFinite(job.remaining)
+        ? job.remaining
+        : buildQueueFallback[index]?.remaining ?? 0,
+    footprint:
+      job && typeof job === 'object' && job.footprint
+        ? {
+            w:
+              typeof job.footprint.w === 'number' && Number.isFinite(job.footprint.w)
+                ? job.footprint.w
+                : buildQueueFallback[index]?.footprint.w ?? 1,
+            h:
+              typeof job.footprint.h === 'number' && Number.isFinite(job.footprint.h)
+                ? job.footprint.h
+                : buildQueueFallback[index]?.footprint.h ?? 1
+          }
+        : buildQueueFallback[index]?.footprint ?? { w: 1, h: 1 }
+  }));
+}
+
+function normalizeBuildingInstances(
+  candidate: SaveV3['buildings'] | unknown
+): SaveV3['buildings'] {
+  if (!Array.isArray(candidate)) {
+    return [];
+  }
+  return candidate.map((instance, index) => ({
+    id: typeof instance?.id === 'number' ? instance.id : index,
+    buildingId:
+      typeof instance?.buildingId === 'string' ? instance.buildingId : 'cottage',
+    recipeId: typeof instance?.recipeId === 'string' ? instance.recipeId : undefined,
+    productionNodeId:
+      typeof instance?.productionNodeId === 'number' ? instance.productionNodeId : undefined
+  }));
+}
+
+function convertBuildJobToConstructionJob(job: BuildJob): ConstructionJob {
+  return {
+    id: job.id,
+    buildingId: job.type,
+    duration: job.duration,
+    remaining: job.remaining,
+    footprint: job.footprint
+  };
+}
+
+function migrateV1ToV3(save: SaveV1, resourceTable: ResourcesTable): SaveV3 {
   const base = defaultState(resourceTable);
   return {
     ...base,
@@ -102,7 +174,7 @@ function migrateV1ToV2(save: SaveV1, resourceTable: ResourcesTable): SaveV2 {
   };
 }
 
-function migrateV0ToV2(save: SaveV0, resourceTable: ResourcesTable): SaveV2 {
+function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV3 {
   const base = defaultState(resourceTable);
   return {
     ...base,
@@ -112,24 +184,42 @@ function migrateV0ToV2(save: SaveV0, resourceTable: ResourcesTable): SaveV2 {
 }
 
 export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameState | null {
-  if (isSaveV2(raw)) {
+  if (isSaveV3(raw)) {
+    const buildQueue = normalizeBuildQueue(raw.buildQueue);
     return {
       v: 1,
       schemaVersion: CURRENT_SCHEMA_VERSION,
       seed: typeof raw.seed === 'number' ? raw.seed : 0,
       resources: sanitizeResources(raw.resources ?? {}, resourceTable),
       structures: normalizeStructures(raw.structures),
-      buildQueue: normalizeBuildQueue(raw.buildQueue),
+      buildQueue,
+      constructionQueue: normalizeConstructionQueue(raw.constructionQueue, buildQueue),
+      buildings: normalizeBuildingInstances(raw.buildings),
+      nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
+      nextBuildingInstanceId:
+        typeof raw.nextBuildingInstanceId === 'number' ? raw.nextBuildingInstanceId : 1
+    };
+  }
+
+  if (isSaveV2(raw)) {
+    const buildQueue = normalizeBuildQueue(raw.buildQueue);
+    return {
+      ...defaultState(resourceTable),
+      seed: typeof raw.seed === 'number' ? raw.seed : 0,
+      resources: sanitizeResources(raw.resources ?? {}, resourceTable),
+      structures: normalizeStructures(raw.structures),
+      buildQueue,
+      constructionQueue: buildQueue.map(convertBuildJobToConstructionJob),
       nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1
     };
   }
 
   if (isSaveV1(raw)) {
-    return migrateV1ToV2(raw, resourceTable);
+    return migrateV1ToV3(raw, resourceTable);
   }
 
   if (isSaveV0(raw)) {
-    return migrateV0ToV2(raw, resourceTable);
+    return migrateV0ToV3(raw, resourceTable);
   }
 
   return null;
