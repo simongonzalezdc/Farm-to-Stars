@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
 import '../styles/build.scss';
 import '../styles/hud.scss';
+import { CalendarHud } from './hud/calendar/Calendar';
+import { QuestLog, type QuestEntry, type QuestStatus } from './hud/quests/QuestLog';
+import { StaminaTipsOverlay } from './hud/stamina/Tips';
+import { DebugOverlay } from './hud/debug/Overlay';
 import { gridToScreen, TILE_H, TILE_W } from './iso';
 import {
   defaultState,
@@ -54,6 +58,7 @@ import {
   recordExportGenerated,
   setPlaytestTelemetryOptIn
 } from './telemetry/playtest';
+import { HOMESTEAD_QUESTS, type QuestMetricId } from './config/quests';
 
 const dataTablesPromise = loadDataTables();
 
@@ -79,6 +84,9 @@ const playtestStatusEl = document.getElementById('playtestStatus');
 const telemetryOptInCheckbox = document.getElementById('telemetryOptIn') as HTMLInputElement | null;
 const downloadPerfButton = document.getElementById('downloadPerf') as HTMLButtonElement | null;
 const exportTownshipButton = document.getElementById('exportTownship') as HTMLButtonElement | null;
+const calendarMount = document.getElementById('calendarMount');
+const questMount = document.getElementById('questMount');
+const staminaTipsMount = document.getElementById('staminaTipsMount');
 
 const resourceElements = new Map<ResourceId, HTMLSpanElement>();
 let buildButtons: HTMLButtonElement[] = [];
@@ -101,6 +109,12 @@ const RESOURCE_ORDER: ResourceId[] = [
 const HOMESTEAD_BUILDING_ORDER: BuildingId[] = ['plot', 'tent', 'well', 'crate', 'road', 'cottage', 'market'];
 const HOMESTEAD_TOOL_ORDER: ToolId[] = ['hoe', 'wateringCan', 'sickle'];
 const HOMESTEAD_CROP_ORDER: CropId[] = ['wheat', 'potato', 'berry'];
+
+interface QuestProgressSnapshot {
+  status: QuestStatus;
+  signature: string;
+  unlockedAt: number;
+}
 
 (document.getElementById('installAudio') as HTMLButtonElement).addEventListener('click', () => {
   void enableAudio();
@@ -239,173 +253,15 @@ function prepareHud(tables: DataTables) {
 
 type WorldBuildingDefinition = Pick<BuildingDefinition, 'id' | 'label' | 'buildTime' | 'footprint'>;
 
-type PerformanceWithMemory = Performance & {
-  memory?: {
-    usedJSHeapSize: number;
-    jsHeapSizeLimit: number;
-  };
-};
-
-class DebugOverlay {
-  private readonly container: HTMLDivElement;
-  private frameCount = 0;
-  private lastSample = performance.now();
-  private fps = 0;
-
-  constructor(private readonly telemetry: TelemetryTracker) {
-    this.container = document.createElement('div');
-    this.container.id = 'debug-overlay';
-    this.container.style.position = 'fixed';
-    this.container.style.right = '0.75rem';
-    this.container.style.bottom = '0.75rem';
-    this.container.style.padding = '0.5rem 0.75rem';
-    this.container.style.background = 'rgba(10, 12, 20, 0.78)';
-    this.container.style.border = '1px solid rgba(148, 163, 184, 0.35)';
-    this.container.style.borderRadius = '10px';
-    this.container.style.color = '#f8fafc';
-    this.container.style.fontFamily = 'JetBrains Mono, SFMono-Regular, Menlo, monospace';
-    this.container.style.fontSize = '0.72rem';
-    this.container.style.lineHeight = '1.45';
-    this.container.style.whiteSpace = 'pre';
-    this.container.style.pointerEvents = 'none';
-    this.container.style.zIndex = '1000';
-    this.container.setAttribute('aria-live', 'polite');
-    document.body.appendChild(this.container);
-  }
-
-  update(frameMs: number, state: GameState, snapshot?: TelemetrySnapshot) {
-    this.frameCount += 1;
-    const now = performance.now();
-    const elapsed = now - this.lastSample;
-    if (elapsed >= 500) {
-      this.fps = (this.frameCount * 1000) / elapsed;
-      this.frameCount = 0;
-      this.lastSample = now;
-    }
-
-    const memoryInfo = (performance as PerformanceWithMemory).memory;
-    const memoryText = memoryInfo
-      ? ` | Mem ${(memoryInfo.usedJSHeapSize / 1048576).toFixed(1)} / ${(
-          memoryInfo.jsHeapSizeLimit / 1048576
-        ).toFixed(0)} MB`
-      : '';
-
-    const telemetrySnapshot = snapshot ?? this.telemetry.snapshot(state);
-    const lines: string[] = [];
-    lines.push(`FPS ${this.fps.toFixed(1)} | Frame ${frameMs.toFixed(2)} ms${memoryText}`);
-    lines.push(this.formatPerformanceLine(telemetrySnapshot));
-
-    const seasonLine = this.formatSeasonLine(telemetrySnapshot);
-    if (seasonLine) {
-      lines.push(seasonLine);
-    }
-
-    lines.push(this.formatHomesteadLine(telemetrySnapshot));
-    lines.push(this.formatWeatherLine(telemetrySnapshot));
-
-    const resourceLine = this.formatResourceLine(telemetrySnapshot);
-    if (resourceLine) {
-      lines.push(resourceLine);
-    }
-
-    const dailyLine = this.formatDailyLine(telemetrySnapshot);
-    if (dailyLine) {
-      lines.push(dailyLine);
-    }
-
-    if (telemetrySnapshot.recentEvents.length > 0) {
-      lines.push(`Recent ${telemetrySnapshot.recentEvents.slice(0, 4).join(' | ')}`);
-    }
-
-    this.container.textContent = lines.join('\n');
-  }
-
-  private formatSeasonLine(snapshot: TelemetrySnapshot): string | null {
-    const { season } = snapshot;
-    const progress = (season.progress * 100).toFixed(0);
-    const remaining = Number.isFinite(season.remainingSeconds)
-      ? this.formatDuration(season.remainingSeconds)
-      : '∞';
-    return `Season ${season.id} • Y${season.year}C${season.cycle} • ${progress}% • Next ${remaining}`;
-  }
-
-  private formatPerformanceLine(snapshot: TelemetrySnapshot): string {
-    const perf = snapshot.performance;
-    if (perf.sampleCount === 0) {
-      return 'Perf samples pending…';
-    }
-    return `Perf avg:${perf.averageFrameMs.toFixed(2)}ms p95:${perf.percentile95FrameMs
-      .toFixed(2)}ms worst:${perf.worstFrameMs.toFixed(2)}ms sim:${perf.averageSimMs.toFixed(2)}ms`;
-  }
-
-  private formatHomesteadLine(snapshot: TelemetrySnapshot): string {
-    const staminaPercent = Math.round(snapshot.homestead.staminaRatio * 100);
-    const exhausted = snapshot.homestead.exhausted ? ' (!)' : '';
-    return `Day ${snapshot.homestead.day} @ ${snapshot.homestead.clock} | Stamina ${staminaPercent}%${exhausted}`;
-  }
-
-  private formatWeatherLine(snapshot: TelemetrySnapshot): string {
-    const delta = snapshot.homestead.moistureDeltaPerSecond;
-    const formattedDelta = delta === 0 ? '0.000' : delta.toFixed(3);
-    return `Weather ${snapshot.homestead.weather} (${formattedDelta} moisture/s)`;
-  }
-
-  private formatResourceLine(snapshot: TelemetrySnapshot): string | null {
-    const entries = Object.entries(snapshot.resources.totals) as [ResourceId, number][];
-    if (entries.length === 0) {
-      return null;
-    }
-    entries.sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
-    const parts = entries.slice(0, 4).map(([resource, total]) => {
-      const rate = snapshot.resources.ratesPerMinute[resource] ?? 0;
-      return `${resource}:${Math.floor(total)} (${this.formatRate(rate)}/m)`;
-    });
-    return `Res ${parts.join(' | ')}`;
-  }
-
-  private formatDailyLine(snapshot: TelemetrySnapshot): string {
-    const daily = snapshot.daily;
-    const outputs = this.formatProductionOutputs(daily.productionOutputs);
-    const base = `Daily build:${daily.buildsCompleted} crop:${daily.cropsMatured}/${daily.cropsWithered} prod:${daily.productionCycles}`;
-    return outputs ? `${base} • ${outputs}` : base;
-  }
-
-  private formatProductionOutputs(outputs: Record<ResourceId, number>): string | null {
-    const entries = Object.entries(outputs) as [ResourceId, number][];
-    if (entries.length === 0) {
-      return null;
-    }
-    entries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
-    return entries
-      .slice(0, 3)
-      .map(([resource, amount]) => `${resource}:${amount.toFixed(1)}`)
-      .join(', ');
-  }
-
-  private formatRate(rate: number): string {
-    if (Math.abs(rate) < 0.05) {
-      return '0.0';
-    }
-    const sign = rate >= 0 ? '+' : '-';
-    return `${sign}${Math.abs(rate).toFixed(1)}`;
-  }
-
-  private formatDuration(seconds: number): string {
-    if (!Number.isFinite(seconds)) {
-      return '∞';
-    }
-    const clamped = Math.max(0, seconds);
-    const minutes = Math.floor(clamped / 60);
-    const secs = Math.floor(clamped % 60);
-    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-}
-
 class IsoScene extends Phaser.Scene {
   state: GameState = defaultState();
   tables!: DataTables;
   private readonly telemetry = new TelemetryTracker();
-  private readonly debugOverlay = new DebugOverlay(this.telemetry);
+  private debugOverlay: DebugOverlay | null = null;
+  private calendarHud: CalendarHud | null = null;
+  private questLog: QuestLog | null = null;
+  private staminaTips: StaminaTipsOverlay | null = null;
+  private questSnapshot = new Map<string, QuestProgressSnapshot>();
   private accum = 0;
   private ground!: Phaser.GameObjects.Container;
   private fieldTiles!: Phaser.GameObjects.Container;
@@ -629,6 +485,32 @@ class IsoScene extends Phaser.Scene {
     this.homestead.updateField();
     this.updateHomesteadHud();
 
+    if (!this.debugOverlay) {
+      this.debugOverlay = new DebugOverlay(this.telemetry);
+    }
+
+    if (calendarMount && !this.calendarHud) {
+      this.calendarHud = new CalendarHud();
+      this.calendarHud.mount(calendarMount);
+    }
+
+    if (questMount && !this.questLog) {
+      this.questLog = new QuestLog({ maxPinned: 2 });
+      this.questLog.mount(questMount);
+      this.questLog.clear();
+    }
+
+    if (staminaTipsMount && !this.staminaTips) {
+      this.staminaTips = new StaminaTipsOverlay();
+      this.staminaTips.mount(staminaTipsMount);
+    }
+
+    const initialSnapshot = this.telemetry.snapshot(this.state);
+    this.calendarHud?.update(initialSnapshot);
+    this.staminaTips?.update(initialSnapshot);
+    this.updateQuestLog(initialSnapshot);
+    this.debugOverlay?.update(0, this.state, initialSnapshot);
+
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       const homesteadActive = this.homestead.handlePointerMove(p);
       if (p.isDown && !this.buildMode.isActive() && !homesteadActive) {
@@ -726,7 +608,10 @@ class IsoScene extends Phaser.Scene {
     const frameDuration = performance.now() - frameStart;
     this.telemetry.recordFrame(frameDuration, simMs, steps);
     const snapshot = this.telemetry.snapshot(this.state);
-    this.debugOverlay.update(frameDuration, this.state, snapshot);
+    this.debugOverlay?.update(frameDuration, this.state, snapshot);
+    this.calendarHud?.update(snapshot);
+    this.staminaTips?.update(snapshot);
+    this.updateQuestLog(snapshot);
 
     updateResourceDisplay(this.state.resources);
 
@@ -895,6 +780,64 @@ class IsoScene extends Phaser.Scene {
     seasonTimerEl.textContent = `${yearLabel} • ${cycleLabel} • Next in ${formatDuration(remaining)}`;
   }
 
+  private updateQuestLog(snapshot: TelemetrySnapshot) {
+    if (!this.questLog) {
+      return;
+    }
+    const entries = this.computeQuestEntries(snapshot);
+    for (const entry of entries) {
+      const signature = JSON.stringify(
+        entry.objectives.map((objective) => ({
+          id: objective.id,
+          current: objective.current,
+          target: objective.target
+        }))
+      );
+      const previous = this.questSnapshot.get(entry.id);
+      let unlockedAt = previous?.unlockedAt ?? Date.now();
+      if (entry.status !== 'locked' && (!previous || previous.status === 'locked')) {
+        unlockedAt = Date.now();
+      }
+      if (!previous || previous.status !== entry.status || previous.signature !== signature) {
+        this.questSnapshot.set(entry.id, { status: entry.status, signature, unlockedAt });
+        this.questLog.upsertQuest({ ...entry, unlockedAt, updatedAt: Date.now() });
+      }
+    }
+  }
+
+  private computeQuestEntries(snapshot: TelemetrySnapshot): QuestEntry[] {
+    const day = Math.max(1, Math.floor(this.state.homestead.time.day));
+    const metricValues = resolveQuestMetricValues(this.state);
+
+    return HOMESTEAD_QUESTS.map((definition) => {
+      const objectives = definition.objectives.map((objective) => ({
+        id: objective.id,
+        description: objective.description,
+        current: metricValues[objective.metric] ?? 0,
+        target: objective.target,
+        optional: objective.optional
+      }));
+
+      const requiredObjectives = objectives.filter((objective) => !objective.optional);
+      const aggregatedTarget = requiredObjectives.reduce((sum, objective) => sum + objective.target, 0);
+      const aggregatedCurrent = requiredObjectives.reduce(
+        (sum, objective) => sum + Math.min(objective.current, objective.target),
+        0
+      );
+      const status = determineQuestStatus(definition.unlockDay <= day, aggregatedCurrent, aggregatedTarget);
+
+      return {
+        id: definition.id,
+        title: definition.title,
+        description: definition.description,
+        rewards: definition.rewards,
+        pinned: definition.pinned,
+        status,
+        objectives
+      };
+    });
+  }
+
   destroy(fromScene?: boolean) {
     this.detachHudListener?.();
     if (telemetryOptInCheckbox && this.playtestConsentHandler) {
@@ -1012,4 +955,43 @@ function formatDuration(seconds: number): string {
   const minutes = Math.floor(clamped / 60);
   const secs = Math.floor(clamped % 60);
   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+function determineQuestStatus(unlocked: boolean, current: number, target: number): QuestStatus {
+  if (!unlocked) {
+    return 'locked';
+  }
+  return current >= target ? 'completed' : 'active';
+}
+
+function resolveQuestMetricValues(state: GameState): Record<QuestMetricId, number> {
+  return {
+    readyCrops: countReadyCrops(state),
+    wellFedLivestock: countHealthyLivestock(state),
+    letters: countCollectedLetters(state)
+  };
+}
+
+function countReadyCrops(state: GameState): number {
+  let count = 0;
+  for (const tile of Object.values(state.homestead.field.tiles)) {
+    if (tile?.crop && tile.crop.ready && !tile.crop.withered) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+function countCollectedLetters(state: GameState): number {
+  return Math.floor(state.resources.letters ?? 0);
+}
+
+function countHealthyLivestock(state: GameState): number {
+  let count = 0;
+  for (const animal of state.homestead.livestock.animals) {
+    if (animal.alive && animal.hunger < 0.5) {
+      count += 1;
+    }
+  }
+  return count;
 }

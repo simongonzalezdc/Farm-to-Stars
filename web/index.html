@@ -5,259 +5,79 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAADf0lEQVR42u3byW6cVRSF0fMEdrlcbqvKrkpLYpyEOMSJEhAgGgGiUUBAFECAgHdiyvMw5nF8uHOmkdLsNVjzX/fsb/jX+vyPhlS1Pv/9AlLV+v5vDalq9favDalGAL80pKrVvZ8bUtXq7KeGVHV89mNDqjq++6wh1Qjg6QWkqqO3fmhIVUd3vm9INQL4riFVLW9/25Cqlre+aUg1AnjSkKqWp183pKrF6VcXkKoWb37ZkKoWJ180pKr5yecNqWp+87OGVDW/8WlDqhHAJw2p6vCNjxtSjQA+uoBUdXj9w4ZUdXDtg4ZUI4D3G1LVwdX3GlLV/pV3G1KNAN5pSFX7lx83pBoBPGpIVXuXHjakqr31g4ZUI4DzhlS1u7rfkKp2j+81pBoBnDWkqp2juw2pRgB3GlLVzvJ2Q6raWdxqSFWzxWlDqprNTxpS1ezwZkOq2j680ZCqtg+uN6QaAVxrSFXT/asNqWq6d6Uh1QjgUkOqmu6uG1LV1s6qIdUI4KghVW3Nlg2pajJbNKSqyfa8IVVNpgcNqWpzut+Qqja39hpS1eZktyHVCGDWkKo2NrcbUo0Apg2pamNj0pDqpQrgz3/+IoAABCAAARi/CAQgAAEIwCBEIAAEIAAEEBaAIYhAAAhAAAggLAAD4EVHIAAEIAAEIAAEYPxkRSAABCAABCAABCAABGD8xEQgAAQgAAQgAAQgAAQgAAQgAAQgAAQgAAQgAATwvPz79xP4HwEgAAEgAAEgAAEgAAEgAAEgAAEgAAEgAAEggFf9p3gH50WPXwAIQAAIQAAIQAAIQATEjF8ACEAACEAACEAEZI1fAAhAAAhABASOXwAIQAAIQAQEjl8ACOBl+RARGL8AjEMAyQGIwPgFYCQCSA5ABMYvAGMRQHIAIjB+ARiNAJIDEIHxxwcgAuMXgBEJIDkAERh/fAAiMH4BGJUAkgMQgfHHByAC448PQATGHx+ACIw/PgARGL8AjE8AyQGIwPjjAxCB8ccHIATDF4AIjF8AIjB+AYjA+AUgAuOPD0AIhi8AERi/AIRg+AIQgfELQAiGLwAhxA9fAMEhuLUAIkNwWwFEhuCWAoiLwc0EEBeD2wggKghvL4CYKLypAEAAIAAQAAgABAACAAGAAEAAIAAQAAgABAACAAGAAEAACMBDIAAQAAgABAACAAGAAEAAIAAQALwm/gOP3jWQp/FwNgAAAABJRU5ErkJggg==" />
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAADf0lEQVR42u3byW6cVRSF0fMEdrlcbqvKrkpLYpyEOMSJEhAgGgGiUUBAFECAgHdiyvMw5nF8uHOmkdLsNVjzX/fsb/jX+vyPhlS1Pv/9AlLV+v5vDalq9favDalGAL80pKrVvZ8bUtXq7KeGVHV89mNDqjq++6wh1Qjg6QWkqqO3fmhIVUd3vm9INQL4riFVLW9/25Cqlre+aUg1AnjSkKqWp183pKrF6VcXkKoWb37ZkKoWJ180pKr5yecNqWp+87OGVDW/8WlDqhHAJw2p6vCNjxtSjQA+uoBUdXj9w4ZUdXDtg4ZUI4D3G1LVwdX3GlLV/pV3GlKNAN5pSFX7lx83pBoBPGpIVXuXHjakqr31g4ZUI4DzhlS1u7rfkKp2j+81pBoBnDWkqp2juw2pRgB3GlLVzvJ2Q6raWdxqSFWzxWlDqprNTxpS1ezwZkOq2j680ZCqtg+uN6QaAVxrSFXT/asNqWq6d6Uh1QjgUkOqmu6uG1LV1s6qIdUI4KghVW3Nlg2pajJbNKSqyfa8IVVNpgcNqWpzut+Qqja39hpS1eZktyHVCGDWkKo2NrcbUo0Apg2pamNj0pDqpQrgz3/+IoAABCAAARi/CAQgAAEIwCBEIAAEIAAEEBaAIYhAAAhAAAggLAAD4EVHIAAEIAA
+" />
   <title>Farm to Stars (Web)</title>
   <style>
-    html, body, #app { height: 100%; margin: 0; background: #0e0e10; color: #e5e7eb; }
-    .hud {
-      position: fixed;
-      left: 16px;
-      top: 16px;
-      padding: 16px 20px;
-      border-radius: 14px;
-      border: 1px solid #ffffff22;
-      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: linear-gradient(135deg, #111826dd, #0f172ad0);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 18px 36px rgba(8, 11, 23, 0.45);
-      max-width: min(420px, 90vw);
-      line-height: 1.45;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      z-index: 20;
-    }
-    .hud h2 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #d8e4ff;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .hud h2::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 999px;
-      background: #38bdf8;
-      box-shadow: 0 0 12px #38bdf8aa;
-    }
-    .hud .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 14px;
-      align-items: center;
-    }
-    .hud span {
-      display: inline-flex;
-      gap: 4px;
-      align-items: baseline;
-    }
-    .hud b {
-      color: #f8fafc;
-      font-weight: 600;
-      transition: color 180ms ease;
-    }
-    .hud button {
-      font-family: inherit;
-      border-radius: 8px;
-      border: 1px solid #ffffff26;
-      background: linear-gradient(145deg, #1d2a41cc, #1b273bcf);
-      color: #f3f4f6;
-      padding: 6px 12px;
-      cursor: pointer;
-      transition: transform 150ms ease, box-shadow 150ms ease, background 180ms ease;
-    }
-    .hud button:hover,
-    .hud button:focus-visible {
-      transform: translateY(-1px);
-      background: linear-gradient(145deg, #2a3b5fcc, #22324dcc);
-      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.36);
-      outline: none;
-    }
-    .hud button:focus-visible {
-      border-color: #38bdf8;
-    }
-    .hud button[aria-pressed='true'] {
-      background: linear-gradient(145deg, #2563ebb5, #1d4ed8b8);
-      border-color: #60a5fa;
-      box-shadow: 0 12px 22px rgba(37, 99, 235, 0.35);
-    }
-    .hud .feedback {
-      font-size: 13px;
-      color: #f9fafb;
-      padding: 8px 10px;
-      border-radius: 8px;
-      background: rgba(37, 99, 235, 0.22);
-      border: 1px solid rgba(59, 130, 246, 0.35);
-      transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
-    }
-    .hud .feedback[data-tone='warn'] {
-      background: rgba(250, 204, 21, 0.18);
-      border-color: rgba(250, 204, 21, 0.45);
-      color: #fde68a;
-    }
-    .hud .feedback[data-tone='error'] {
-      background: rgba(248, 113, 113, 0.22);
-      border-color: rgba(239, 68, 68, 0.45);
-      color: #fecaca;
-    }
-    .hud .feedback[data-tone='success'] {
-      background: rgba(34, 197, 94, 0.2);
-      border-color: rgba(34, 197, 94, 0.45);
-      color: #bbf7d0;
-    }
-    .hud .opt-in {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      background: rgba(56, 189, 248, 0.08);
-      border-radius: 8px;
-      padding: 6px 10px;
-      border: 1px solid rgba(56, 189, 248, 0.2);
-      color: #bae6fd;
-    }
-    .hud .opt-in input {
-      accent-color: #38bdf8;
-    }
-    .hud .labels {
-      font-size: 12px;
-      opacity: 0.85;
-      letter-spacing: 0.04em;
-    }
-    .hud .queue {
-      font-size: 13px;
-    }
-    .hud small {
-      opacity: 0.82;
-    }
-    .hud .season-row {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 4px;
-    }
-    .hud .season-name {
-      font-size: 13px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .hud .season-effects {
-      font-size: 12px;
-      opacity: 0.88;
-    }
-    .hud .season-timer {
-      font-size: 11px;
-      opacity: 0.78;
-      letter-spacing: 0.02em;
-    }
-    #selectedCost[data-state='warn'] {
-      color: #facc15;
-    }
-    #selectedCost[data-state='ok'] {
-      color: #4ade80;
-    }
-    @media (max-width: 720px) {
-      .hud {
-        left: 12px;
-        right: 12px;
-        top: auto;
-        bottom: 16px;
-        padding: 14px 16px 16px;
-        max-width: unset;
-        gap: 10px;
-      }
-      .hud .row {
-        gap: 6px 10px;
-      }
-      .hud button {
-        flex: 1 1 120px;
-      }
-    }
-    @media (pointer: coarse) {
-      .hud button {
-        padding: 10px 14px;
-        font-size: 15px;
-      }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .hud button,
-      .hud .feedback,
-      .hud b {
-        transition: none;
-      }
-    }
+    html, body, #app { height: 100%; margin: 0; background: #0e0e10; color: #e5e7eb; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+    body { overflow: hidden; }
     button { font-family: inherit; }
   </style>
 </head>
 <body>
   <div id="app"></div>
-  <div class="hud">
-    <h2>Colony HUD</h2>
-    <div class="row" id="resourceRow" aria-live="polite"></div>
-    <div class="row">
-      <span>Mode: <b id="modeIndicator">Camera</b></span>
-      <span>Cost: <b id="selectedCost" data-state="idle">—</b></span>
+  <div id="hudRoot" class="hud-layout">
+    <div class="hud-layout__column">
+      <section id="colonyHud" class="hud-panel hud-colony" aria-label="Colony HUD">
+        <header class="hud-colony__header">
+          <h2>Colony HUD</h2>
+          <span>Mode: <b id="modeIndicator">Camera</b></span>
+        </header>
+        <div id="resourceRow" class="hud-colony__resources" aria-live="polite"></div>
+        <div class="hud-colony__section">
+          <span>Cost: <b id="selectedCost" data-state="idle">—</b></span>
+        </div>
+        <div class="hud-colony__season">
+          <span id="seasonName" class="hud-colony__season-name">🌱 Spring Awakening</span>
+          <small id="seasonEffects" class="hud-colony__season-effects">+20% growth speed, +10% resource yield.</small>
+          <small id="seasonTimer" class="hud-colony__season-timer">Year 1 • Cycle 1 • Next in 03:00</small>
+        </div>
+        <div class="hud-colony__section hud-colony__section--status">
+          <span>Day <b id="homesteadDay">1</b></span>
+          <span>Time <b id="homesteadClock">06:00</b></span>
+          <span>Stamina <b id="homesteadStamina">100%</b></span>
+          <span>Weather <b id="homesteadWeather">Clear</b></span>
+        </div>
+        <div class="hud-colony__section hud-colony__buttons">
+          <button id="installAudio" type="button">Enable Audio</button>
+          <button id="mute" type="button" aria-pressed="false">Mute</button>
+          <button id="installApp" type="button" hidden>Install App</button>
+        </div>
+        <div class="hud-colony__group">
+          <h3>Build Options</h3>
+          <div id="buildOptions" class="hud-colony__button-row"></div>
+        </div>
+        <div class="hud-colony__group">
+          <h3>Tools</h3>
+          <div id="toolbelt" class="hud-colony__button-row"></div>
+        </div>
+        <div class="hud-colony__group">
+          <h3>Seeds</h3>
+          <div id="seedBar" class="hud-colony__button-row"></div>
+        </div>
+        <div class="hud-colony__group">
+          <h3>Playtest &amp; Export</h3>
+          <div id="playtestControls" class="hud-colony__button-row hud-colony__button-row--wrap">
+            <label class="hud-colony__opt-in" for="telemetryOptIn">
+              <input type="checkbox" id="telemetryOptIn" /> Share anonymized metrics
+            </label>
+            <button id="downloadPerf" type="button">Download Perf Log</button>
+            <button id="exportTownship" type="button">Export to Township</button>
+          </div>
+          <small id="playtestStatus" class="hud-colony__status-text">Telemetry opt-in required before exporting.</small>
+        </div>
+        <div class="hud-colony__queue">
+          <span>Queue: <b id="buildQueue">0</b></span>
+          <small id="queueDetails">No active construction.</small>
+        </div>
+        <div class="hud-colony__feedback" id="buildFeedback" aria-live="polite" data-tone="info">Camera pan + zoom enabled.</div>
+        <div class="hud-colony__feedback" id="homesteadFeedback" aria-live="polite" data-tone="info">Select a tool to tend the field.</div>
+      </section>
     </div>
-    <div class="row season-row">
-      <span id="seasonName" class="season-name">🌱 Spring Awakening</span>
-      <small id="seasonEffects" class="season-effects">+20% growth speed, +10% resource yield.</small>
-      <small id="seasonTimer" class="season-timer">Year 1 • Cycle 1 • Next in 03:00</small>
-    </div>
-    <div class="row labels">
-      <span>Homestead status:</span>
-    </div>
-    <div class="row">
-      <span>Day: <b id="homesteadDay">1</b></span>
-      <span>Time: <b id="homesteadClock">06:00</b></span>
-      <span>Stamina: <b id="homesteadStamina">100%</b></span>
-      <span>Weather: <b id="homesteadWeather">Clear</b></span>
-    </div>
-    <div class="row">
-      <button id="installAudio">Enable Audio</button>
-      <button id="mute" aria-pressed="false">Mute</button>
-      <button id="installApp" hidden>Install App</button>
-    </div>
-    <div class="row labels">
-      <span>Build options:</span>
-    </div>
-    <div class="row" id="buildOptions"></div>
-    <div class="row labels">
-      <span>Tools:</span>
-    </div>
-    <div class="row" id="toolbelt"></div>
-    <div class="row labels">
-      <span>Seeds:</span>
-    </div>
-    <div class="row" id="seedBar"></div>
-    <div class="row labels">
-      <span>Playtest &amp; Export:</span>
-    </div>
-    <div class="row" id="playtestControls">
-      <label class="opt-in" for="telemetryOptIn">
-        <input type="checkbox" id="telemetryOptIn" /> Share anonymized metrics
-      </label>
-      <button id="downloadPerf" type="button">Download Perf Log</button>
-      <button id="exportTownship" type="button">Export to Township</button>
-    </div>
-    <div class="row">
-      <small id="playtestStatus">Telemetry opt-in required before exporting.</small>
-    </div>
-    <div class="row queue">
-      <span>Queue: <b id="buildQueue">0</b></span>
-      <small id="queueDetails">No active construction.</small>
-    </div>
-    <div class="row">
-      <div id="buildFeedback" class="feedback" aria-live="polite" data-tone="info">Camera pan + zoom enabled.</div>
-    </div>
-    <div class="row">
-      <div id="homesteadFeedback" class="feedback" aria-live="polite" data-tone="info">Select a tool to tend the field.</div>
+    <div class="hud-layout__column">
+      <div id="calendarMount"></div>
+      <div id="questMount"></div>
+      <div id="staminaTipsMount"></div>
     </div>
   </div>
   <script type="module" src="/src/main.ts"></script>

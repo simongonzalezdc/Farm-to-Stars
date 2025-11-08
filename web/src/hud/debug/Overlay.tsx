@@ -130,7 +130,7 @@ export class DebugOverlay {
     doc.body.appendChild(container);
   }
 
-  update(deltaMs: number, state: Parameters<TelemetryTracker['snapshot']>[0]) {
+  update(deltaMs: number, state: Parameters<TelemetryTracker['snapshot']>[0], snapshot?: TelemetrySnapshot) {
     if (!this.container) {
       return;
     }
@@ -144,11 +144,11 @@ export class DebugOverlay {
       this.lastSample = now;
     }
 
-    const snapshot = this.telemetry.snapshot(state);
+    const data = snapshot ?? this.telemetry.snapshot(state);
     const memoryText = this.formatMemory();
-    this.renderSummaryPanel(snapshot, deltaMs, memoryText);
-    this.renderResourcesPanel(snapshot);
-    this.renderEventsPanel(snapshot);
+    this.renderSummaryPanel(data, deltaMs, memoryText);
+    this.renderResourcesPanel(data);
+    this.renderEventsPanel(data);
   }
 
   private renderSummaryPanel(snapshot: TelemetrySnapshot, deltaMs: number, memory: string) {
