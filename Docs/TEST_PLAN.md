@@ -13,3 +13,68 @@
 ## 2) Automated
 - **Unit tests:** economy math, construction timers, save migrations.
 - **E2E smoke (Playwright):** load → place road → save → reload → verify persisted.
+
+## 3) Week 1–4 Playtest Checklist
+
+Use this page as a printable or digital worksheet during guided playtests. Check items as they are observed and capture any deviations immediately.
+
+### Setup & Install Readiness
+1. [ ] **Build freshness** – Install dependencies and run `npm run build && npm run preview` on target hardware.
+   - **Pass:** Build completes without errors; preview launches in <30 s.
+   - **Fail:** Any build error, preview crash, or load time ≥30 s.
+   - **Observer Notes:** _______________________________________
+2. [ ] **PWA install prompt** – From a clean browser profile, load the preview URL and trigger the install prompt.
+   - **Pass:** Install icon appears within 10 s; app installs and launches from home screen with correct icon/text.
+   - **Fail:** Prompt never appears, install fails, or launch opens fallback tab.
+   - **Observer Notes:** _______________________________________
+3. [ ] **First-run assets** – Confirm initial camera framing, HUD layout, and tutorial copy (if present) render without missing art/SFX.
+   - **Pass:** Iso tiles crisp at 96×48; HUD elements aligned; opening music layer plays on first interaction.
+   - **Fail:** Blurry sprites, HUD clipping, missing audio trigger.
+   - **Observer Notes:** _______________________________________
+
+### Core Loop Validation (Weeks 1–3)
+4. [ ] **Camera & controls** – Pan, zoom (3 levels), and character y-sort.
+   - **Pass:** Smooth pan without stutter; zoom levels swap correctly; avatar occludes/appears as expected when walking behind structures.
+   - **Fail:** Input lag >150 ms, stuck zoom level, or incorrect draw order.
+   - **Observer Notes / Timing (s):** ____________________________
+5. [ ] **Construction flow** – Enter build mode, place road, plot, cottage, and market.
+   - **Pass:** Ghost preview respects validity; construction timers run; placements snap to grid; confirmation SFX plays.
+   - **Fail:** Invalid tiles allowed, timer stalls, missing audio.
+   - **Observer Notes / Bugs:** ________________________________
+6. [ ] **Economy loop** – Plant plot → harvest ingredient → craft food → sell at market → earn coins.
+   - **Pass:** Harvest increments inventory; recipe consumes inputs; market sale updates coin counter and HUD tooltip.
+   - **Fail:** Resource loss, UI desync, or blocked interactions.
+   - **Observer Notes / Timing (loop duration):** _______________
+7. [ ] **Save/Load** – Exit to menu (or reload page) and resume session.
+   - **Pass:** Latest placements and currency persist; construction timers resume with correct remaining time.
+   - **Fail:** Save missing, timers reset/complete unexpectedly.
+   - **Observer Notes:** _______________________________________
+
+### Edge Cases & Regression Sweeps
+8. [ ] **Seasonal visuals toggle** – Advance time or trigger season change.
+   - **Pass:** Palette shift applies across terrain, crops, and sky without popping.
+   - **Fail:** Mixed season assets, animation hitch >0.5 s.
+   - **Observer Notes:** _______________________________________
+9. [ ] **Offline resilience** – Install as PWA, disable network, and relaunch.
+   - **Pass:** App opens offline; cached assets load; last save accessible.
+   - **Fail:** Offline error modal, missing textures/audio.
+   - **Observer Notes:** _______________________________________
+10. [ ] **Performance burst** – Trigger busy scene (multiple constructions + market interactions) while observing overlay FPS/memory.
+    - **Pass:** FPS ≥60; steady-state memory <300 MB after 5 min; cold start ≤3 s (log actual below).
+    - **Fail:** FPS dips <55 for >3 s, memory spike >350 MB, cold start ≥3 s.
+    - **Observer Notes / FPS / Memory / Start time:** ____________
+11. [ ] **Audio polish** – Verify SFX layering and music transitions between day/night.
+    - **Pass:** Interaction SFX audible without clipping; music cross-fades smoothly with day/night switch.
+    - **Fail:** Missing cues, abrupt cuts, volume imbalance.
+    - **Observer Notes:** _______________________________________
+12. [ ] **Lighthouse regression** – Run Lighthouse (PWA category) on installable build.
+    - **Pass:** PWA ≥90, Performance ≥80, Accessibility ≥95.
+    - **Fail:** Any score below target or critical audit regression.
+    - **Observer Notes / Scores:** ______________________________
+
+### Debrief & Bugs
+- **Top issues surfaced:** ______________________________________
+- **Follow-up bugs logged (ID/status):** _________________________
+- **Additional observations or player quotes:** ___________________
+
+> Tip: Snap a photo or export PDF after each session to keep historical regression evidence.
