@@ -136,6 +136,13 @@ export function tick(
   }
 
   for (const [resource, gain] of Object.entries(resourceAccum) as [ResourceId, number][]) {
+    if (state.resources[resource] == null) {
+      state.resources[resource] = 0;
+    }
+    const slot = ensureStorageSlot(state, resource);
+    const next = Math.min(slot.capacity, Math.max(0, (state.resources[resource] ?? 0) + gain));
+    state.resources[resource] = next;
+    slot.current = next;
     if (!state.resources[resource]) {
       state.resources[resource] = 0;
     }
