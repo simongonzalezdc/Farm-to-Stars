@@ -1,8 +1,11 @@
 import Phaser from 'phaser';
 import { gridToScreen, screenToGrid, TILE_W, TILE_H } from './iso';
 import { defaultState, type GameState, type BuildingType, type Structure } from './types';
+import { gridToScreen, TILE_W, TILE_H } from './iso';
+import type { GameState } from './types';
 import { load, save } from './storage';
 import { enableAudio, toggleMute } from './audio';
+import { defaultState, hydrateState, tick, fmt, SIM_DT } from './world';
 import { tick, fmt } from './world';
 import { BUILDINGS, applyCost, canAfford, formatCost } from './buildings';
 import {
@@ -16,6 +19,9 @@ import {
   MAP_WIDTH,
   MAP_HEIGHT
 } from './maps/tilemap';
+import { loadDataTables, type DataTables } from './data';
+
+const dataTablesPromise = loadDataTables();
 
 const woodEl = document.getElementById('wood')!;
 const stoneEl = document.getElementById('stone')!;
@@ -33,8 +39,61 @@ const buildButtons = Array.from(
   (document.getElementById('mute') as HTMLButtonElement).setAttribute('aria-pressed', String(m));
 });
 
+type PerformanceWithMemory = Performance & {
+  memory?: {
+    usedJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
+};
+
+class DebugOverlay {
+  private readonly container: HTMLDivElement;
+  private frameCount = 0;
+  private lastSample = performance.now();
+  private fps = 0;
+
+  constructor() {
+    this.container = document.createElement('div');
+    this.container.id = 'debug-overlay';
+    this.container.style.position = 'fixed';
+    this.container.style.right = '0.5rem';
+    this.container.style.bottom = '0.5rem';
+    this.container.style.padding = '0.25rem 0.5rem';
+    this.container.style.background = 'rgba(0, 0, 0, 0.6)';
+    this.container.style.color = '#ffffff';
+    this.container.style.fontFamily = 'monospace';
+    this.container.style.fontSize = '0.75rem';
+    this.container.style.zIndex = '1000';
+    this.container.setAttribute('aria-live', 'polite');
+    document.body.appendChild(this.container);
+  }
+
+  update(deltaMs: number) {
+    this.frameCount += 1;
+    const now = performance.now();
+    const elapsed = now - this.lastSample;
+    if (elapsed >= 500) {
+      this.fps = (this.frameCount * 1000) / elapsed;
+      this.frameCount = 0;
+      this.lastSample = now;
+    }
+
+    const memoryInfo = (performance as PerformanceWithMemory).memory;
+    const memoryText = memoryInfo
+      ? ` | Mem: ${(memoryInfo.usedJSHeapSize / 1048576).toFixed(1)} / ${(
+          memoryInfo.jsHeapSizeLimit / 1048576
+        ).toFixed(0)} MB`
+      : '';
+
+    this.container.textContent = `FPS: ${this.fps.toFixed(1)} | Frame: ${deltaMs.toFixed(2)} ms${memoryText}`;
+  }
+}
+
+const debugOverlay = new DebugOverlay();
+
 class IsoScene extends Phaser.Scene {
   state: GameState = defaultState();
+  tables!: DataTables;
   private accum = 0;
   private ground!: Phaser.GameObjects.Container;
   private overlays!: Phaser.GameObjects.Container;
@@ -148,6 +207,10 @@ class IsoScene extends Phaser.Scene {
     } else {
       this.state = base;
     }
+    this.state = hydrateState(loaded);
+    this.tables = await dataTablesPromise;
+    const loaded = await load(this.tables.resources);
+    this.state = loaded ?? defaultState(this.tables.resources);
 
     const cam = this.cameras.main;
     cam.setBackgroundColor('#0e0e10');
@@ -234,15 +297,20 @@ class IsoScene extends Phaser.Scene {
   }
 
   update(_time: number, deltaMs: number) {
-    // fixed 10 Hz sim (you can switch to 20 Hz by changing 0.1 → 0.05)
+    // fixed 10 Hz sim (SIM_DT = 0.1s by default)
     this.accum += deltaMs / 1000;
-    while (this.accum >= 0.1) {
-      tick(this.state, 0.1);
-      this.accum -= 0.1;
+    while (this.accum >= SIM_DT) {
+      const events = tick(this.state, SIM_DT);
+      if (events.length > 0) {
+        // Surface the last event for easy debug hooks in Phaser's registry.
+        const last = events[events.length - 1];
+        this.registry.set('lastEvent', last.type);
+      }
+      this.accum -= SIM_DT;
     }
 
-    woodEl.textContent = fmt(this.state.resources.wood);
-    stoneEl.textContent = fmt(this.state.resources.stone);
+    woodEl.textContent = fmt(this.state.resources.wood ?? 0);
+    stoneEl.textContent = fmt(this.state.resources.stone ?? 0);
 
     // y-sort props by screen y
     this.props.list.sort((a, b) => (a as any).y - (b as any).y);
@@ -492,6 +560,7 @@ class IsoScene extends Phaser.Scene {
 
   private hideBlockedTiles() {
     this.blockedOverlays.forEach((img) => img.setVisible(false));
+    debugOverlay.update(deltaMs);
   }
 }
 
@@ -505,4 +574,9 @@ const config: Phaser.Types.Core.GameConfig = {
   scale: { mode: Phaser.Scale.RESIZE }
 };
 
-new Phaser.Game(config);
+async function boot() {
+  await dataTablesPromise;
+  new Phaser.Game(config);
+}
+
+void boot();
