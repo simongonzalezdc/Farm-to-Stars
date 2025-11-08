@@ -48,7 +48,7 @@ const bell = new Tone.FMSynth({
 const padProgression = ['C4', 'G4', 'A4', 'F4'];
 let padStep = 0;
 
-new Tone.Loop(time => {
+new Tone.Loop((time) => {
   const root = padProgression[padStep % padProgression.length];
   const fifth = Tone.Frequency(root).transpose(7).toNote();
   padSynth.triggerAttackRelease([root, fifth], '2m', time);
@@ -58,7 +58,7 @@ new Tone.Loop(time => {
 const bassProgression = ['C2', 'G2', 'A2', 'F2'];
 let bassStep = 0;
 
-new Tone.Loop(time => {
+new Tone.Loop((time) => {
   const bassRoot = bassProgression[bassStep % bassProgression.length];
   bassSynth.triggerAttackRelease(bassRoot, '1m', time);
   bassStep++;

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { tick, fmt } from '../world';
+import { fmt, initWorld, tick } from '../world';
 import { defaultState } from '../types';
 
 describe('world simulation', () => {
   it('increments wood based on elapsed time', () => {
     const state = defaultState();
+    initWorld(state);
     tick(state, 1.0);
     expect(state.resources.wood).toBeGreaterThan(0);
     expect(state.resources.wood).toBeCloseTo(0.1, 5);

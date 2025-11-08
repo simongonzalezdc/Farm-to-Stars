@@ -61,7 +61,12 @@ export function processEconomy(
     }
 
     if (Object.keys(produced).length > 0) {
-      events.push({ type: 'production.cycle', nodeId: node.id, recipeId: recipe.id, outputs: produced });
+      events.push({
+        type: 'production.cycle',
+        nodeId: node.id,
+        recipeId: recipe.id,
+        outputs: produced
+      });
     }
 
     node.progress = 0;
