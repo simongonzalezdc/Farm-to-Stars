@@ -100,6 +100,8 @@ This matrix expands the Wave Alpha/Alpha+ alignment from `Docs/BUILD_GUIDE.md` i
 
 ## Wave Delta · Hardening & Playtest Prep
 
+Wave Delta has its own deep-dive playbook in `Docs/HOMESTEAD_WAVE_DELTA_TASKS.md`. Use that reference for day-to-day execution while this matrix keeps the high-level alignment in the same view as earlier waves.
+
 ### D1 — Bug Bash & Stabilization
 - **Definition of Ready:** Wave Beta features merged, Q1 automation green, triage board populated with priority issues.
 - **Task Cards:**
