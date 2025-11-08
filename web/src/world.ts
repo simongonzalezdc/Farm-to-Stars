@@ -143,6 +143,10 @@ export function tick(
     const next = Math.min(slot.capacity, Math.max(0, (state.resources[resource] ?? 0) + gain));
     state.resources[resource] = next;
     slot.current = next;
+    if (!state.resources[resource]) {
+      state.resources[resource] = 0;
+    }
+    state.resources[resource] += gain;
   }
 
   const economy = processEconomyTick(state, dt, recipes);
