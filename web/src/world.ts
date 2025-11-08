@@ -9,6 +9,9 @@ import { processConstruction } from './systems/construction';
 import { processEconomyTick } from './systems/economy';
 import { tickCropLifecycle } from './systems/cropLifecycle';
 import { advanceWeather } from './systems/weather';
+import { tickLivestock } from './sim/livestock/lifecycle';
+import { updateWeatherEvents } from './sim/weather/events';
+import { ensureDailyMail, processMailQueue } from './sim/jobs/mailQueue';
 import { advanceTime } from './state/time';
 import { regenerateStamina } from './state/stamina';
 import type {
@@ -19,11 +22,15 @@ import type {
   CropId,
   GameEvent,
   GameState,
+  LivestockId,
+  LivestockTable,
+  MailMessage,
   RecipeDefinition,
   RecipeId,
   ResourceId,
   Resources,
   Structure,
+  WeatherEventType,
   WeatherType
 } from './types';
 
@@ -34,6 +41,11 @@ export const EVENT_SEASON_CHANGED = 'world.season.changed';
 export const EVENT_HOMESTEAD_TIME = 'world.homestead.time';
 export const EVENT_HOMESTEAD_WEATHER = 'world.homestead.weather';
 export const EVENT_HOMESTEAD_CROP = 'world.homestead.crop';
+export const EVENT_LIVESTOCK_PRODUCE = 'world.livestock.produce';
+export const EVENT_LIVESTOCK_STARVED = 'world.livestock.starved';
+export const EVENT_WEATHER_EVENT_STARTED = 'world.weather.event.started';
+export const EVENT_WEATHER_EVENT_ENDED = 'world.weather.event.ended';
+export const EVENT_MAIL_DELIVERED = 'world.mail.delivered';
 
 export interface ResourceProducedDetail {
   resource: ResourceId;
@@ -72,6 +84,28 @@ export interface HomesteadCropDetail {
   x: number;
   y: number;
   state: 'matured' | 'withered';
+}
+
+export interface LivestockProduceDetail {
+  livestockId: number;
+  speciesId: LivestockId;
+  resource: ResourceId;
+  amount: number;
+}
+
+export interface LivestockStarvedDetail {
+  livestockId: number;
+  speciesId: LivestockId;
+}
+
+export interface WeatherDynamicEventDetail {
+  eventId: string;
+  eventType: WeatherEventType;
+  intensity: number;
+}
+
+export interface MailDeliveredDetail {
+  message: MailMessage;
 }
 
 export const gameEvents = new EventTarget();
@@ -120,7 +154,8 @@ export function tick(
   dt: number,
   buildingDefs: Partial<Record<BuildingId, BuildingDefinition>> = {},
   recipes: Record<RecipeId, RecipeDefinition> = {},
-  crops: CropsTable = {}
+  crops: CropsTable = {},
+  livestock: LivestockTable = {}
 ): GameEvent[] {
   const events: GameEvent[] = [];
 
@@ -262,8 +297,28 @@ export function tick(
     }
   }
 
-  const homesteadEvents = processHomestead(state, dt, finalSeasonDefinition, crops);
-  events.push(...homesteadEvents);
+  const homestead = processHomestead(state, dt, finalSeasonDefinition, crops, livestock);
+  events.push(...homestead.events);
+  for (const resource of Object.keys(homestead.feedConsumed) as ResourceId[]) {
+    syncStorageSlot(state, resource);
+  }
+  for (const resource of homestead.produceResources) {
+    syncStorageSlot(state, resource);
+  }
+
+  ensureDailyMail(state);
+  const mail = processMailQueue(state);
+  events.push(...mail.events);
+  if (mail.delivered.length > 0) {
+    syncStorageSlot(state, 'letters');
+  }
+  for (const message of mail.delivered) {
+    const detail: MailDeliveredDetail = { message };
+    gameEvents.dispatchEvent(new CustomEvent(EVENT_MAIL_DELIVERED, { detail }));
+    for (const resource of Object.keys(message.attachments) as ResourceId[]) {
+      syncStorageSlot(state, resource);
+    }
+  }
 
   emitResourceEvents(state, events);
 
@@ -325,13 +380,22 @@ function advanceSeason(state: GameState, dt: number): SeasonAdvanceResult {
   return { changed: entered.length > 0, seasonsEntered: entered, segments };
 }
 
+interface HomesteadTickResult {
+  events: GameEvent[];
+  feedConsumed: Partial<Record<ResourceId, number>>;
+  produceResources: Set<ResourceId>;
+}
+
 function processHomestead(
   state: GameState,
   dt: number,
   seasonDefinition: SeasonDefinition,
-  crops: CropsTable
-): GameEvent[] {
+  crops: CropsTable,
+  livestockDefs: LivestockTable
+): HomesteadTickResult {
   const events: GameEvent[] = [];
+  const feedConsumed: Partial<Record<ResourceId, number>> = {};
+  const produceResources = new Set<ResourceId>();
 
   const timeResult = advanceTime(state.homestead.time, dt);
   const timeDetail: HomesteadTimeDetail = {
@@ -351,17 +415,45 @@ function processHomestead(
   regenerateStamina(state.homestead.stamina, { dt });
 
   const weatherResult = advanceWeather(state.homestead.weather, dt, seasonDefinition.weather);
+  const weatherEvents = updateWeatherEvents(state.homestead.weather, dt);
+  state.homestead.weather.moistureDeltaPerSecond =
+    weatherResult.moistureDeltaPerSecond + weatherEvents.moistureModifier;
   const weatherDetail: HomesteadWeatherDetail = {
     weather: weatherResult.current,
-    moistureDeltaPerSecond: weatherResult.moistureDeltaPerSecond
+    moistureDeltaPerSecond: state.homestead.weather.moistureDeltaPerSecond
   };
   gameEvents.dispatchEvent(new CustomEvent(EVENT_HOMESTEAD_WEATHER, { detail: weatherDetail }));
   if (weatherResult.changed) {
     events.push({
       type: 'homestead.weather.changed',
       weather: weatherResult.current,
-      moistureDeltaPerSecond: weatherResult.moistureDeltaPerSecond
+      moistureDeltaPerSecond: state.homestead.weather.moistureDeltaPerSecond
     });
+  }
+
+  for (const started of weatherEvents.started) {
+    events.push({
+      type: 'weather.event.started',
+      eventId: started.id,
+      eventType: started.type,
+      intensity: started.intensity
+    });
+    const detail: WeatherDynamicEventDetail = {
+      eventId: started.id,
+      eventType: started.type,
+      intensity: started.intensity
+    };
+    gameEvents.dispatchEvent(new CustomEvent(EVENT_WEATHER_EVENT_STARTED, { detail }));
+  }
+
+  for (const ended of weatherEvents.ended) {
+    events.push({ type: 'weather.event.ended', eventId: ended.id, eventType: ended.type });
+    const detail: WeatherDynamicEventDetail = {
+      eventId: ended.id,
+      eventType: ended.type,
+      intensity: ended.intensity
+    };
+    gameEvents.dispatchEvent(new CustomEvent(EVENT_WEATHER_EVENT_ENDED, { detail }));
   }
 
   if (dt > 0 && Object.keys(crops).length > 0) {
@@ -378,7 +470,31 @@ function processHomestead(
     }
   }
 
-  return events;
+  if (Object.keys(livestockDefs).length > 0 && dt > 0) {
+    const livestockResult = tickLivestock(state, dt, livestockDefs);
+    Object.assign(feedConsumed, livestockResult.feedConsumed);
+    for (const event of livestockResult.events) {
+      events.push(event);
+      if (event.type === 'livestock.produce') {
+        produceResources.add(event.resource);
+        const detail: LivestockProduceDetail = {
+          livestockId: event.livestockId,
+          speciesId: event.speciesId,
+          resource: event.resource,
+          amount: event.amount
+        };
+        gameEvents.dispatchEvent(new CustomEvent(EVENT_LIVESTOCK_PRODUCE, { detail }));
+      } else if (event.type === 'livestock.starved') {
+        const detail: LivestockStarvedDetail = {
+          livestockId: event.livestockId,
+          speciesId: event.speciesId
+        };
+        gameEvents.dispatchEvent(new CustomEvent(EVENT_LIVESTOCK_STARVED, { detail }));
+      }
+    }
+  }
+
+  return { events, feedConsumed, produceResources };
 }
 
 function resetResourceTracking(state: GameState) {

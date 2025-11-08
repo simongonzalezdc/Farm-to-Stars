@@ -43,6 +43,15 @@ import { BuildModeController } from './ui/buildModeController';
 import { HomesteadController } from './ui/homesteadController';
 import { getNormalizedTime } from './state/time';
 import { getStaminaRatio } from './state/stamina';
+import { TelemetryTracker, type TelemetrySnapshot } from './telemetry/telemetry';
+import { exportHomesteadToTownship } from './sim/export/homesteadToTownship';
+import {
+  flushPlaytestEvents,
+  getPlaytestTelemetryOptIn,
+  peekPlaytestEvents,
+  recordExportGenerated,
+  setPlaytestTelemetryOptIn
+} from './telemetry/playtest';
 
 const dataTablesPromise = loadDataTables();
 
@@ -64,6 +73,10 @@ const homesteadWeatherEl = document.getElementById('homesteadWeather')!;
 const homesteadFeedbackEl = document.getElementById('homesteadFeedback')!;
 const toolbeltContainer = document.getElementById('toolbelt') as HTMLDivElement;
 const seedBarContainer = document.getElementById('seedBar') as HTMLDivElement;
+const playtestStatusEl = document.getElementById('playtestStatus');
+const telemetryOptInCheckbox = document.getElementById('telemetryOptIn') as HTMLInputElement | null;
+const downloadPerfButton = document.getElementById('downloadPerf') as HTMLButtonElement | null;
+const exportTownshipButton = document.getElementById('exportTownship') as HTMLButtonElement | null;
 
 const resourceElements = new Map<ResourceId, HTMLSpanElement>();
 let buildButtons: HTMLButtonElement[] = [];
@@ -237,23 +250,28 @@ class DebugOverlay {
   private lastSample = performance.now();
   private fps = 0;
 
-  constructor() {
+  constructor(private readonly telemetry: TelemetryTracker) {
     this.container = document.createElement('div');
     this.container.id = 'debug-overlay';
     this.container.style.position = 'fixed';
-    this.container.style.right = '0.5rem';
-    this.container.style.bottom = '0.5rem';
-    this.container.style.padding = '0.25rem 0.5rem';
-    this.container.style.background = 'rgba(0, 0, 0, 0.6)';
-    this.container.style.color = '#ffffff';
-    this.container.style.fontFamily = 'monospace';
-    this.container.style.fontSize = '0.75rem';
+    this.container.style.right = '0.75rem';
+    this.container.style.bottom = '0.75rem';
+    this.container.style.padding = '0.5rem 0.75rem';
+    this.container.style.background = 'rgba(10, 12, 20, 0.78)';
+    this.container.style.border = '1px solid rgba(148, 163, 184, 0.35)';
+    this.container.style.borderRadius = '10px';
+    this.container.style.color = '#f8fafc';
+    this.container.style.fontFamily = 'JetBrains Mono, SFMono-Regular, Menlo, monospace';
+    this.container.style.fontSize = '0.72rem';
+    this.container.style.lineHeight = '1.45';
+    this.container.style.whiteSpace = 'pre';
+    this.container.style.pointerEvents = 'none';
     this.container.style.zIndex = '1000';
     this.container.setAttribute('aria-live', 'polite');
     document.body.appendChild(this.container);
   }
 
-  update(deltaMs: number) {
+  update(frameMs: number, state: GameState, snapshot?: TelemetrySnapshot) {
     this.frameCount += 1;
     const now = performance.now();
     const elapsed = now - this.lastSample;
@@ -265,22 +283,127 @@ class DebugOverlay {
 
     const memoryInfo = (performance as PerformanceWithMemory).memory;
     const memoryText = memoryInfo
-      ? ` | Mem: ${(memoryInfo.usedJSHeapSize / 1048576).toFixed(1)} / ${(
+      ? ` | Mem ${(memoryInfo.usedJSHeapSize / 1048576).toFixed(1)} / ${(
           memoryInfo.jsHeapSizeLimit / 1048576
         ).toFixed(0)} MB`
       : '';
 
-    this.container.textContent = `FPS: ${this.fps.toFixed(1)} | Frame: ${deltaMs.toFixed(
-      2
-    )} ms${memoryText}`;
+    const telemetrySnapshot = snapshot ?? this.telemetry.snapshot(state);
+    const lines: string[] = [];
+    lines.push(`FPS ${this.fps.toFixed(1)} | Frame ${frameMs.toFixed(2)} ms${memoryText}`);
+    lines.push(this.formatPerformanceLine(telemetrySnapshot));
+
+    const seasonLine = this.formatSeasonLine(telemetrySnapshot);
+    if (seasonLine) {
+      lines.push(seasonLine);
+    }
+
+    lines.push(this.formatHomesteadLine(telemetrySnapshot));
+    lines.push(this.formatWeatherLine(telemetrySnapshot));
+
+    const resourceLine = this.formatResourceLine(telemetrySnapshot);
+    if (resourceLine) {
+      lines.push(resourceLine);
+    }
+
+    const dailyLine = this.formatDailyLine(telemetrySnapshot);
+    if (dailyLine) {
+      lines.push(dailyLine);
+    }
+
+    if (telemetrySnapshot.recentEvents.length > 0) {
+      lines.push(`Recent ${telemetrySnapshot.recentEvents.slice(0, 4).join(' | ')}`);
+    }
+
+    this.container.textContent = lines.join('\n');
+  }
+
+  private formatSeasonLine(snapshot: TelemetrySnapshot): string | null {
+    const { season } = snapshot;
+    const progress = (season.progress * 100).toFixed(0);
+    const remaining = Number.isFinite(season.remainingSeconds)
+      ? this.formatDuration(season.remainingSeconds)
+      : '∞';
+    return `Season ${season.id} • Y${season.year}C${season.cycle} • ${progress}% • Next ${remaining}`;
+  }
+
+  private formatPerformanceLine(snapshot: TelemetrySnapshot): string {
+    const perf = snapshot.performance;
+    if (perf.sampleCount === 0) {
+      return 'Perf samples pending…';
+    }
+    return `Perf avg:${perf.averageFrameMs.toFixed(2)}ms p95:${perf.percentile95FrameMs
+      .toFixed(2)}ms worst:${perf.worstFrameMs.toFixed(2)}ms sim:${perf.averageSimMs.toFixed(2)}ms`;
+  }
+
+  private formatHomesteadLine(snapshot: TelemetrySnapshot): string {
+    const staminaPercent = Math.round(snapshot.homestead.staminaRatio * 100);
+    const exhausted = snapshot.homestead.exhausted ? ' (!)' : '';
+    return `Day ${snapshot.homestead.day} @ ${snapshot.homestead.clock} | Stamina ${staminaPercent}%${exhausted}`;
+  }
+
+  private formatWeatherLine(snapshot: TelemetrySnapshot): string {
+    const delta = snapshot.homestead.moistureDeltaPerSecond;
+    const formattedDelta = delta === 0 ? '0.000' : delta.toFixed(3);
+    return `Weather ${snapshot.homestead.weather} (${formattedDelta} moisture/s)`;
+  }
+
+  private formatResourceLine(snapshot: TelemetrySnapshot): string | null {
+    const entries = Object.entries(snapshot.resources.totals) as [ResourceId, number][];
+    if (entries.length === 0) {
+      return null;
+    }
+    entries.sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
+    const parts = entries.slice(0, 4).map(([resource, total]) => {
+      const rate = snapshot.resources.ratesPerMinute[resource] ?? 0;
+      return `${resource}:${Math.floor(total)} (${this.formatRate(rate)}/m)`;
+    });
+    return `Res ${parts.join(' | ')}`;
+  }
+
+  private formatDailyLine(snapshot: TelemetrySnapshot): string {
+    const daily = snapshot.daily;
+    const outputs = this.formatProductionOutputs(daily.productionOutputs);
+    const base = `Daily build:${daily.buildsCompleted} crop:${daily.cropsMatured}/${daily.cropsWithered} prod:${daily.productionCycles}`;
+    return outputs ? `${base} • ${outputs}` : base;
+  }
+
+  private formatProductionOutputs(outputs: Record<ResourceId, number>): string | null {
+    const entries = Object.entries(outputs) as [ResourceId, number][];
+    if (entries.length === 0) {
+      return null;
+    }
+    entries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+    return entries
+      .slice(0, 3)
+      .map(([resource, amount]) => `${resource}:${amount.toFixed(1)}`)
+      .join(', ');
+  }
+
+  private formatRate(rate: number): string {
+    if (Math.abs(rate) < 0.05) {
+      return '0.0';
+    }
+    const sign = rate >= 0 ? '+' : '-';
+    return `${sign}${Math.abs(rate).toFixed(1)}`;
+  }
+
+  private formatDuration(seconds: number): string {
+    if (!Number.isFinite(seconds)) {
+      return '∞';
+    }
+    const clamped = Math.max(0, seconds);
+    const minutes = Math.floor(clamped / 60);
+    const secs = Math.floor(clamped % 60);
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 }
-
-const debugOverlay = new DebugOverlay();
 
 class IsoScene extends Phaser.Scene {
   state: GameState = defaultState();
   tables!: DataTables;
+  private readonly telemetry = new TelemetryTracker();
+  private readonly debugOverlay = new DebugOverlay(this.telemetry);
   private accum = 0;
   private ground!: Phaser.GameObjects.Container;
   private fieldTiles!: Phaser.GameObjects.Container;
@@ -294,6 +417,9 @@ class IsoScene extends Phaser.Scene {
   private buildMode!: BuildModeController;
   private homestead!: HomesteadController;
   private detachHudListener?: () => void;
+  private playtestConsentHandler?: () => void;
+  private downloadPerfHandler?: () => void;
+  private exportHandler?: () => void;
 
   preload() {
     const g = this.add.graphics({ x: 0, y: 0 });
@@ -428,6 +554,7 @@ class IsoScene extends Phaser.Scene {
     }
 
     initWorld(this.state);
+    this.telemetry.reset(this.state);
     this.occupancy = createOccupancyMap();
 
     const cam = this.cameras.main;
@@ -545,18 +672,47 @@ class IsoScene extends Phaser.Scene {
     gameEvents.addEventListener(EVENT_RESOURCES_UPDATED, listener);
     this.detachHudListener = () => gameEvents.removeEventListener(EVENT_RESOURCES_UPDATED, listener);
     updateResourcesHud(this.state.resources);
+
+    if (telemetryOptInCheckbox) {
+      telemetryOptInCheckbox.checked = getPlaytestTelemetryOptIn();
+      this.playtestConsentHandler = () => {
+        setPlaytestTelemetryOptIn(Boolean(telemetryOptInCheckbox.checked));
+        this.updatePlaytestStatus();
+      };
+      telemetryOptInCheckbox.addEventListener('change', this.playtestConsentHandler);
+    }
+
+    if (downloadPerfButton) {
+      this.downloadPerfHandler = () => this.handleDownloadPerf();
+      downloadPerfButton.addEventListener('click', this.downloadPerfHandler);
+    }
+
+    if (exportTownshipButton) {
+      this.exportHandler = () => this.handleExport();
+      exportTownshipButton.addEventListener('click', this.exportHandler);
+    }
+
+    this.updatePlaytestStatus();
   }
 
   update(_time: number, deltaMs: number) {
+    const frameStart = performance.now();
     this.accum += deltaMs / 1000;
+    let simMs = 0;
+    let steps = 0;
     while (this.accum >= SIM_DT) {
+      const tickStart = performance.now();
       const events = tick(
         this.state,
         SIM_DT,
         this.buildingDefs,
         this.tables.recipes,
-        this.tables.crops
+        this.tables.crops,
+        this.tables.livestock
       );
+      this.telemetry.recordTick(this.state, events, SIM_DT);
+      simMs += performance.now() - tickStart;
+      steps += 1;
       if (events.length > 0) {
         const last = events[events.length - 1];
         this.registry.set('lastEvent', last.type);
@@ -564,13 +720,17 @@ class IsoScene extends Phaser.Scene {
       this.accum -= SIM_DT;
     }
 
-    debugOverlay.update(deltaMs);
+    const frameDuration = performance.now() - frameStart;
+    this.telemetry.recordFrame(frameDuration, simMs, steps);
+    const snapshot = this.telemetry.snapshot(this.state);
+    this.debugOverlay.update(frameDuration, this.state, snapshot);
 
     updateResourceDisplay(this.state.resources);
 
     this.syncSeasonState();
     this.homestead.updateField();
     this.updateHomesteadHud();
+    this.updatePlaytestStatus(snapshot);
 
     this.props.list.sort((a, b) => {
       const aImg = a as Phaser.GameObjects.Image;
@@ -733,7 +893,95 @@ class IsoScene extends Phaser.Scene {
 
   destroy(fromScene?: boolean) {
     this.detachHudListener?.();
+    if (telemetryOptInCheckbox && this.playtestConsentHandler) {
+      telemetryOptInCheckbox.removeEventListener('change', this.playtestConsentHandler);
+      this.playtestConsentHandler = undefined;
+    }
+    if (downloadPerfButton && this.downloadPerfHandler) {
+      downloadPerfButton.removeEventListener('click', this.downloadPerfHandler);
+      this.downloadPerfHandler = undefined;
+    }
+    if (exportTownshipButton && this.exportHandler) {
+      exportTownshipButton.removeEventListener('click', this.exportHandler);
+      this.exportHandler = undefined;
+    }
     super.destroy(fromScene);
+  }
+
+  private updatePlaytestStatus(snapshot?: TelemetrySnapshot) {
+    if (!playtestStatusEl) {
+      return;
+    }
+    const optedIn = getPlaytestTelemetryOptIn();
+    if (!optedIn) {
+      playtestStatusEl.textContent = 'Telemetry opt-in required before exporting.';
+      exportTownshipButton?.setAttribute('disabled', 'true');
+      downloadPerfButton?.setAttribute('disabled', 'true');
+      return;
+    }
+
+    exportTownshipButton?.removeAttribute('disabled');
+    downloadPerfButton?.removeAttribute('disabled');
+    const events = peekPlaytestEvents();
+    const perf = (snapshot ?? this.telemetry.snapshot(this.state)).performance;
+    playtestStatusEl.textContent = `Opted in • ${perf.sampleCount} perf samples • ${events.length} buffered events.`;
+  }
+
+  private handleDownloadPerf() {
+    if (!getPlaytestTelemetryOptIn()) {
+      this.setPlaytestStatus('Enable telemetry opt-in to download performance logs.');
+      return;
+    }
+    const events = flushPlaytestEvents();
+    if (events.length === 0) {
+      this.setPlaytestStatus('No buffered telemetry samples yet. Play a bit longer.');
+      return;
+    }
+
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      performance: this.telemetry.snapshot(this.state).performance,
+      events
+    };
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `homestead-perf-${Date.now()}.json`;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    this.setPlaytestStatus(`Downloaded ${events.length} telemetry events.`);
+    this.updatePlaytestStatus();
+  }
+
+  private handleExport() {
+    if (!getPlaytestTelemetryOptIn()) {
+      this.setPlaytestStatus('Enable telemetry opt-in before exporting to Township.');
+      return;
+    }
+
+    const payload = exportHomesteadToTownship(this.state);
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `homestead-export-${payload.seed}.json`;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(json).length;
+    recordExportGenerated(bytes, payload.township.shipments.length);
+    this.setPlaytestStatus(`Exported snapshot with ${payload.township.shipments.length} shipments.`);
+    this.updatePlaytestStatus();
+  }
+
+  private setPlaytestStatus(message: string) {
+    if (playtestStatusEl) {
+      playtestStatusEl.textContent = message;
+    }
   }
 }
 

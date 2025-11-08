@@ -1,0 +1,22 @@
+{
+  "chicken": {
+    "label": "Hen",
+    "growthDays": 3,
+    "feedResource": "wheat",
+    "feedPerDay": 1,
+    "produceResource": "eggs",
+    "produceAmount": 2,
+    "produceIntervalSeconds": 420,
+    "hungerToleranceDays": 1.5
+  },
+  "cow": {
+    "label": "Dairy Cow",
+    "growthDays": 6,
+    "feedResource": "food",
+    "feedPerDay": 3,
+    "produceResource": "milk",
+    "produceAmount": 3,
+    "produceIntervalSeconds": 600,
+    "hungerToleranceDays": 2.5
+  }
+}

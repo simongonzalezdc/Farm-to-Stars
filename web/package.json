@@ -12,7 +12,11 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier --check \"src/**/*.{ts,tsx}\"",
-    "format:fix": "prettier --write \"src/**/*.{ts,tsx}\""
+    "format:fix": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "migrate": "node scripts/migrate/run.mjs",
+    "build:rc": "node scripts/release/createRcBuild.mjs",
+    "build:playtest": "node scripts/release/buildPlaytest.mjs",
+    "profile:homestead": "node scripts/profile/profileHomestead.mjs"
   },
   "dependencies": {
     "phaser": "^3.80.0",
