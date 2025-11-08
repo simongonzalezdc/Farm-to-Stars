@@ -83,6 +83,15 @@ export interface ToolDefinition {
 
 export type ToolsTable = Record<ToolId, ToolDefinition>;
 
+export type ToolPerkId = string;
+
+export interface ToolPerkProgress {
+  uses: number;
+  unlocked: ToolPerkId[];
+}
+
+export type ToolMasteryState = Record<ToolId, ToolPerkProgress>;
+
 export type Resources = Record<ResourceId, number>;
 
 export interface ResourceStorageSlot {
@@ -244,6 +253,7 @@ export interface HomesteadState {
   stamina: StaminaState;
   weather: WeatherState;
   livestock: LivestockHerdState;
+  toolMastery: ToolMasteryState;
 }
 
 export interface LivestockAnimalState {
@@ -324,7 +334,8 @@ export type GameEvent =
   | { type: 'livestock.starved'; livestockId: number; speciesId: LivestockId }
   | { type: 'weather.event.started'; eventId: string; eventType: WeatherEventType; intensity: number }
   | { type: 'weather.event.ended'; eventId: string; eventType: WeatherEventType }
-  | { type: 'mail.delivered'; messageId: number; attachments: Partial<Record<ResourceId, number>> };
+  | { type: 'mail.delivered'; messageId: number; attachments: Partial<Record<ResourceId, number>> }
+  | { type: 'tool.perk.unlocked'; perkId: ToolPerkId; toolId: ToolId; uses: number };
 
 export const CURRENT_SCHEMA_VERSION = 6;
 
@@ -480,7 +491,8 @@ export function createDefaultHomesteadState(): HomesteadState {
     time: createDefaultTimeState(),
     stamina: createDefaultStaminaState(),
     weather: createDefaultWeatherState(),
-    livestock: createDefaultLivestockState()
+    livestock: createDefaultLivestockState(),
+    toolMastery: {}
   };
 }
 
