@@ -1,6 +1,34 @@
 {
-  "road":    {"category":"infrastructure","buildTime":2.0,"size":[1,1],"effects":{"moveMul":1.3}},
-  "plot":    {"category":"farm","buildTime":3.0,"size":[1,1],"production":"wheat"},
-  "cottage": {"category":"housing","buildTime":8.0,"size":[2,2],"effects":{"popCap":4}},
-  "market":  {"category":"commerce","buildTime":6.0,"size":[2,2],"production":"sell"}
+  "road": {
+    "label": "Road",
+    "category": "infrastructure",
+    "buildTime": 2.0,
+    "size": [1, 1],
+    "cost": { "stone": 1 },
+    "effects": { "moveMul": 1.3 }
+  },
+  "plot": {
+    "label": "Farm Plot",
+    "category": "farm",
+    "buildTime": 3.0,
+    "size": [1, 1],
+    "cost": { "wood": 6 },
+    "production": "wheat"
+  },
+  "cottage": {
+    "label": "Cottage",
+    "category": "housing",
+    "buildTime": 8.0,
+    "size": [2, 2],
+    "cost": { "wood": 18, "stone": 6 },
+    "effects": { "popCap": 4 }
+  },
+  "market": {
+    "label": "Market",
+    "category": "commerce",
+    "buildTime": 6.0,
+    "size": [2, 2],
+    "cost": { "wood": 12, "stone": 8 },
+    "production": "sell"
+  }
 }

@@ -98,19 +98,31 @@ function validateBuildingsTable(raw: unknown): BuildingsTable {
       throw new Error(`Building "${key}" must be an object.`);
     }
 
+    const label = value.label;
     const category = value.category;
     const buildTime = value.buildTime;
     const size = value.size;
     const effects = value.effects;
     const production = value.production;
+    const cost = value.cost;
 
-    if (!isString(category) || !isNumber(buildTime) || !Array.isArray(size) || size.length !== 2) {
+    if (!isNumber(buildTime) || !Array.isArray(size) || size.length !== 2) {
       throw new Error(`Building "${key}" is missing required fields.`);
     }
 
     const [width, height] = size;
     if (!isNumber(width) || !isNumber(height)) {
       throw new Error(`Building "${key}" has invalid size tuple.`);
+    }
+
+    let normalizedLabel = isString(label) ? label : key;
+    if (!isString(label)) {
+      normalizedLabel = key.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+
+    const normalizedCategory = isString(category) ? category : undefined;
+    if (category !== undefined && !normalizedCategory) {
+      throw new Error(`Building "${key}" category must be a string if provided.`);
     }
 
     let normalizedEffects: BuildingEffects | undefined;
@@ -132,12 +144,30 @@ function validateBuildingsTable(raw: unknown): BuildingsTable {
       throw new Error(`Building "${key}" production must be a string.`);
     }
 
+    let normalizedCost: BuildingDefinition['cost'];
+    if (cost !== undefined) {
+      if (!isRecord(cost)) {
+        throw new Error(`Building "${key}" cost must be an object map.`);
+      }
+      const entries: [string, number][] = [];
+      for (const [resource, amount] of Object.entries(cost)) {
+        if (!isNumber(amount)) {
+          throw new Error(`Building "${key}" cost for "${resource}" must be numeric.`);
+        }
+        entries.push([resource, amount]);
+      }
+      normalizedCost = Object.fromEntries(entries);
+    }
+
     table[key] = {
-      category,
+      id: key,
+      label: normalizedLabel,
       buildTime,
-      size: [width, height],
+      footprint: { w: width, h: height },
+      ...(normalizedCategory ? { category: normalizedCategory } : {}),
       ...(normalizedEffects ? { effects: normalizedEffects } : {}),
-      ...(production ? { production } : {})
+      ...(production ? { recipeId: production } : {}),
+      ...(normalizedCost ? { cost: normalizedCost } : {})
     };
   }
 
