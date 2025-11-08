@@ -1,0 +1,125 @@
+:root {
+  --build-hud-bg-top: #10182b;
+  --build-hud-bg-bottom: #0c1221;
+  --build-hud-border: rgba(148, 163, 184, 0.38);
+  --build-hud-shadow: 0 18px 36px rgba(8, 12, 24, 0.55);
+  --build-text-primary: #f8fafc;
+  --build-text-secondary: #dbeafe;
+  --build-text-muted: #cbd5f5;
+  --build-button-border: rgba(148, 197, 255, 0.3);
+  --build-button-bg: linear-gradient(145deg, #1b2a42, #172235);
+  --build-button-bg-hover: linear-gradient(145deg, #253652, #1e2d45);
+  --build-button-bg-active: linear-gradient(145deg, #1f3f75, #1a3473);
+  --build-focus-ring: #38bdf8;
+  --build-info-surface: #102b46;
+  --build-info-border: #38bdf8;
+  --build-info-text: #cce9ff;
+  --build-warn-surface: #42260a;
+  --build-warn-border: #f59e0b;
+  --build-warn-text: #fde68a;
+  --build-error-surface: #3b0a17;
+  --build-error-border: #f87171;
+  --build-error-text: #fecaca;
+  --build-success-surface: #0f2f1f;
+  --build-success-border: #22c55e;
+  --build-success-text: #bbf7d0;
+}
+
+.hud {
+  background: linear-gradient(135deg, var(--build-hud-bg-top), var(--build-hud-bg-bottom));
+  border-color: var(--build-hud-border);
+  box-shadow: var(--build-hud-shadow);
+  color: var(--build-text-primary);
+}
+
+.hud h2 {
+  color: var(--build-text-secondary);
+  letter-spacing: 0.14em;
+}
+
+.hud h2::before {
+  background: var(--build-focus-ring);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.75);
+}
+
+.hud b {
+  color: var(--build-text-primary);
+}
+
+.hud span,
+.hud small {
+  color: var(--build-text-muted);
+}
+
+.hud button {
+  background: var(--build-button-bg);
+  border-color: var(--build-button-border);
+  color: var(--build-text-primary);
+  transition: transform 150ms ease, box-shadow 150ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.hud button:hover,
+.hud button:focus-visible {
+  background: var(--build-button-bg-hover);
+  border-color: rgba(96, 165, 250, 0.65);
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.55);
+  transform: translateY(-1px);
+}
+
+.hud button:focus-visible {
+  outline: 2px solid var(--build-focus-ring);
+  outline-offset: 2px;
+}
+
+.hud button[aria-pressed='true'] {
+  background: var(--build-button-bg-active);
+  border-color: rgba(96, 165, 250, 0.8);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.45);
+}
+
+.hud .feedback {
+  background: var(--build-info-surface);
+  border-color: var(--build-info-border);
+  color: var(--build-info-text);
+}
+
+.hud .feedback[data-tone='warn'] {
+  background: var(--build-warn-surface);
+  border-color: var(--build-warn-border);
+  color: var(--build-warn-text);
+}
+
+.hud .feedback[data-tone='error'] {
+  background: var(--build-error-surface);
+  border-color: var(--build-error-border);
+  color: var(--build-error-text);
+}
+
+.hud .feedback[data-tone='success'] {
+  background: var(--build-success-surface);
+  border-color: var(--build-success-border);
+  color: var(--build-success-text);
+}
+
+#selectedCost[data-state='idle'] {
+  color: var(--build-text-muted);
+}
+
+#selectedCost[data-state='warn'] {
+  color: #fcd34d;
+}
+
+#selectedCost[data-state='ok'] {
+  color: #4ade80;
+}
+
+@media (pointer: coarse) {
+  .hud button {
+    font-size: 15px;
+    padding: 10px 16px;
+  }
+}
+
+button {
+  font-family: inherit;
+}
