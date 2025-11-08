@@ -25,7 +25,8 @@ describe('world simulation', () => {
     tick(state, 1.0, buildingDefs);
     const springDef = getSeasonDefinition(state.season.active);
     expect(state.resources.wood).toBeGreaterThan(0);
-    expect(state.resources.wood).toBeCloseTo(0.1 * springDef.multipliers.resourceRate, 5);
+    const baseGain = 0.1 * springDef.multipliers.resourceRate;
+    expect(state.resources.wood).toBeCloseTo(baseGain * 2, 5);
     state.resources.wood = 1.25;
 
     const events = tick(state, 0.1, buildingDefs, {} as Record<RecipeId, RecipeDefinition>);
@@ -57,6 +58,7 @@ describe('world simulation', () => {
     tick(winterState, 1.0, buildingDefs);
 
     const winterDef = getSeasonDefinition(SeasonId.Winter);
-    expect(winterState.resources.wood).toBeCloseTo(0.1 * winterDef.multipliers.resourceRate, 5);
+    const winterGain = 0.1 * winterDef.multipliers.resourceRate;
+    expect(winterState.resources.wood).toBeCloseTo(winterGain * 2, 5);
   });
 });

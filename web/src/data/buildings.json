@@ -2,33 +2,33 @@
   "road": {
     "label": "Road",
     "category": "infrastructure",
-    "buildTime": 2.0,
+    "buildTime": 1.5,
     "size": [1, 1],
-    "cost": { "stone": 1 },
+    "cost": { "wood": 4 },
     "effects": { "moveMul": 1.3 }
   },
   "plot": {
     "label": "Farm Plot",
     "category": "farm",
-    "buildTime": 3.0,
+    "buildTime": 4.0,
     "size": [1, 1],
-    "cost": { "wood": 6 },
+    "cost": { "wood": 10 },
     "production": "wheat"
   },
   "cottage": {
     "label": "Cottage",
     "category": "housing",
-    "buildTime": 8.0,
+    "buildTime": 9.0,
     "size": [2, 2],
-    "cost": { "wood": 18, "stone": 6 },
+    "cost": { "wood": 20, "coins": 40 },
     "effects": { "popCap": 4 }
   },
   "market": {
     "label": "Market",
     "category": "commerce",
-    "buildTime": 6.0,
+    "buildTime": 5.0,
     "size": [2, 2],
-    "cost": { "wood": 12, "stone": 8 },
+    "cost": { "wood": 14 },
     "production": "sell"
   }
 }
