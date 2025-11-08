@@ -10,8 +10,7 @@ export default defineConfig({
       includeAssets: ['icons/icon.svg'],
       workbox: {
         navigateFallback: 'index.html',
-        cleanupOutdatedCaches: true,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest,wav}']
+        cleanupOutdatedCaches: true
       },
       devOptions: {
         enabled: true,

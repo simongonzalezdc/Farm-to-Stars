@@ -319,6 +319,7 @@ export class BuildModeController {
       playInvalidPlacement();
       this.setFeedback(this.describeIssues(placement), 'error', 1400);
       this.drawFootprint(x, y, def, placement.issues);
+      playInvalidPlacementSfx();
       return;
     }
 
@@ -344,7 +345,7 @@ export class BuildModeController {
     };
     this.state.buildQueue.push(job);
     markJob(this.occupancy, x, y, def.footprint.w, def.footprint.h, this.selected, jobId);
-    playPlace();
+    playPlacementSfx();
 
     this.onJobQueued(job);
 

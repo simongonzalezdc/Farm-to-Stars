@@ -49,12 +49,11 @@ const seasonTimerEl = document.getElementById('seasonTimer')!;
 const buildButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-building]'));
 const installButton = document.getElementById('installApp') as HTMLButtonElement | null;
 
-(document.getElementById('installAudio') as HTMLButtonElement).addEventListener(
-  'click',
-  enableAudio
-);
-(document.getElementById('mute') as HTMLButtonElement).addEventListener('click', () => {
-  const muted = toggleMute();
+(document.getElementById('installAudio') as HTMLButtonElement).addEventListener('click', () => {
+  void enableAudio();
+});
+(document.getElementById('mute') as HTMLButtonElement).addEventListener('click', async () => {
+  const muted = await toggleMute();
   (document.getElementById('mute') as HTMLButtonElement).setAttribute(
     'aria-pressed',
     String(muted)

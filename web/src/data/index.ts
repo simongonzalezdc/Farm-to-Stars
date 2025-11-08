@@ -198,7 +198,6 @@ function validateRecipesTable(raw: unknown): RecipesTable {
       id: key,
       duration,
       inputs: normalizeRecipeIO(key, 'inputs', inputs),
-      duration,
       outputs: normalizeRecipeIO(key, 'outputs', outputs),
       outputCaps: normalizeOutputCaps(key, outputCaps)
     };
