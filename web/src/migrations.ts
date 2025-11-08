@@ -22,6 +22,7 @@ import {
   type BackgroundJobQueueState,
   type BuildJob,
   type ConstructionJob,
+  type Orientation,
   type CropTileState,
   type FieldState,
   type GameState,
@@ -35,6 +36,8 @@ import {
   type ResourceId,
   type ResourcesTable,
   type ResourceStorageState,
+  type ToolPerkId,
+  type ToolId,
   type SaveV0,
   type SaveV1,
   type SaveV2,
@@ -105,6 +108,7 @@ function isSaveV0(candidate: unknown): candidate is SaveV0 {
 function cloneStructure(structure: SaveV3['structures'][number]): SaveV3['structures'][number] {
   return {
     ...structure,
+    orientation: coerceOrientation(structure.orientation, 0),
     footprint: { ...structure.footprint }
   };
 }
@@ -115,7 +119,7 @@ function normalizeStructures(
 ): SaveV3['structures'] {
   const baseFallback = fallback.length > 0
     ? cloneStructure(fallback[0])
-    : { id: 0, type: 'cottage', x: 0, y: 0, footprint: { w: 1, h: 1 } };
+    : { id: 0, type: 'cottage', x: 0, y: 0, footprint: { w: 1, h: 1 }, orientation: 0 };
 
   if (!Array.isArray(candidate)) {
     return fallback.map(cloneStructure);
@@ -146,7 +150,9 @@ function normalizeStructures(
           }
         : { ...source.footprint };
 
-    return { id, type, x, y, footprint };
+    const orientation = coerceOrientation((structure as { orientation?: unknown })?.orientation, source.orientation);
+
+    return { id, type, x, y, footprint, orientation };
   });
 }
 
@@ -159,6 +165,7 @@ function normalizeBuildQueue(candidate: SaveV3['buildQueue'] | unknown): SaveV3[
     type: typeof job?.type === 'string' ? job.type : 'cottage',
     x: typeof job?.x === 'number' ? job.x : 0,
     y: typeof job?.y === 'number' ? job.y : 0,
+    orientation: coerceOrientation((job as { orientation?: unknown })?.orientation),
     footprint:
       job && typeof job === 'object' && job.footprint
         ? {
@@ -184,7 +191,8 @@ function convertBuildJobToConstructionJob(job: BuildJob): ConstructionJob {
     buildingId: job.type,
     duration: job.duration,
     remaining: job.remaining,
-    footprint: job.footprint
+    footprint: job.footprint,
+    orientation: job.orientation
   };
 }
 
@@ -210,6 +218,7 @@ function normalizeConstructionQueue(
       typeof job?.remaining === 'number' && Number.isFinite(job.remaining)
         ? job.remaining
         : buildQueueFallback[index]?.remaining ?? 0,
+    orientation: coerceOrientation((job as { orientation?: unknown })?.orientation, buildQueueFallback[index]?.orientation ?? 0),
     footprint:
       job && typeof job === 'object' && job.footprint
         ? {

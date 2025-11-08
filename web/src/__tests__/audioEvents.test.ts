@@ -56,6 +56,7 @@ describe('world audio events', () => {
           x: 4,
           y: 2,
           footprint: { w: 1, h: 1 },
+          orientation: 0,
           duration: 1,
           remaining: 0.05,
           status: 'building'
@@ -67,7 +68,8 @@ describe('world audio events', () => {
           buildingId: 'cottage',
           duration: 1,
           remaining: 0.05,
-          footprint: { w: 1, h: 1 }
+          footprint: { w: 1, h: 1 },
+          orientation: 0
         }
       ]
     };

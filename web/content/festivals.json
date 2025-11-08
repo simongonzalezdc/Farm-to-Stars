@@ -1,0 +1,79 @@
+{
+  "spring": [
+    {
+      "id": "spring_wake",
+      "name": "Spring Wake",
+      "day": 10,
+      "description": "Seed swap, planting ritual, and community cookout to kick off the growing season.",
+      "activities": ["seed_blessing", "seed_exchange", "dusk_feast"],
+      "questHook": {
+        "id": "quest.spring_wake.community_table",
+        "summary": "Contribute three different crops to the communal table before dusk.",
+        "requirements": [
+          { "type": "deliver", "resource": "wheat", "amount": 3 },
+          { "type": "deliver", "resource": "berries", "amount": 5 },
+          { "type": "deliver", "resource": "orchid petals", "amount": 2 }
+        ],
+        "reward": { "resource": "festival_token", "amount": 4 }
+      },
+      "audioCue": "music.spring_wake.theme"
+    }
+  ],
+  "summer": [
+    {
+      "id": "starlight_soiree",
+      "name": "Starlight Soirée",
+      "day": 18,
+      "description": "Night market lit by lanterns with telescope workshops and rare seed auctions.",
+      "activities": ["lantern_lighting", "telescope_demo", "rare_seed_auction"],
+      "questHook": {
+        "id": "quest.summer.starlight_charting",
+        "summary": "Craft a star chart using Starlight observatory readings.",
+        "requirements": [
+          { "type": "craft", "recipe": "star_chart", "count": 1 },
+          { "type": "deliver", "resource": "orchid petals", "amount": 4 }
+        ],
+        "reward": { "resource": "festival_token", "amount": 6 }
+      },
+      "audioCue": "music.starlight_soiree.waltz"
+    }
+  ],
+  "autumn": [
+    {
+      "id": "comet_harvest",
+      "name": "Comet Harvest",
+      "day": 22,
+      "description": "Skywatching parade celebrating the comet corn bloom with cooperative cooking challenges.",
+      "activities": ["meteor_parade", "comet_corn_roast", "cooperative_cookoff"],
+      "questHook": {
+        "id": "quest.autumn.comet_cookoff",
+        "summary": "Prepare three comet corn dishes for the judges.",
+        "requirements": [
+          { "type": "cook", "recipe": "comet_corn_succotash", "count": 2 },
+          { "type": "cook", "recipe": "caramel_comet_corn", "count": 1 }
+        ],
+        "reward": { "resource": "festival_token", "amount": 5 }
+      },
+      "audioCue": "music.comet_harvest.procession"
+    }
+  ],
+  "winter": [
+    {
+      "id": "lunar_vigil",
+      "name": "Lunar Vigil",
+      "day": 26,
+      "description": "Quiet moonlit ceremony featuring luminous lilies and hearthside storytelling.",
+      "activities": ["moonlit_procession", "lily_offering", "story_circle"],
+      "questHook": {
+        "id": "quest.winter.lily_guardian",
+        "summary": "Cultivate and deliver Lunar Lily nectar for the shrine keeper.",
+        "requirements": [
+          { "type": "harvest", "crop": "lunar_lily", "count": 3 },
+          { "type": "deliver", "resource": "lily nectar", "amount": 3 }
+        ],
+        "reward": { "resource": "festival_token", "amount": 7 }
+      },
+      "audioCue": "music.lunar_vigil.chant"
+    }
+  ]
+}
