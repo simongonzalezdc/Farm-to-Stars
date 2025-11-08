@@ -3,7 +3,7 @@ import { gridToScreen, TILE_W, TILE_H } from './iso';
 import { defaultState, type GameState } from './types';
 import { load, save } from './storage';
 import { enableAudio, toggleMute } from './audio';
-import { tick, fmt } from './world';
+import { tick, fmt, initWorld } from './world';
 
 const woodEl = document.getElementById('wood')!;
 const stoneEl = document.getElementById('stone')!;
@@ -51,6 +51,8 @@ class IsoScene extends Phaser.Scene {
   async create() {
     const loaded = await load();
     this.state = loaded ?? defaultState();
+
+    initWorld(this.state);
 
     const cam = this.cameras.main;
     cam.setBackgroundColor('#0e0e10');
