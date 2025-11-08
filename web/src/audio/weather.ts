@@ -53,6 +53,18 @@ export function createWeatherAmbience(
   const rainAutoFilter = new Tone.AutoFilter({ frequency: 0.3, depth: 0.6 }).start();
   rainNoise.connect(rainFilter).connect(rainAutoFilter).connect(rainGain);
 
+  const thunderGain = new Tone.Gain(0).connect(destination);
+  const thunderFilter = new Tone.Filter({ type: 'lowpass', frequency: 500, Q: 0.8 }).connect(thunderGain);
+  const thunderEnvelope = new Tone.AmplitudeEnvelope({ attack: 0.08, decay: 0.7, sustain: 0, release: 1.8 });
+  const thunderNoise = new Tone.Noise('brown').start();
+  thunderNoise.connect(thunderEnvelope).connect(thunderFilter);
+
+  const rumble = new Tone.Oscillator({ type: 'sine', frequency: 42, volume: -18 }).start();
+  const rumbleGain = new Tone.Gain(0).connect(destination);
+  rumble.connect(rumbleGain);
+
+  let thunderCooldown = 0;
+
   let weather: WeatherType = 'clear';
   const activeEvents = new Map<string, ActiveEventState>();
   let lastDuck = 0;
@@ -75,6 +87,28 @@ export function createWeatherAmbience(
 
   function setGain(gain: Tone.Gain, value: number, ramp: number) {
     gain.gain.rampTo(clamp(value, 0, 1), Math.max(0.05, ramp));
+  }
+
+  function triggerThunder(intensity: number) {
+    const playable = shouldPlay();
+    const now = Tone.now();
+    if (!playable || now < thunderCooldown) {
+      return;
+    }
+    thunderCooldown = now + 2.5;
+    const clamped = clamp(intensity, 0.3, 1.2);
+    thunderEnvelope.triggerAttackRelease(1.9, now);
+    thunderFilter.frequency.cancelAndHoldAtTime(now);
+    thunderFilter.frequency.setValueAtTime(320, now);
+    thunderFilter.frequency.exponentialRampToValueAtTime(720 * clamped, now + 0.6);
+    thunderGain.gain.cancelAndHoldAtTime(now);
+    thunderGain.gain.setValueAtTime(0, now);
+    thunderGain.gain.linearRampToValueAtTime(0.55 * clamped, now + 0.18);
+    thunderGain.gain.linearRampToValueAtTime(0, now + 2.4);
+    rumbleGain.gain.cancelAndHoldAtTime(now);
+    rumbleGain.gain.setValueAtTime(0, now);
+    rumbleGain.gain.linearRampToValueAtTime(0.32 * clamped, now + 0.2);
+    rumbleGain.gain.linearRampToValueAtTime(0, now + 2.6);
   }
 
   function updateAmbience() {
@@ -131,6 +165,9 @@ export function createWeatherAmbience(
     if (debug) {
       console.debug('[audio] weather.event.start', detail);
     }
+    if (detail.eventType === 'lightning') {
+      triggerThunder(detail.intensity);
+    }
     updateAmbience();
   }
 
@@ -166,6 +203,12 @@ export function createWeatherAmbience(
       rainAutoFilter.dispose();
       rainGain.dispose();
       rainPan.dispose();
+      thunderEnvelope.dispose();
+      thunderNoise.dispose();
+      thunderFilter.dispose();
+      thunderGain.dispose();
+      rumble.dispose();
+      rumbleGain.dispose();
     }
   };
 }
