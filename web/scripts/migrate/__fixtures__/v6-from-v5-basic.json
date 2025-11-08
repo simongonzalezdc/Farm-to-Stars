@@ -1,0 +1,153 @@
+{
+  "v": 1,
+  "schemaVersion": 6,
+  "seed": 101,
+  "resources": {
+    "wood": 5,
+    "stone": 3,
+    "water": 0,
+    "food": 2,
+    "coins": 7,
+    "wheat": 0,
+    "potato": 0,
+    "berries": 0,
+    "fiber": 0,
+    "eggs": 0,
+    "milk": 0,
+    "letters": 0
+  },
+  "resourceStorage": {
+    "wood": {
+      "capacity": 9999,
+      "current": 5
+    },
+    "stone": {
+      "capacity": 9999,
+      "current": 3
+    },
+    "water": {
+      "capacity": 9999,
+      "current": 0
+    },
+    "food": {
+      "capacity": 9999,
+      "current": 2
+    },
+    "coins": {
+      "capacity": 999999,
+      "current": 7
+    },
+    "wheat": {
+      "capacity": 500,
+      "current": 0
+    },
+    "potato": {
+      "capacity": 500,
+      "current": 0
+    },
+    "berries": {
+      "capacity": 250,
+      "current": 0
+    },
+    "fiber": {
+      "capacity": 750,
+      "current": 0
+    },
+    "eggs": {
+      "capacity": 250,
+      "current": 0
+    },
+    "milk": {
+      "capacity": 250,
+      "current": 0
+    },
+    "letters": {
+      "capacity": 99,
+      "current": 0
+    }
+  },
+  "structures": [],
+  "buildQueue": [],
+  "constructionQueue": [],
+  "buildings": [],
+  "productionNodes": [],
+  "productionQueue": [],
+  "productionModifiers": {
+    "speedMultiplier": 1,
+    "outputMultiplier": 1
+  },
+  "nextBuildId": 1,
+  "nextBuildingInstanceId": 1,
+  "nextProductionNodeId": 1,
+  "season": {
+    "active": "spring",
+    "elapsed": 0,
+    "cycle": 0,
+    "year": 0
+  },
+  "homestead": {
+    "field": {
+      "width": 200,
+      "height": 200,
+      "tiles": {}
+    },
+    "time": {
+      "secondsPerDay": 900,
+      "elapsed": 0,
+      "day": 1
+    },
+    "stamina": {
+      "max": 100,
+      "current": 100,
+      "regenPerSecond": 12,
+      "exhausted": false
+    },
+    "weather": {
+      "current": "clear",
+      "duration": 180,
+      "elapsed": 0,
+      "moistureDeltaPerSecond": -0.005,
+      "events": {
+        "active": [],
+        "nextRollIn": 90,
+        "serial": 0
+      },
+      "rngState": 2654435769
+    },
+    "livestock": {
+      "animals": [
+        {
+          "id": 0,
+          "speciesId": "chicken",
+          "ageDays": 1,
+          "growth": 0.35,
+          "hunger": 0,
+          "produceProgress": 0,
+          "lastFedDay": 1,
+          "alive": true
+        },
+        {
+          "id": 1,
+          "speciesId": "cow",
+          "ageDays": 2,
+          "growth": 0.45,
+          "hunger": 0,
+          "produceProgress": 0,
+          "lastFedDay": 1,
+          "alive": true
+        }
+      ],
+      "nextAnimalId": 2
+    }
+  },
+  "mail": {
+    "nextId": 1,
+    "inbox": [],
+    "scheduled": [],
+    "lastGeneratedDay": 0
+  },
+  "jobQueue": {
+    "nextJobId": 1,
+    "jobs": []
+  }
+}

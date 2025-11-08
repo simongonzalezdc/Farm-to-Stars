@@ -1,0 +1,144 @@
+{
+  "perks": [
+    {
+      "id": "tool.hoe.apprentice",
+      "toolId": "hoe",
+      "title": "Apprentice Tiller",
+      "headline": "Soil work costs 10% less stamina.",
+      "description": "You've learned how to brace your shoulders and let the hoe's weight do the work.",
+      "milestone": {
+        "type": "uses",
+        "count": 25,
+        "label": "Till 25 soil tiles."
+      },
+      "modifiers": {
+        "staminaCostMultiplier": 0.9
+      }
+    },
+    {
+      "id": "tool.hoe.expert",
+      "toolId": "hoe",
+      "title": "Expert Furrow",
+      "headline": "Tilling drains 20% less stamina.",
+      "description": "Your swings stay compact and efficient, leaving perfect seed beds behind.",
+      "milestone": {
+        "type": "uses",
+        "count": 75,
+        "label": "Till 75 soil tiles."
+      },
+      "modifiers": {
+        "staminaCostMultiplier": 0.8
+      }
+    },
+    {
+      "id": "tool.hoe.maestro",
+      "toolId": "hoe",
+      "title": "Furrow Maestro",
+      "headline": "Reduce hoe stamina cost by 20% and shave off another point.",
+      "description": "You barely break a sweat while carving tidy rows across the homestead.",
+      "milestone": {
+        "type": "uses",
+        "count": 150,
+        "label": "Till 150 soil tiles."
+      },
+      "modifiers": {
+        "staminaCostMultiplier": 0.8,
+        "staminaCostDelta": -1
+      }
+    },
+    {
+      "id": "tool.wateringCan.apprentice",
+      "toolId": "wateringCan",
+      "title": "Measured Pour",
+      "headline": "Watering costs 10% less stamina.",
+      "description": "You pace each pour, saving energy for the rest of the field.",
+      "milestone": {
+        "type": "uses",
+        "count": 30,
+        "label": "Water 30 tilled tiles."
+      },
+      "modifiers": {
+        "staminaCostMultiplier": 0.9
+      }
+    },
+    {
+      "id": "tool.wateringCan.expert",
+      "toolId": "wateringCan",
+      "title": "Soaking Rhythm",
+      "headline": "Watering drains 20% less stamina and adds a moisture boost.",
+      "description": "Your steady tempo coaxes more from every drop.",
+      "milestone": {
+        "type": "uses",
+        "count": 90,
+        "label": "Water 90 tilled tiles."
+      },
+      "modifiers": {
+        "staminaCostMultiplier": 0.8,
+        "moistureDeltaBonus": 0.05
+      }
+    },
+    {
+      "id": "tool.wateringCan.maestro",
+      "toolId": "wateringCan",
+      "title": "Irrigation Virtuoso",
+      "headline": "Reduce watering stamina cost by 20% and add 0.1 extra moisture.",
+      "description": "Neighbors swear the soil perks up the moment you pass by.",
+      "milestone": {
+        "type": "uses",
+        "count": 180,
+        "label": "Water 180 tilled tiles."
+      },
+      "modifiers": {
+        "staminaCostMultiplier": 0.8,
+        "moistureDeltaBonus": 0.1
+      }
+    },
+    {
+      "id": "tool.sickle.apprentice",
+      "toolId": "sickle",
+      "title": "Clean Cut",
+      "headline": "Harvesting costs 10% less stamina.",
+      "description": "You separate stalks with a fluid flick of the wrist.",
+      "milestone": {
+        "type": "uses",
+        "count": 20,
+        "label": "Harvest 20 crops."
+      },
+      "modifiers": {
+        "staminaCostMultiplier": 0.9
+      }
+    },
+    {
+      "id": "tool.sickle.expert",
+      "toolId": "sickle",
+      "title": "Bundled Windfall",
+      "headline": "Harvesting drains 20% less stamina and yields 10% extra produce.",
+      "description": "You gather each crop in generous bundles without slowing down.",
+      "milestone": {
+        "type": "uses",
+        "count": 60,
+        "label": "Harvest 60 crops."
+      },
+      "modifiers": {
+        "staminaCostMultiplier": 0.8,
+        "yieldMultiplier": 1.1
+      }
+    },
+    {
+      "id": "tool.sickle.maestro",
+      "toolId": "sickle",
+      "title": "Starbound Harvester",
+      "headline": "Reduce harvesting stamina by 20% and boost yields by 20%.",
+      "description": "You sweep the field in sparkling arcs, leaving brimming baskets behind.",
+      "milestone": {
+        "type": "uses",
+        "count": 140,
+        "label": "Harvest 140 crops."
+      },
+      "modifiers": {
+        "staminaCostMultiplier": 0.8,
+        "yieldMultiplier": 1.2
+      }
+    }
+  ]
+}

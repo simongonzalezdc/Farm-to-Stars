@@ -1,0 +1,411 @@
+:root {
+  --hud-surface: rgba(13, 17, 23, 0.88);
+  --hud-surface-subtle: rgba(22, 28, 38, 0.78);
+  --hud-border: rgba(148, 163, 184, 0.35);
+  --hud-border-strong: rgba(148, 197, 255, 0.45);
+  --hud-elevation: 0 18px 42px rgba(8, 12, 24, 0.55);
+  --hud-radius: 16px;
+  --hud-gap: clamp(0.75rem, 1.5vw, 1.25rem);
+  --hud-text-primary: #f8fafc;
+  --hud-text-secondary: #cbd5f5;
+  --hud-text-muted: #94a3b8;
+  --hud-badge-muted-bg: rgba(148, 163, 184, 0.18);
+  --hud-badge-muted-text: #cbd5f5;
+  --hud-badge-accent-bg: rgba(56, 189, 248, 0.18);
+  --hud-badge-accent-text: #bae6fd;
+  --hud-badge-success-bg: rgba(34, 197, 94, 0.16);
+  --hud-badge-success-text: #bbf7d0;
+  --hud-progress-track: rgba(148, 163, 184, 0.2);
+  --hud-progress-fill: linear-gradient(135deg, #38bdf8, #60a5fa);
+  --hud-progress-fill-muted: linear-gradient(135deg, rgba(148, 163, 184, 0.45), rgba(203, 213, 225, 0.35));
+  --hud-tip-info-bg: rgba(56, 189, 248, 0.12);
+  --hud-tip-warn-bg: rgba(234, 179, 8, 0.14);
+  --hud-tip-critical-bg: rgba(239, 68, 68, 0.18);
+  --hud-tip-info-border: rgba(56, 189, 248, 0.35);
+  --hud-tip-warn-border: rgba(234, 179, 8, 0.35);
+  --hud-tip-critical-border: rgba(239, 68, 68, 0.5);
+}
+
+.hud-panel {
+  background: var(--hud-surface);
+  border: 1px solid var(--hud-border);
+  border-radius: var(--hud-radius);
+  box-shadow: var(--hud-elevation);
+  color: var(--hud-text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--hud-gap);
+  padding: clamp(0.85rem, 2vw, 1.35rem);
+  backdrop-filter: blur(12px);
+}
+
+.hud-panel h2,
+.hud-panel h3 {
+  color: var(--hud-text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.hud-panel p,
+.hud-panel span,
+.hud-panel li {
+  color: var(--hud-text-primary);
+}
+
+.hud-calendar {
+  min-width: min(420px, 100%);
+}
+
+.hud-calendar__header {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: start;
+}
+
+.hud-calendar__title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hud-calendar__season {
+  font-size: 1rem;
+}
+
+.hud-calendar__year {
+  color: var(--hud-text-muted);
+  font-size: 0.85rem;
+}
+
+.hud-calendar__clock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-calendar__day {
+  font-size: 0.9rem;
+}
+
+.hud-calendar__time {
+  color: var(--hud-text-muted);
+  font-size: 0.85rem;
+}
+
+.hud-calendar__progress-track {
+  background: var(--hud-progress-track);
+  border-radius: 999px;
+  height: 0.55rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.hud-calendar__progress-fill {
+  background: var(--hud-progress-fill);
+  border-radius: 999px;
+  height: 100%;
+  transition: width 240ms ease;
+}
+
+.hud-calendar__progress-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--hud-text-muted);
+}
+
+.hud-calendar__seasons {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.hud-calendar__season {
+  background: var(--hud-surface-subtle);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.75rem;
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+
+.hud-calendar__season.is-active {
+  border-color: var(--hud-border-strong);
+  transform: translateY(-2px);
+}
+
+.hud-calendar__season.is-past {
+  opacity: 0.65;
+}
+
+.hud-calendar__season-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.hud-calendar__season-icon {
+  font-size: 1.3rem;
+}
+
+.hud-calendar__season-track {
+  background: var(--hud-progress-track);
+  border-radius: 999px;
+  height: 0.4rem;
+  overflow: hidden;
+}
+
+.hud-calendar__season-fill {
+  background: var(--hud-progress-fill-muted);
+  height: 100%;
+  transition: width 240ms ease;
+}
+
+.hud-calendar__season.is-active .hud-calendar__season-fill {
+  background: var(--hud-progress-fill);
+}
+
+.hud-calendar__season-summary {
+  margin: 0;
+  color: var(--hud-text-muted);
+  font-size: 0.8rem;
+}
+
+.hud-calendar__insights h3 {
+  font-size: 0.85rem;
+}
+
+.hud-calendar__recent {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+
+.hud-calendar__recent-item {
+  color: var(--hud-text-muted);
+}
+
+.hud-quest-log {
+  min-width: min(420px, 100%);
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+.hud-quest-log__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+}
+
+.hud-quest-log__item {
+  list-style: none;
+}
+
+.hud-quest-log__empty {
+  color: var(--hud-text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+}
+
+.hud-quest-card {
+  background: var(--hud-surface-subtle);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.9rem;
+  transition: border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+}
+
+.hud-quest-card:hover,
+.hud-quest-card:focus-within {
+  border-color: var(--hud-border-strong);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.35);
+  transform: translateY(-2px);
+}
+
+.hud-quest-card.is-completed {
+  opacity: 0.7;
+}
+
+.hud-quest-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hud-quest-card__header h3 {
+  flex: 1;
+  font-size: 1rem;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.hud-quest-card__badge {
+  border-radius: 999px;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.65rem;
+  text-transform: uppercase;
+}
+
+.hud-quest-card__badge--muted {
+  background: var(--hud-badge-muted-bg);
+  color: var(--hud-badge-muted-text);
+}
+
+.hud-quest-card__badge--accent {
+  background: var(--hud-badge-accent-bg);
+  color: var(--hud-badge-accent-text);
+}
+
+.hud-quest-card__badge--success {
+  background: var(--hud-badge-success-bg);
+  color: var(--hud-badge-success-text);
+}
+
+.hud-quest-card__pin {
+  background: none;
+  border: none;
+  color: var(--hud-text-secondary);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.1rem 0.35rem;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.hud-quest-card__pin:hover,
+.hud-quest-card__pin:focus-visible {
+  color: #fcd34d;
+  transform: scale(1.1);
+}
+
+.hud-quest-card__pin:focus-visible {
+  outline: 2px solid #fcd34d;
+  outline-offset: 2px;
+}
+
+.hud-quest-card__description {
+  color: var(--hud-text-muted);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.hud-quest-card__objectives {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.hud-quest-card__objective {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.hud-quest-card__objective-track {
+  background: var(--hud-progress-track);
+  border-radius: 999px;
+  height: 0.35rem;
+  overflow: hidden;
+}
+
+.hud-quest-card__objective-fill {
+  background: var(--hud-progress-fill);
+  height: 100%;
+  transition: width 200ms ease;
+}
+
+.hud-quest-card__objective-progress {
+  align-self: flex-end;
+  color: var(--hud-text-muted);
+  font-size: 0.75rem;
+}
+
+.hud-quest-card__rewards {
+  color: var(--hud-text-secondary);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.hud-stamina-tips {
+  min-width: min(320px, 100%);
+  max-width: 420px;
+  gap: 0.75rem;
+}
+
+.hud-stamina-tips__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.hud-stamina-tips__item {
+  border-radius: 12px;
+  font-size: 0.9rem;
+  list-style: none;
+  padding: 0.65rem 0.75rem;
+  line-height: 1.4;
+}
+
+.hud-stamina-tips__item--info {
+  background: var(--hud-tip-info-bg);
+  border: 1px solid var(--hud-tip-info-border);
+}
+
+.hud-stamina-tips__item--warn {
+  background: var(--hud-tip-warn-bg);
+  border: 1px solid var(--hud-tip-warn-border);
+}
+
+.hud-stamina-tips__item--critical {
+  background: var(--hud-tip-critical-bg);
+  border: 1px solid var(--hud-tip-critical-border);
+}
+
+@media (max-width: 720px) {
+  .hud-panel {
+    padding: 1rem;
+  }
+
+  .hud-calendar__header {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .hud-calendar__clock {
+    text-align: center;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .hud-calendar__seasons {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .hud-quest-log {
+    max-height: none;
+  }
+}

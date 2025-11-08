@@ -15,3 +15,9 @@ inventory HUD, tool/seed bars, and tent/well/crate visual overrides now pull str
 - [ ] **Week 8:** Extend save schema + migrations, hook UI/UX for new interactions.
 - [ ] **Week 9:** Balance Homestead pacing, tune weather, add audio/visual polish.
 - [ ] **Week 10:** Regression sweep, QA checklist updates, and playtest instrumentation for Homestead.
+
+## Leadership Summary — QA Enablement Additions
+
+- **Regression Coverage:** Expanded Test Plan section 5 introduces livestock, festival, and advanced tool regression checklists, ready for Week 10 sweep sign-off.
+- **Guided Playtests:** New `Docs/PLAYTEST_SCENARIOS.md` scripts cover livestock onboarding, festival cadence, and advanced tool specialization with clear success metrics for moderated sessions.
+- **Operations Readiness:** Established bug triage board structure and SLA cadence in `Docs/BUG_TRIAGE.md`, aligning daily rituals and escalation paths ahead of live events.
