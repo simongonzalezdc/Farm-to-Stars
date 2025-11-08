@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { load, save, STORAGE_KEY } from '../storage';
-import { CURRENT_SCHEMA_VERSION, defaultState, type ResourcesTable } from '../types';
+import {
+  CURRENT_SCHEMA_VERSION,
+  createDefaultSeasonState,
+  defaultState,
+  type ResourcesTable
+} from '../types';
 
 const store = new Map<string, unknown>();
 
@@ -17,6 +22,7 @@ vi.mock('idb-keyval', () => {
 const RESOURCE_TABLE: ResourcesTable = {
   wood: { display: 'Wood', stack: 9999 },
   stone: { display: 'Stone', stack: 9999 },
+  water: { display: 'Water', stack: 9999 },
   food: { display: 'Food', stack: 9999 },
   coins: { display: 'Coins', stack: 999999 }
 };
@@ -57,7 +63,22 @@ describe('storage', () => {
       ...defaultState(RESOURCE_TABLE),
       seed: 77,
       resources: { wood: 10, stone: 5, food: 2, coins: 1 },
-      schemaVersion: CURRENT_SCHEMA_VERSION
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      season: createDefaultSeasonState()
     });
+    const expected = defaultState(RESOURCE_TABLE);
+    expected.seed = 77;
+    expected.resources = {
+      ...expected.resources,
+      wood: 10,
+      stone: 5,
+      food: 2,
+      coins: 1
+    };
+    expected.resourceStorage.wood.current = 10;
+    expected.resourceStorage.stone.current = 5;
+    expected.resourceStorage.food.current = 2;
+    expected.resourceStorage.coins.current = 1;
+    expect(loaded).toEqual(expected);
   });
 });

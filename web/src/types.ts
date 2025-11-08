@@ -1,3 +1,5 @@
+import { DEFAULT_SEASON_ID, getSeasonDefinition, type SeasonId } from './config/seasons';
+
 export type ResourceId = string;
 export type BuildingId = string;
 export type RecipeId = string;
@@ -41,7 +43,13 @@ export interface RecipeDefinition {
 export type RecipesTable = Record<RecipeId, RecipeDefinition>;
 
 export type Resources = Record<ResourceId, number>;
-export type ResourceCaps = Partial<Record<ResourceId, number>>;
+
+export interface ResourceStorageSlot {
+  current: number;
+  capacity: number;
+}
+
+export type ResourceStorageState = Record<ResourceId, ResourceStorageSlot>;
 
 export type BuildingType = BuildingId;
 
@@ -91,11 +99,30 @@ export interface ProductionNode {
   active: boolean;
 }
 
+export interface SeasonState {
+  active: SeasonId;
+  elapsed: number;
+  /** Count of total season transitions that have occurred. */
+  cycle: number;
+  /** Completed yearly loops (each loop is a full season order). */
+  year: number;
+export interface ProductionQueueItem {
+  nodeId: number;
+  recipeId: RecipeId;
+}
+
+export interface ProductionModifiers {
+  speedMultiplier: number;
+  outputMultiplier: number;
+}
+
 export type GameEvent =
   | { type: 'construction.completed'; building: Structure }
-  | { type: 'resource.collected'; resource: ResourceId; amount: number };
+  | { type: 'resource.collected'; resource: ResourceId; amount: number }
+  | { type: 'season.changed'; season: SeasonId };
+  | { type: 'production.cycle'; nodeId: number; recipeId: RecipeId; outputs: RecipeIO };
 
-export const CURRENT_SCHEMA_VERSION = 3;
+export const CURRENT_SCHEMA_VERSION = 4;
 
 export type SaveV0 = { seed: number } & Record<ResourceId, number>;
 
@@ -113,7 +140,7 @@ export interface SaveV2 extends SaveV1 {
 }
 
 export interface SaveV3 extends SaveV1 {
-  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  schemaVersion: 3;
   structures: Structure[];
   buildQueue: BuildJob[];
   constructionQueue: ConstructionJob[];
@@ -122,7 +149,23 @@ export interface SaveV3 extends SaveV1 {
   nextBuildingInstanceId: number;
 }
 
-export type GameState = SaveV3;
+export interface SaveV4 extends SaveV1 {
+  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  structures: Structure[];
+  buildQueue: BuildJob[];
+  constructionQueue: ConstructionJob[];
+  buildings: BuildingInstance[];
+  productionNodes: ProductionNode[];
+  productionQueue: ProductionQueueItem[];
+  resourceStorage: ResourceStorageState;
+  productionModifiers: ProductionModifiers;
+  nextBuildId: number;
+  nextBuildingInstanceId: number;
+  season: SeasonState;
+  nextProductionNodeId: number;
+}
+
+export type GameState = SaveV4;
 
 export const LEGACY_RESOURCE_IDS: ResourceId[] = ['wood', 'stone', 'food', 'coins'];
 
@@ -138,12 +181,46 @@ export function createEmptyResources(resourceTable?: ResourcesTable): Resources 
   return Object.fromEntries(entries) as Resources;
 }
 
+export function createDefaultSeasonState(): SeasonState {
+  return {
+    active: DEFAULT_SEASON_ID,
+    elapsed: 0,
+    cycle: 0,
+    year: 0
+  };
+}
+
+export function clampSeasonElapsed(state: SeasonState): SeasonState {
+  const definition = getSeasonDefinition(state.active);
+  const clampedElapsed = Math.max(
+    0,
+    Math.min(state.elapsed, Number.isFinite(definition.durationSeconds) ? definition.durationSeconds : state.elapsed)
+  );
+  return { ...state, elapsed: clampedElapsed };
+export function createEmptyResourceStorage(
+  resourceTable?: ResourcesTable
+): ResourceStorageState {
+  if (!resourceTable) {
+    return LEGACY_RESOURCE_IDS.reduce<ResourceStorageState>((acc, id) => {
+      acc[id] = { current: 0, capacity: Number.POSITIVE_INFINITY };
+      return acc;
+    }, {} as ResourceStorageState);
+  }
+
+  const entries = Object.entries(resourceTable).map(([id, def]) => [
+    id,
+    { current: 0, capacity: def.stack }
+  ]);
+  return Object.fromEntries(entries) as ResourceStorageState;
+}
+
 export function defaultState(resourceTable?: ResourcesTable): GameState {
   return {
     v: 1,
     schemaVersion: CURRENT_SCHEMA_VERSION,
     seed: 12345,
     resources: createEmptyResources(resourceTable),
+    resourceStorage: createEmptyResourceStorage(resourceTable),
     structures: [
       {
         id: 0,
@@ -156,7 +233,12 @@ export function defaultState(resourceTable?: ResourcesTable): GameState {
     buildQueue: [],
     constructionQueue: [],
     buildings: [],
+    productionNodes: [],
+    productionQueue: [],
+    productionModifiers: { speedMultiplier: 1, outputMultiplier: 1 },
     nextBuildId: 1,
-    nextBuildingInstanceId: 1
+    nextBuildingInstanceId: 1,
+    season: createDefaultSeasonState()
+    nextProductionNodeId: 1
   };
 }

@@ -1,19 +1,30 @@
 import {
   CURRENT_SCHEMA_VERSION,
+  clampSeasonElapsed,
+  createDefaultSeasonState,
+  createEmptyResourceStorage,
   createEmptyResources,
   defaultState,
   LEGACY_RESOURCE_IDS,
   type BuildJob,
   type ConstructionJob,
   type GameState,
+  type ProductionModifiers,
+  type ProductionNode,
+  type ProductionQueueItem,
   type Resources,
   type ResourceId,
   type ResourcesTable,
+  type ResourceStorageState,
   type SaveV0,
   type SaveV1,
   type SaveV2,
-  type SaveV3
+  type SaveV3,
+  type SaveV4,
+  type SeasonState
+  type SaveV4
 } from './types';
+import { getSeasonDefinition, isSeasonId } from './config/seasons';
 
 function sanitizeResources(
   candidate: Partial<Record<ResourceId, unknown>>,
@@ -31,9 +42,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function isSaveV3(candidate: unknown): candidate is SaveV3 {
+function isSaveV4(candidate: unknown): candidate is SaveV4 {
   if (!isRecord(candidate)) return false;
   return candidate.v === 1 && candidate.schemaVersion === CURRENT_SCHEMA_VERSION;
+}
+
+function isSaveV3(candidate: unknown): candidate is SaveV3 {
+  if (!isRecord(candidate)) return false;
+  return candidate.v === 1 && candidate.schemaVersion === 3;
 }
 
 function isSaveV2(candidate: unknown): candidate is SaveV2 {
@@ -140,7 +156,7 @@ function normalizeConstructionQueue(
 }
 
 function normalizeBuildingInstances(
-  candidate: SaveV3['buildings'] | unknown
+  candidate: SaveV3['buildings'] | SaveV4['buildings'] | unknown
 ): SaveV3['buildings'] {
   if (!Array.isArray(candidate)) {
     return [];
@@ -155,6 +171,117 @@ function normalizeBuildingInstances(
   }));
 }
 
+function normalizeSeasonState(candidate: unknown): SeasonState {
+  const fallback = createDefaultSeasonState();
+  if (!isRecord(candidate)) {
+    return fallback;
+  }
+
+  const rawActive = candidate.active;
+  const active = isSeasonId(rawActive) ? rawActive : fallback.active;
+  const definition = getSeasonDefinition(active);
+
+  const rawElapsed = typeof candidate.elapsed === 'number' && Number.isFinite(candidate.elapsed)
+    ? candidate.elapsed
+    : fallback.elapsed;
+  const elapsed = Math.max(0, Math.min(rawElapsed, definition.durationSeconds));
+
+  const rawCycle = typeof candidate.cycle === 'number' && Number.isFinite(candidate.cycle)
+    ? Math.max(0, Math.floor(candidate.cycle))
+    : fallback.cycle;
+
+  const rawYear = typeof candidate.year === 'number' && Number.isFinite(candidate.year)
+    ? Math.max(0, Math.floor(candidate.year))
+    : fallback.year;
+
+  return clampSeasonElapsed({ active, elapsed, cycle: rawCycle, year: rawYear });
+function normalizeProductionNodes(candidate: unknown): ProductionNode[] {
+  if (!Array.isArray(candidate)) {
+    return [];
+  }
+  return candidate.reduce<ProductionNode[]>((acc, node, index) => {
+    if (!node || typeof node !== 'object') return acc;
+    const id = typeof (node as ProductionNode).id === 'number' ? (node as ProductionNode).id : index;
+    const recipeId = typeof (node as ProductionNode).recipeId === 'string'
+      ? (node as ProductionNode).recipeId
+      : undefined;
+    if (!recipeId) {
+      return acc;
+    }
+    const progress =
+      typeof (node as ProductionNode).progress === 'number' && Number.isFinite((node as ProductionNode).progress)
+        ? (node as ProductionNode).progress
+        : 0;
+    const active = typeof (node as ProductionNode).active === 'boolean'
+      ? (node as ProductionNode).active
+      : false;
+    acc.push({ id, recipeId, progress, active });
+    return acc;
+  }, []);
+}
+
+function normalizeProductionQueue(candidate: unknown): ProductionQueueItem[] {
+  if (!Array.isArray(candidate)) {
+    return [];
+  }
+  return candidate.reduce<ProductionQueueItem[]>((acc, item) => {
+    if (!item || typeof item !== 'object') return acc;
+    const nodeId = typeof (item as ProductionQueueItem).nodeId === 'number'
+      ? (item as ProductionQueueItem).nodeId
+      : undefined;
+    const recipeId = typeof (item as ProductionQueueItem).recipeId === 'string'
+      ? (item as ProductionQueueItem).recipeId
+      : undefined;
+    if (nodeId == null || !recipeId) {
+      return acc;
+    }
+    acc.push({ nodeId, recipeId });
+    return acc;
+  }, []);
+}
+
+function normalizeProductionModifiers(candidate: unknown): ProductionModifiers {
+  const defaults: ProductionModifiers = { speedMultiplier: 1, outputMultiplier: 1 };
+  if (!candidate || typeof candidate !== 'object') {
+    return defaults;
+  }
+  const speed = (candidate as ProductionModifiers).speedMultiplier;
+  const output = (candidate as ProductionModifiers).outputMultiplier;
+  return {
+    speedMultiplier: typeof speed === 'number' && Number.isFinite(speed) && speed > 0 ? speed : 1,
+    outputMultiplier: typeof output === 'number' && Number.isFinite(output) && output > 0 ? output : 1
+  };
+}
+
+function normalizeResourceStorage(
+  candidate: unknown,
+  resourceTable: ResourcesTable,
+  resources: Resources
+): ResourceStorageState {
+  const base = createEmptyResourceStorage(resourceTable);
+  if (!candidate || typeof candidate !== 'object') {
+    for (const key of Object.keys(base) as ResourceId[]) {
+      base[key].current = resources[key] ?? 0;
+    }
+    return base;
+  }
+
+  const storage = { ...base };
+  for (const key of Object.keys(storage) as ResourceId[]) {
+    const slot = (candidate as ResourceStorageState)[key];
+    const capacity =
+      typeof slot?.capacity === 'number' && Number.isFinite(slot.capacity) && slot.capacity > 0
+        ? slot.capacity
+        : storage[key].capacity;
+    const currentRaw = typeof slot?.current === 'number' && Number.isFinite(slot.current) ? slot.current : resources[key] ?? 0;
+    storage[key] = {
+      capacity,
+      current: Math.min(Math.max(0, currentRaw), capacity)
+    };
+  }
+  return storage;
+}
+
 function convertBuildJobToConstructionJob(job: BuildJob): ConstructionJob {
   return {
     id: job.id,
@@ -165,25 +292,135 @@ function convertBuildJobToConstructionJob(job: BuildJob): ConstructionJob {
   };
 }
 
-function migrateV1ToV3(save: SaveV1, resourceTable: ResourcesTable): SaveV3 {
+function migrateV1ToV3(save: SaveV1, resourceTable: ResourcesTable): SaveV4 {
   const base = defaultState(resourceTable);
+function assembleV4State(save: Partial<SaveV4> & SaveV3, resourceTable: ResourcesTable): SaveV4 {
+  const resources = sanitizeResources(save.resources ?? {}, resourceTable);
+  const structures = normalizeStructures(save.structures);
+  const buildQueue = normalizeBuildQueue(save.buildQueue);
+  const constructionQueue = normalizeConstructionQueue(save.constructionQueue, buildQueue);
+  const buildings = normalizeBuildingInstances(save.buildings);
+  const productionNodes = normalizeProductionNodes((save as Partial<SaveV4>).productionNodes);
+  const productionQueue = normalizeProductionQueue((save as Partial<SaveV4>).productionQueue);
+  const productionModifiers = normalizeProductionModifiers((save as Partial<SaveV4>).productionModifiers);
+  const resourceStorage = normalizeResourceStorage(
+    (save as Partial<SaveV4>).resourceStorage,
+    resourceTable,
+    resources
+  );
+
+  const nodeIds = new Set(productionNodes.map((node) => node.id));
+  let nextProductionNodeId =
+    typeof (save as Partial<SaveV4>).nextProductionNodeId === 'number' &&
+    Number.isFinite((save as Partial<SaveV4>).nextProductionNodeId)
+      ? (save as Partial<SaveV4>).nextProductionNodeId
+      : productionNodes.reduce((max, node) => Math.max(max, node.id), 0) + 1;
+
+  for (const building of buildings) {
+    if (!building.recipeId) {
+      building.productionNodeId = undefined;
+      continue;
+    }
+    if (building.productionNodeId && nodeIds.has(building.productionNodeId)) {
+      continue;
+    }
+    const nodeId = nextProductionNodeId++;
+    productionNodes.push({ id: nodeId, recipeId: building.recipeId, progress: 0, active: false });
+    nodeIds.add(nodeId);
+    productionQueue.push({ nodeId, recipeId: building.recipeId });
+    building.productionNodeId = nodeId;
+  }
+
+  const validNodeIds = new Set(productionNodes.map((node) => node.id));
+  const filteredQueue = productionQueue.filter((item, index, arr) => {
+    if (!validNodeIds.has(item.nodeId)) {
+      return false;
+    }
+    const firstIndex = arr.findIndex((entry) => entry.nodeId === item.nodeId);
+    return firstIndex === index;
+  });
+
+  for (const key of Object.keys(resourceStorage) as ResourceId[]) {
+    const cap = resourceStorage[key].capacity;
+    const current = resources[key] ?? 0;
+    resourceStorage[key].current = Math.min(Math.max(0, current), cap);
+  }
+
   return {
-    ...base,
-    seed: save.seed,
-    resources: sanitizeResources(save.resources, resourceTable)
+    v: 1,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    seed: typeof save.seed === 'number' && Number.isFinite(save.seed) ? save.seed : 0,
+    resources,
+    resourceStorage,
+    structures,
+    buildQueue,
+    constructionQueue,
+    buildings,
+    productionNodes,
+    productionQueue: filteredQueue,
+    productionModifiers,
+    nextBuildId: typeof save.nextBuildId === 'number' && Number.isFinite(save.nextBuildId) ? save.nextBuildId : 1,
+    nextBuildingInstanceId:
+      typeof save.nextBuildingInstanceId === 'number' && Number.isFinite(save.nextBuildingInstanceId)
+        ? save.nextBuildingInstanceId
+        : 1,
+    nextProductionNodeId
   };
 }
 
-function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV3 {
-  const base = defaultState(resourceTable);
+function migrateV1ToV3(save: SaveV1, resourceTable: ResourcesTable): SaveV3 {
+  const baseStructures = defaultState(resourceTable).structures;
   return {
-    ...base,
+    v: 1,
+    schemaVersion: 3,
     seed: save.seed,
-    resources: sanitizeResources(save, resourceTable)
+    resources: sanitizeResources(save.resources, resourceTable),
+    structures: baseStructures,
+    buildQueue: [],
+    constructionQueue: [],
+    buildings: [],
+    nextBuildId: 1,
+    nextBuildingInstanceId: 1
+  };
+}
+
+function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV4 {
+  const base = defaultState(resourceTable);
+function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV3 {
+  const baseStructures = defaultState(resourceTable).structures;
+  return {
+    v: 1,
+    schemaVersion: 3,
+    seed: save.seed,
+    resources: sanitizeResources(save, resourceTable),
+    structures: baseStructures,
+    buildQueue: [],
+    constructionQueue: [],
+    buildings: [],
+    nextBuildId: 1,
+    nextBuildingInstanceId: 1
   };
 }
 
 export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameState | null {
+  if (isSaveV4(raw)) {
+    const buildQueue = normalizeBuildQueue(raw.buildQueue);
+    return {
+      v: 1,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      seed: typeof raw.seed === 'number' ? raw.seed : 0,
+      resources: sanitizeResources(raw.resources ?? {}, resourceTable),
+      structures: normalizeStructures(raw.structures),
+      buildQueue,
+      constructionQueue: normalizeConstructionQueue(raw.constructionQueue, buildQueue),
+      buildings: normalizeBuildingInstances(raw.buildings),
+      nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
+      nextBuildingInstanceId:
+        typeof raw.nextBuildingInstanceId === 'number' ? raw.nextBuildingInstanceId : 1,
+      season: normalizeSeasonState(raw.season)
+    };
+  }
+
   if (isSaveV3(raw)) {
     const buildQueue = normalizeBuildQueue(raw.buildQueue);
     return {
@@ -197,29 +434,48 @@ export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameSt
       buildings: normalizeBuildingInstances(raw.buildings),
       nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
       nextBuildingInstanceId:
-        typeof raw.nextBuildingInstanceId === 'number' ? raw.nextBuildingInstanceId : 1
+        typeof raw.nextBuildingInstanceId === 'number' ? raw.nextBuildingInstanceId : 1,
+      season: createDefaultSeasonState()
     };
+    return assembleV4State(raw, resourceTable);
+  }
+
+  if (isSaveV3(raw)) {
+    return assembleV4State(raw, resourceTable);
   }
 
   if (isSaveV2(raw)) {
     const buildQueue = normalizeBuildQueue(raw.buildQueue);
-    return {
-      ...defaultState(resourceTable),
+    const partial: SaveV3 = {
+      v: 1,
+      schemaVersion: 3,
       seed: typeof raw.seed === 'number' ? raw.seed : 0,
       resources: sanitizeResources(raw.resources ?? {}, resourceTable),
       structures: normalizeStructures(raw.structures),
       buildQueue,
       constructionQueue: buildQueue.map(convertBuildJobToConstructionJob),
-      nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1
+      nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
+      season: createDefaultSeasonState()
+      buildings: [],
+      nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
+      nextBuildingInstanceId: 1
     };
+    return assembleV4State(partial, resourceTable);
   }
 
   if (isSaveV1(raw)) {
-    return migrateV1ToV3(raw, resourceTable);
+    const migrated = migrateV1ToV3(raw, resourceTable);
+    return { ...migrated, season: createDefaultSeasonState(), schemaVersion: CURRENT_SCHEMA_VERSION };
   }
 
   if (isSaveV0(raw)) {
-    return migrateV0ToV3(raw, resourceTable);
+    const migrated = migrateV0ToV3(raw, resourceTable);
+    return { ...migrated, season: createDefaultSeasonState(), schemaVersion: CURRENT_SCHEMA_VERSION };
+    return assembleV4State(migrateV1ToV3(raw, resourceTable), resourceTable);
+  }
+
+  if (isSaveV0(raw)) {
+    return assembleV4State(migrateV0ToV3(raw, resourceTable), resourceTable);
   }
 
   return null;
