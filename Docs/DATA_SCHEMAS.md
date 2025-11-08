@@ -68,3 +68,59 @@ export interface SaveV6 {
 ```
 - Migrations promote legacy saves (v0–v5) into the v6 layout, populating default livestock herds, mailboxes, and weather event
   schedulers.
+
+## Homestead → Township Export Payload (Wave Delta)
+
+Wave Delta introduces a guarded export that snapshots the homestead and packages a starter district blueprint for Township.
+
+- Generator: `web/src/sim/export/homesteadToTownship.ts`
+- JSON schema reference: `web/content/township/import.json`
+
+### Payload Outline
+
+```
+interface HomesteadTownshipExport {
+  version: number;          // Export format version (currently 1)
+  generatedAt: string;      // ISO timestamp when the snapshot was produced
+  seed: number;             // Derived from save.seed and current in-game day to ensure deterministic imports
+  homestead: {
+    metadata: {
+      day: number;
+      season: SeasonId;
+      year: number;
+      cycle: number;
+      weather: WeatherType;
+    };
+    resources: Record<ResourceId, number>; // Floored to whole units
+    staminaPercent: number;                // Rounded snapshot of the farmer state
+    structures: Array<{
+      type: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }>;
+    livestock: Array<{
+      speciesId: LivestockId;
+      mature: number;
+      juvenile: number;
+    }>;
+  };
+  township: {
+    agriculture: Array<{
+      id: string;             // Stable district id derived from the export seed
+      seed: number;           // RNG seed the Township importer can use for layout generation
+      plots: number;          // Total cultivated footprint (tile count)
+      fertility: number;      // Normalised export potential 0..1
+      logisticsScore: number; // Normalised throughput indicator 0..1
+      exports: Array<{ resourceId: ResourceId; amount: number }>;
+    }>;
+    shipments: Array<{ resourceId: ResourceId; amount: number }>;
+  };
+}
+```
+
+- Mail attachments can optionally be folded into the outgoing shipment manifest. The default export path includes them so
+  Township gets credit for gifts players have banked during Homestead.
+- `exportTownship` HUD control (Wave Delta) requires telemetry opt-in; generated payload sizes and shipment counts feed the
+  playtest telemetry buffer via `recordExportGenerated`.

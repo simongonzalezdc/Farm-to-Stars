@@ -58,4 +58,18 @@ describe('TelemetryTracker', () => {
     const snapshot = tracker.snapshot(state);
     expect(snapshot.recentEvents.length).toBeLessThanOrEqual(6);
   });
+
+  it('accumulates performance samples', () => {
+    const tracker = new TelemetryTracker();
+    const state = defaultState();
+    tracker.reset(state);
+
+    tracker.recordFrame(16, 6, 3);
+    tracker.recordFrame(20, 8, 4);
+
+    const snapshot = tracker.snapshot(state);
+    expect(snapshot.performance.sampleCount).toBe(2);
+    expect(snapshot.performance.worstFrameMs).toBeCloseTo(20, 5);
+    expect(snapshot.performance.averageSimMs).toBeCloseTo(7, 5);
+  });
 });

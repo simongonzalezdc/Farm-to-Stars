@@ -46,6 +46,14 @@ import { HomesteadController } from './ui/homesteadController';
 import { getNormalizedTime } from './state/time';
 import { getStaminaRatio } from './state/stamina';
 import { TelemetryTracker, type TelemetrySnapshot } from './telemetry/telemetry';
+import { exportHomesteadToTownship } from './sim/export/homesteadToTownship';
+import {
+  flushPlaytestEvents,
+  getPlaytestTelemetryOptIn,
+  peekPlaytestEvents,
+  recordExportGenerated,
+  setPlaytestTelemetryOptIn
+} from './telemetry/playtest';
 
 const dataTablesPromise = loadDataTables();
 
@@ -67,6 +75,10 @@ const homesteadWeatherEl = document.getElementById('homesteadWeather')!;
 const homesteadFeedbackEl = document.getElementById('homesteadFeedback')!;
 const toolbeltContainer = document.getElementById('toolbelt') as HTMLDivElement;
 const seedBarContainer = document.getElementById('seedBar') as HTMLDivElement;
+const playtestStatusEl = document.getElementById('playtestStatus');
+const telemetryOptInCheckbox = document.getElementById('telemetryOptIn') as HTMLInputElement | null;
+const downloadPerfButton = document.getElementById('downloadPerf') as HTMLButtonElement | null;
+const exportTownshipButton = document.getElementById('exportTownship') as HTMLButtonElement | null;
 
 const resourceElements = new Map<ResourceId, HTMLSpanElement>();
 let buildButtons: HTMLButtonElement[] = [];
@@ -261,7 +273,7 @@ class DebugOverlay {
     document.body.appendChild(this.container);
   }
 
-  update(deltaMs: number, state: GameState) {
+  update(frameMs: number, state: GameState, snapshot?: TelemetrySnapshot) {
     this.frameCount += 1;
     const now = performance.now();
     const elapsed = now - this.lastSample;
@@ -278,30 +290,31 @@ class DebugOverlay {
         ).toFixed(0)} MB`
       : '';
 
-    const snapshot = this.telemetry.snapshot(state);
+    const telemetrySnapshot = snapshot ?? this.telemetry.snapshot(state);
     const lines: string[] = [];
-    lines.push(`FPS ${this.fps.toFixed(1)} | Frame ${deltaMs.toFixed(2)} ms${memoryText}`);
+    lines.push(`FPS ${this.fps.toFixed(1)} | Frame ${frameMs.toFixed(2)} ms${memoryText}`);
+    lines.push(this.formatPerformanceLine(telemetrySnapshot));
 
-    const seasonLine = this.formatSeasonLine(snapshot);
+    const seasonLine = this.formatSeasonLine(telemetrySnapshot);
     if (seasonLine) {
       lines.push(seasonLine);
     }
 
-    lines.push(this.formatHomesteadLine(snapshot));
-    lines.push(this.formatWeatherLine(snapshot));
+    lines.push(this.formatHomesteadLine(telemetrySnapshot));
+    lines.push(this.formatWeatherLine(telemetrySnapshot));
 
-    const resourceLine = this.formatResourceLine(snapshot);
+    const resourceLine = this.formatResourceLine(telemetrySnapshot);
     if (resourceLine) {
       lines.push(resourceLine);
     }
 
-    const dailyLine = this.formatDailyLine(snapshot);
+    const dailyLine = this.formatDailyLine(telemetrySnapshot);
     if (dailyLine) {
       lines.push(dailyLine);
     }
 
-    if (snapshot.recentEvents.length > 0) {
-      lines.push(`Recent ${snapshot.recentEvents.slice(0, 4).join(' | ')}`);
+    if (telemetrySnapshot.recentEvents.length > 0) {
+      lines.push(`Recent ${telemetrySnapshot.recentEvents.slice(0, 4).join(' | ')}`);
     }
 
     this.container.textContent = lines.join('\n');
@@ -314,6 +327,15 @@ class DebugOverlay {
       ? this.formatDuration(season.remainingSeconds)
       : '∞';
     return `Season ${season.id} • Y${season.year}C${season.cycle} • ${progress}% • Next ${remaining}`;
+  }
+
+  private formatPerformanceLine(snapshot: TelemetrySnapshot): string {
+    const perf = snapshot.performance;
+    if (perf.sampleCount === 0) {
+      return 'Perf samples pending…';
+    }
+    return `Perf avg:${perf.averageFrameMs.toFixed(2)}ms p95:${perf.percentile95FrameMs
+      .toFixed(2)}ms worst:${perf.worstFrameMs.toFixed(2)}ms sim:${perf.averageSimMs.toFixed(2)}ms`;
   }
 
   private formatHomesteadLine(snapshot: TelemetrySnapshot): string {
@@ -397,6 +419,9 @@ class IsoScene extends Phaser.Scene {
   private buildMode!: BuildModeController;
   private homestead!: HomesteadController;
   private detachHudListener?: () => void;
+  private playtestConsentHandler?: () => void;
+  private downloadPerfHandler?: () => void;
+  private exportHandler?: () => void;
 
   preload() {
     const g = this.add.graphics({ x: 0, y: 0 });
@@ -650,11 +675,36 @@ class IsoScene extends Phaser.Scene {
     gameEvents.addEventListener(EVENT_RESOURCES_UPDATED, listener);
     this.detachHudListener = () => gameEvents.removeEventListener(EVENT_RESOURCES_UPDATED, listener);
     updateResourcesHud(this.state.resources);
+
+    if (telemetryOptInCheckbox) {
+      telemetryOptInCheckbox.checked = getPlaytestTelemetryOptIn();
+      this.playtestConsentHandler = () => {
+        setPlaytestTelemetryOptIn(Boolean(telemetryOptInCheckbox.checked));
+        this.updatePlaytestStatus();
+      };
+      telemetryOptInCheckbox.addEventListener('change', this.playtestConsentHandler);
+    }
+
+    if (downloadPerfButton) {
+      this.downloadPerfHandler = () => this.handleDownloadPerf();
+      downloadPerfButton.addEventListener('click', this.downloadPerfHandler);
+    }
+
+    if (exportTownshipButton) {
+      this.exportHandler = () => this.handleExport();
+      exportTownshipButton.addEventListener('click', this.exportHandler);
+    }
+
+    this.updatePlaytestStatus();
   }
 
   update(_time: number, deltaMs: number) {
+    const frameStart = performance.now();
     this.accum += deltaMs / 1000;
+    let simMs = 0;
+    let steps = 0;
     while (this.accum >= SIM_DT) {
+      const tickStart = performance.now();
       const events = tick(
         this.state,
         SIM_DT,
@@ -664,6 +714,8 @@ class IsoScene extends Phaser.Scene {
         this.tables.livestock
       );
       this.telemetry.recordTick(this.state, events, SIM_DT);
+      simMs += performance.now() - tickStart;
+      steps += 1;
       if (events.length > 0) {
         const last = events[events.length - 1];
         this.registry.set('lastEvent', last.type);
@@ -671,13 +723,17 @@ class IsoScene extends Phaser.Scene {
       this.accum -= SIM_DT;
     }
 
-    this.debugOverlay.update(deltaMs, this.state);
+    const frameDuration = performance.now() - frameStart;
+    this.telemetry.recordFrame(frameDuration, simMs, steps);
+    const snapshot = this.telemetry.snapshot(this.state);
+    this.debugOverlay.update(frameDuration, this.state, snapshot);
 
     updateResourceDisplay(this.state.resources);
 
     this.syncSeasonState();
     this.homestead.updateField();
     this.updateHomesteadHud();
+    this.updatePlaytestStatus(snapshot);
 
     this.props.list.sort((a, b) => {
       const aImg = a as Phaser.GameObjects.Image;
@@ -841,7 +897,95 @@ class IsoScene extends Phaser.Scene {
 
   destroy(fromScene?: boolean) {
     this.detachHudListener?.();
+    if (telemetryOptInCheckbox && this.playtestConsentHandler) {
+      telemetryOptInCheckbox.removeEventListener('change', this.playtestConsentHandler);
+      this.playtestConsentHandler = undefined;
+    }
+    if (downloadPerfButton && this.downloadPerfHandler) {
+      downloadPerfButton.removeEventListener('click', this.downloadPerfHandler);
+      this.downloadPerfHandler = undefined;
+    }
+    if (exportTownshipButton && this.exportHandler) {
+      exportTownshipButton.removeEventListener('click', this.exportHandler);
+      this.exportHandler = undefined;
+    }
     super.destroy(fromScene);
+  }
+
+  private updatePlaytestStatus(snapshot?: TelemetrySnapshot) {
+    if (!playtestStatusEl) {
+      return;
+    }
+    const optedIn = getPlaytestTelemetryOptIn();
+    if (!optedIn) {
+      playtestStatusEl.textContent = 'Telemetry opt-in required before exporting.';
+      exportTownshipButton?.setAttribute('disabled', 'true');
+      downloadPerfButton?.setAttribute('disabled', 'true');
+      return;
+    }
+
+    exportTownshipButton?.removeAttribute('disabled');
+    downloadPerfButton?.removeAttribute('disabled');
+    const events = peekPlaytestEvents();
+    const perf = (snapshot ?? this.telemetry.snapshot(this.state)).performance;
+    playtestStatusEl.textContent = `Opted in • ${perf.sampleCount} perf samples • ${events.length} buffered events.`;
+  }
+
+  private handleDownloadPerf() {
+    if (!getPlaytestTelemetryOptIn()) {
+      this.setPlaytestStatus('Enable telemetry opt-in to download performance logs.');
+      return;
+    }
+    const events = flushPlaytestEvents();
+    if (events.length === 0) {
+      this.setPlaytestStatus('No buffered telemetry samples yet. Play a bit longer.');
+      return;
+    }
+
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      performance: this.telemetry.snapshot(this.state).performance,
+      events
+    };
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `homestead-perf-${Date.now()}.json`;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    this.setPlaytestStatus(`Downloaded ${events.length} telemetry events.`);
+    this.updatePlaytestStatus();
+  }
+
+  private handleExport() {
+    if (!getPlaytestTelemetryOptIn()) {
+      this.setPlaytestStatus('Enable telemetry opt-in before exporting to Township.');
+      return;
+    }
+
+    const payload = exportHomesteadToTownship(this.state);
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `homestead-export-${payload.seed}.json`;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(json).length;
+    recordExportGenerated(bytes, payload.township.shipments.length);
+    this.setPlaytestStatus(`Exported snapshot with ${payload.township.shipments.length} shipments.`);
+    this.updatePlaytestStatus();
+  }
+
+  private setPlaytestStatus(message: string) {
+    if (playtestStatusEl) {
+      playtestStatusEl.textContent = message;
+    }
   }
 }
 

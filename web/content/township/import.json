@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Homestead to Township Export",
+  "type": "object",
+  "required": ["version", "generatedAt", "seed", "homestead", "township"],
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "seed": { "type": "integer", "minimum": 0 },
+    "homestead": {
+      "type": "object",
+      "required": ["metadata", "resources", "staminaPercent", "structures", "livestock"],
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "required": ["day", "season", "year", "cycle", "weather"],
+          "properties": {
+            "day": { "type": "integer", "minimum": 1 },
+            "season": { "type": "string" },
+            "year": { "type": "integer", "minimum": 0 },
+            "cycle": { "type": "integer", "minimum": 0 },
+            "weather": { "type": "string" }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        },
+        "staminaPercent": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "structures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "x", "y", "width", "height"],
+            "properties": {
+              "type": { "type": "string" },
+              "x": { "type": "integer" },
+              "y": { "type": "integer" },
+              "width": { "type": "integer", "minimum": 1 },
+              "height": { "type": "integer", "minimum": 1 }
+            }
+          }
+        },
+        "livestock": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["speciesId", "mature", "juvenile"],
+            "properties": {
+              "speciesId": { "type": "string" },
+              "mature": { "type": "integer", "minimum": 0 },
+              "juvenile": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "township": {
+      "type": "object",
+      "required": ["agriculture", "shipments"],
+      "properties": {
+        "agriculture": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "seed", "plots", "fertility", "logisticsScore", "exports"],
+            "properties": {
+              "id": { "type": "string" },
+              "seed": { "type": "integer", "minimum": 0 },
+              "plots": { "type": "integer", "minimum": 1 },
+              "fertility": { "type": "number", "minimum": 0, "maximum": 1 },
+              "logisticsScore": { "type": "number", "minimum": 0, "maximum": 1 },
+              "exports": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["resourceId", "amount"],
+                  "properties": {
+                    "resourceId": { "type": "string" },
+                    "amount": { "type": "integer", "minimum": 0 }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "shipments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["resourceId", "amount"],
+            "properties": {
+              "resourceId": { "type": "string" },
+              "amount": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

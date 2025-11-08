@@ -111,6 +111,20 @@
       border-color: rgba(34, 197, 94, 0.45);
       color: #bbf7d0;
     }
+    .hud .opt-in {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      background: rgba(56, 189, 248, 0.08);
+      border-radius: 8px;
+      padding: 6px 10px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      color: #bae6fd;
+    }
+    .hud .opt-in input {
+      accent-color: #38bdf8;
+    }
     .hud .labels {
       font-size: 12px;
       opacity: 0.85;
@@ -222,6 +236,19 @@
       <span>Seeds:</span>
     </div>
     <div class="row" id="seedBar"></div>
+    <div class="row labels">
+      <span>Playtest &amp; Export:</span>
+    </div>
+    <div class="row" id="playtestControls">
+      <label class="opt-in" for="telemetryOptIn">
+        <input type="checkbox" id="telemetryOptIn" /> Share anonymized metrics
+      </label>
+      <button id="downloadPerf" type="button">Download Perf Log</button>
+      <button id="exportTownship" type="button">Export to Township</button>
+    </div>
+    <div class="row">
+      <small id="playtestStatus">Telemetry opt-in required before exporting.</small>
+    </div>
     <div class="row queue">
       <span>Queue: <b id="buildQueue">0</b></span>
       <small id="queueDetails">No active construction.</small>

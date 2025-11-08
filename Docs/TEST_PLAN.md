@@ -74,6 +74,18 @@ Use this page as a printable or digital worksheet during guided playtests. Check
     - **Pass:** PWA ≥90, Performance ≥80, Accessibility ≥95.
     - **Fail:** Any score below target or critical audit regression.
     - **Observer Notes / Scores:** ______________________________
+13. [ ] **Telemetry opt-in gate** – Toggle the HUD “Share anonymized metrics” control.
+    - **Pass:** Export/Download buttons enable only when opted in; status copy updates with sample counts.
+    - **Fail:** Buttons enabled while opted out, status text stale, or console errors.
+    - **Observer Notes:** _______________________________________
+14. [ ] **Performance log export** – Play 10+ minutes, download perf log via HUD button.
+    - **Pass:** JSON file downloads, includes recent `performance.sample` events and averages; log importable by `npm run profile:homestead`.
+    - **Fail:** Download disabled, file empty/corrupt, profile script errors.
+    - **Observer Notes / Hash:** ________________________________
+15. [ ] **Township snapshot export** – Trigger “Export to Township” with mature crops & livestock.
+    - **Pass:** JSON payload downloads, contains structures/livestock summaries, shipments include mail attachments when present.
+    - **Fail:** Button inert, payload missing entities, schema mismatch (validate against `web/content/township/import.json`).
+    - **Observer Notes / Seed:** ________________________________
 
 ### Debrief & Bugs
 - **Top issues surfaced:** ______________________________________

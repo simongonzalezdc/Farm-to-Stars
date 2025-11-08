@@ -1,5 +1,6 @@
 import { getSeasonDefinition } from '../config/seasons';
 import { getNormalizedTime } from '../state/time';
+import { recordPerformanceSample } from './playtest';
 import type {
   GameEvent,
   GameState,
@@ -41,11 +42,21 @@ export interface TelemetrySnapshot {
     productionActive: number;
   };
   recentEvents: string[];
+  performance: TelemetryPerformanceSnapshot;
+}
+
+export interface TelemetryPerformanceSnapshot {
+  sampleCount: number;
+  averageFrameMs: number;
+  worstFrameMs: number;
+  percentile95FrameMs: number;
+  averageSimMs: number;
 }
 
 const RATE_LERP_PER_SECOND = 2;
 const EPSILON = 1e-6;
 const MAX_RECENT_EVENTS = 6;
+const MAX_PERFORMANCE_SAMPLES = 240;
 
 export class TelemetryTracker {
   private readonly resourceSamples = new Map<ResourceId, number>();
@@ -57,12 +68,14 @@ export class TelemetryTracker {
   private productionCyclesToday = 0;
   private readonly productionOutputsToday = new Map<ResourceId, number>();
   private readonly recentEvents: string[] = [];
+  private readonly performanceSamples: { frameMs: number; simMs: number; steps: number }[] = [];
 
   reset(state: GameState) {
     this.resourceSamples.clear();
     this.resourceRates.clear();
     this.productionOutputsToday.clear();
     this.recentEvents.length = 0;
+    this.performanceSamples.length = 0;
     this.day = 0;
     this.ensureDay(state.homestead.time.day);
     for (const [resource, amount] of Object.entries(state.resources) as [ResourceId, number][]) {
@@ -129,6 +142,22 @@ export class TelemetryTracker {
     }
   }
 
+  recordFrame(frameMs: number, simMs: number, steps: number) {
+    if (!Number.isFinite(frameMs) || frameMs <= 0) {
+      return;
+    }
+    const sample = {
+      frameMs,
+      simMs: Number.isFinite(simMs) && simMs >= 0 ? simMs : 0,
+      steps: Number.isFinite(steps) && steps >= 0 ? steps : 0
+    };
+    this.performanceSamples.push(sample);
+    if (this.performanceSamples.length > MAX_PERFORMANCE_SAMPLES) {
+      this.performanceSamples.shift();
+    }
+    recordPerformanceSample(sample);
+  }
+
   snapshot(state: GameState): TelemetrySnapshot {
     const definition = getSeasonDefinition(state.season.active);
     const duration = definition.durationSeconds;
@@ -183,7 +212,44 @@ export class TelemetryTracker {
         construction: state.constructionQueue.length,
         productionActive: state.productionNodes.filter((node) => node.active).length
       },
-      recentEvents: [...this.recentEvents]
+      recentEvents: [...this.recentEvents],
+      performance: this.computePerformance()
+    };
+  }
+
+  private computePerformance(): TelemetryPerformanceSnapshot {
+    if (this.performanceSamples.length === 0) {
+      return {
+        sampleCount: 0,
+        averageFrameMs: 0,
+        worstFrameMs: 0,
+        percentile95FrameMs: 0,
+        averageSimMs: 0
+      };
+    }
+
+    const samples = [...this.performanceSamples];
+    let totalFrame = 0;
+    let totalSim = 0;
+    let worst = 0;
+    for (const sample of samples) {
+      totalFrame += sample.frameMs;
+      totalSim += sample.simMs;
+      if (sample.frameMs > worst) {
+        worst = sample.frameMs;
+      }
+    }
+
+    const sorted = samples.map((s) => s.frameMs).sort((a, b) => a - b);
+    const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95));
+    const p95 = sorted[idx] ?? sorted[sorted.length - 1] ?? 0;
+
+    return {
+      sampleCount: samples.length,
+      averageFrameMs: totalFrame / samples.length,
+      worstFrameMs: worst,
+      percentile95FrameMs: p95,
+      averageSimMs: totalSim / samples.length
     };
   }
 
