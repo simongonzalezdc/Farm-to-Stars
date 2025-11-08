@@ -15,3 +15,19 @@
 - [ ] Add `/src/data/*.json` per DATA_SCHEMAS.md and load on boot.
 - [ ] Replace placeholder textures with a CC0 pixel‑iso tileset; add `/CREDITS.md`.
 - [ ] Add Playwright smoke test: load→place→save→reload.
+
+## Local npm registry checklist
+To prevent package installs from failing with HTTP 403 errors, run through the following steps before installing dependencies:
+
+1. Verify the registry and auth settings:
+   - Run `npm config get registry` from the `web/` folder and ensure it returns `https://registry.npmjs.org/`.
+   - Run `npm config list` and confirm no legacy auth tokens are present. If a stale token appears, remove it with `npm config delete //<registry>/:_authToken` or by editing your user‑level `.npmrc`.
+   - Check for proxy environment variables (`npm_config_http_proxy`, `npm_config_https_proxy`) that might block access. Unset them or point them to a working proxy if required.
+
+2. Clear and retry the install:
+   - Execute `npm cache clean --force` to purge any cached 403 responses.
+   - Run `npm install` afterwards. If the install still fails, attempt to fetch a known public package manually (e.g. `npm pack eslint-config-prettier@9.1.0`) to confirm the registry is reachable from your machine.
+
+3. Escalate remaining access issues:
+   - If the manual fetch also fails with 403, your network or proxy configuration likely blocks the npm registry. Work with your network admin to whitelist `https://registry.npmjs.org/`.
+   - Document any environment overrides (such as custom proxies or service accounts) that you apply locally so other contributors can replicate the fix.
