@@ -5,6 +5,7 @@
 {
   "wood":  {"display": "Wood",  "stack": 9999},
   "stone": {"display": "Stone", "stack": 9999},
+  "water": {"display": "Water", "stack": 9999},
   "food":  {"display": "Food",  "stack": 9999},
   "coins": {"display": "Coins", "stack": 999999}
 }

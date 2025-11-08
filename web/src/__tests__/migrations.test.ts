@@ -5,6 +5,7 @@ import { CURRENT_SCHEMA_VERSION, type ResourcesTable } from '../types';
 const RESOURCE_TABLE: ResourcesTable = {
   wood: { display: 'Wood', stack: 9999 },
   stone: { display: 'Stone', stack: 9999 },
+  water: { display: 'Water', stack: 9999 },
   food: { display: 'Food', stack: 9999 },
   coins: { display: 'Coins', stack: 999999 }
 };
@@ -27,8 +28,15 @@ describe('save migrations', () => {
 
     expect(migrated).toMatchObject({
       seed: 42,
-      resources: { wood: 10, stone: 0, food: 3, coins: 0 },
-      schemaVersion: CURRENT_SCHEMA_VERSION
+      resources: { wood: 10, stone: 0, water: 0, food: 3, coins: 0 },
+      resourceStorage: {
+        wood: { capacity: 9999, current: 10 },
+        stone: { capacity: 9999, current: 0 },
+        water: { capacity: 9999, current: 0 }
+      },
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      productionNodes: [],
+      productionQueue: []
     });
   });
 
@@ -46,7 +54,7 @@ describe('save migrations', () => {
 
     expect(migrated).toMatchObject({
       seed: 21,
-      resources: { wood: 5, stone: 6, food: 7, coins: 8 },
+      resources: { wood: 5, stone: 6, water: 0, food: 7, coins: 8 },
       schemaVersion: CURRENT_SCHEMA_VERSION
     });
   });

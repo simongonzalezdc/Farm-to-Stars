@@ -1,9 +1,12 @@
 import { processConstruction } from './systems/construction';
+import { processEconomyTick } from './systems/economy';
 import type {
   BuildingDefinition,
   BuildingId,
   GameEvent,
   GameState,
+  RecipeDefinition,
+  RecipeId,
   ResourceId,
   Resources,
   Structure
@@ -11,50 +14,44 @@ import type {
 
 export const SIM_DT = 0.1; // 10 Hz
 
-const resourceRemainder: Resources = { wood: 0, stone: 0, food: 0, coins: 0 };
-const lastTotals: Resources = { wood: 0, stone: 0, food: 0, coins: 0 };
+const resourceRemainder: Resources = {};
+const lastTotals: Resources = {};
 
-const RESOURCE_PER_SEC: Partial<Record<ResourceId, number>> = {
-  wood: 0.1
-};
+export const EVENT_RESOURCE_PRODUCED = 'resource.produced';
+export const EVENT_RESOURCES_UPDATED = 'resources.updated';
+export const EVENT_BUILD_COMPLETE = 'construction.completed';
+
+export interface ResourceProducedDetail {
+  resource: ResourceId;
+  amount: number;
+  total: number;
+}
+
+export interface ResourcesUpdatedDetail {
+  resources: Resources;
+}
+
+export interface BuildCompleteDetail {
+  structureId: number;
+  buildingId: BuildingId;
+}
+
+export const gameEvents = new EventTarget();
 
 export function initWorld(state: GameState) {
-  for (const key of Object.keys(resourceRemainder) as ResourceId[]) {
-    resourceRemainder[key] = 0;
-    lastTotals[key] = state.resources[key] ?? 0;
-  }
+  resetResourceTracking(state);
 }
 
 export function tick(
   state: GameState,
   dt: number,
-  buildingDefs: Record<BuildingId, BuildingDefinition>
+  buildingDefs: Record<BuildingId, BuildingDefinition>,
+  recipes: Record<RecipeId, RecipeDefinition>
 ): GameEvent[] {
   const events: GameEvent[] = [];
 
-  for (const resource of Object.keys(RESOURCE_PER_SEC) as ResourceId[]) {
-    const perSec = RESOURCE_PER_SEC[resource] ?? 0;
-    if (perSec <= 0) continue;
-    const gain = perSec * dt;
-    state.resources[resource] = (state.resources[resource] ?? 0) + gain;
-  }
-
-  for (const resource of Object.keys(state.resources) as ResourceId[]) {
-    const total = state.resources[resource];
-    const delta = total - lastTotals[resource];
-    if (delta > 0) {
-      resourceRemainder[resource] += delta;
-      while (resourceRemainder[resource] >= 1) {
-        resourceRemainder[resource] -= 1;
-        events.push({ type: 'resource.collected', resource, amount: 1 });
-        const detail: ResourceProducedDetail = { resource, amount: 1 };
-        gameEvents.dispatchEvent(
-          new CustomEvent<ResourceProducedDetail>(EVENT_RESOURCE_PRODUCED, { detail })
-        );
-      }
-    }
-    lastTotals[resource] = total;
-  }
+  const economy = processEconomyTick(state, dt, recipes);
+  events.push(...economy.events);
 
   const { completed } = processConstruction(state, dt, buildingDefs);
 
@@ -88,11 +85,96 @@ export function tick(
     };
     state.structures.push(structure);
     events.push({ type: 'construction.completed', building: structure });
+
+    if (result.instance?.recipeId) {
+      const nodeId = state.nextProductionNodeId++;
+      state.productionNodes.push({
+        id: nodeId,
+        recipeId: result.instance.recipeId,
+        progress: 0,
+        active: false
+      });
+      state.productionQueue.push({ nodeId, recipeId: result.instance.recipeId });
+      result.instance.productionNodeId = nodeId;
+    }
+
+    const detail: BuildCompleteDetail = { structureId: structure.id, buildingId: structure.type };
+    gameEvents.dispatchEvent(new CustomEvent<BuildCompleteDetail>(EVENT_BUILD_COMPLETE, { detail }));
   }
+
+  emitResourceEvents(state, events);
 
   return events;
 }
 
 export function fmt(n: number) {
   return Math.floor(n).toLocaleString();
+}
+
+function resetResourceTracking(state: GameState) {
+  for (const key of Object.keys(resourceRemainder)) {
+    delete resourceRemainder[key as keyof Resources];
+  }
+  for (const key of Object.keys(lastTotals)) {
+    delete lastTotals[key as keyof Resources];
+  }
+  for (const key of Object.keys(state.resources) as ResourceId[]) {
+    resourceRemainder[key] = 0;
+    lastTotals[key] = state.resources[key] ?? 0;
+    ensureStorageSlot(state, key);
+    syncStorageSlot(state, key);
+  }
+}
+
+function emitResourceEvents(state: GameState, events: GameEvent[]) {
+  let updated = false;
+  for (const resource of Object.keys(state.resources) as ResourceId[]) {
+    if (!(resource in resourceRemainder)) {
+      resourceRemainder[resource] = 0;
+      lastTotals[resource] = 0;
+    }
+    syncStorageSlot(state, resource);
+    const total = state.resources[resource] ?? 0;
+    const delta = total - (lastTotals[resource] ?? 0);
+    if (Math.abs(delta) > 1e-6) {
+      updated = true;
+    }
+    if (delta > 0) {
+      resourceRemainder[resource] += delta;
+      while (resourceRemainder[resource] >= 1 - 1e-6) {
+        resourceRemainder[resource] -= 1;
+        events.push({ type: 'resource.collected', resource, amount: 1 });
+        const detail: ResourceProducedDetail = { resource, amount: 1, total };
+        gameEvents.dispatchEvent(
+          new CustomEvent<ResourceProducedDetail>(EVENT_RESOURCE_PRODUCED, { detail })
+        );
+      }
+    }
+    lastTotals[resource] = total;
+  }
+
+  if (updated) {
+    const detail: ResourcesUpdatedDetail = { resources: { ...state.resources } };
+    gameEvents.dispatchEvent(new CustomEvent<ResourcesUpdatedDetail>(EVENT_RESOURCES_UPDATED, { detail }));
+  }
+}
+
+function ensureStorageSlot(state: GameState, resource: ResourceId) {
+  if (state.resourceStorage[resource]) {
+    return;
+  }
+  state.resourceStorage[resource] = {
+    current: state.resources[resource] ?? 0,
+    capacity: Number.POSITIVE_INFINITY
+  };
+}
+
+function syncStorageSlot(state: GameState, resource: ResourceId) {
+  const slot = state.resourceStorage[resource];
+  if (!slot) {
+    ensureStorageSlot(state, resource);
+    return syncStorageSlot(state, resource);
+  }
+  const current = state.resources[resource] ?? 0;
+  slot.current = Math.min(Math.max(0, current), slot.capacity);
 }

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { fmt, initWorld, tick } from '../world';
-import { defaultState, type BuildingDefinition, type BuildingId } from '../types';
+import {
+  defaultState,
+  type BuildingDefinition,
+  type BuildingId,
+  type RecipeDefinition,
+  type RecipeId
+} from '../types';
 
 const buildingDefs = {
   cottage: {
@@ -12,12 +18,16 @@ const buildingDefs = {
 } as Record<BuildingId, BuildingDefinition>;
 
 describe('world simulation', () => {
-  it('increments wood based on elapsed time', () => {
+  it('emits resource collection events when resources increase externally', () => {
     const state = defaultState();
     initWorld(state);
-    tick(state, 1.0, buildingDefs);
-    expect(state.resources.wood).toBeGreaterThan(0);
-    expect(state.resources.wood).toBeCloseTo(0.1, 5);
+    state.resources.wood = 1.25;
+
+    const events = tick(state, 0.1, buildingDefs, {} as Record<RecipeId, RecipeDefinition>);
+
+    expect(events).toEqual([
+      { type: 'resource.collected', resource: 'wood', amount: 1 }
+    ]);
   });
 
   it('formats resource counts for display', () => {
