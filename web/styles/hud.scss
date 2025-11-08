@@ -26,6 +26,30 @@
   --hud-tip-critical-border: rgba(239, 68, 68, 0.5);
 }
 
+.hud-layout {
+  position: fixed;
+  top: clamp(0.75rem, 2vw, 1.5rem);
+  left: clamp(0.75rem, 2vw, 1.5rem);
+  display: grid;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  width: min(92vw, 960px);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.hud-layout__column {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+  pointer-events: none;
+}
+
+.hud-layout__column > .hud-panel,
+.hud-layout__column > section {
+  pointer-events: auto;
+}
+
 .hud-panel {
   background: var(--hud-surface);
   border: 1px solid var(--hud-border);
@@ -37,6 +61,166 @@
   gap: var(--hud-gap);
   padding: clamp(0.85rem, 2vw, 1.35rem);
   backdrop-filter: blur(12px);
+}
+
+.hud-colony {
+  gap: clamp(0.65rem, 1.6vw, 1rem);
+}
+
+.hud-colony__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.hud-colony__resources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-colony__resources span {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.hud-colony__section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.hud-colony__section--status {
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-colony__season {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.hud-colony__season-name {
+  font-size: 1rem;
+}
+
+.hud-colony__season-effects {
+  color: var(--hud-text-muted);
+  font-size: 0.85rem;
+}
+
+.hud-colony__season-timer {
+  color: var(--hud-text-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+.hud-colony__buttons {
+  gap: 0.5rem;
+}
+
+.hud-colony__buttons button {
+  flex: 1 1 120px;
+}
+
+.hud-colony__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hud-colony__group h3 {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hud-text-muted);
+}
+
+.hud-colony__button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hud-colony__button-row--wrap {
+  align-items: center;
+}
+
+.hud-colony__button-row--wrap button {
+  flex: 1 1 150px;
+}
+
+.hud-colony__opt-in {
+  align-items: center;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 999px;
+  color: #bae6fd;
+  display: inline-flex;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.hud-colony__opt-in input {
+  accent-color: #38bdf8;
+}
+
+.hud-colony__status-text {
+  color: var(--hud-text-muted);
+  font-size: 0.8rem;
+}
+
+.hud-colony__queue {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+}
+
+.hud-colony__queue small {
+  color: var(--hud-text-muted);
+}
+
+.hud-colony__feedback {
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.85rem;
+  background: rgba(37, 99, 235, 0.16);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #dbeafe;
+}
+
+.hud-colony__feedback[data-tone='warn'] {
+  background: rgba(250, 204, 21, 0.16);
+  border-color: rgba(250, 204, 21, 0.35);
+  color: #fde68a;
+}
+
+.hud-colony__feedback[data-tone='error'] {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fecaca;
+}
+
+.hud-colony__feedback[data-tone='success'] {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.45);
+  color: #bbf7d0;
+}
+
+#selectedCost[data-state='warn'] {
+  color: #facc15;
+}
+
+#selectedCost[data-state='ok'] {
+  color: #4ade80;
 }
 
 .hud-panel h2,
@@ -382,6 +566,21 @@
 .hud-stamina-tips__item--critical {
   background: var(--hud-tip-critical-bg);
   border: 1px solid var(--hud-tip-critical-border);
+}
+
+@media (max-width: 900px) {
+  .hud-layout {
+    grid-template-columns: 1fr;
+    top: auto;
+    bottom: clamp(0.75rem, 3vw, 1.5rem);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(96vw, 640px);
+  }
+
+  .hud-layout__column {
+    width: 100%;
+  }
 }
 
 @media (max-width: 720px) {
