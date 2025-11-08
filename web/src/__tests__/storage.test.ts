@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { load, save, STORAGE_KEY } from '../storage';
-import { CURRENT_SCHEMA_VERSION, defaultState, type ResourcesTable } from '../types';
+import {
+  CURRENT_SCHEMA_VERSION,
+  createDefaultSeasonState,
+  defaultState,
+  type ResourcesTable
+} from '../types';
 
 const store = new Map<string, unknown>();
 
@@ -54,6 +59,13 @@ describe('storage', () => {
     });
 
     const loaded = await load(RESOURCE_TABLE);
+    expect(loaded).toEqual({
+      ...defaultState(RESOURCE_TABLE),
+      seed: 77,
+      resources: { wood: 10, stone: 5, food: 2, coins: 1 },
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      season: createDefaultSeasonState()
+    });
     const expected = defaultState(RESOURCE_TABLE);
     expected.seed = 77;
     expected.resources = {

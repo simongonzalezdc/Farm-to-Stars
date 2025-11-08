@@ -1,5 +1,7 @@
 import {
   CURRENT_SCHEMA_VERSION,
+  clampSeasonElapsed,
+  createDefaultSeasonState,
   createEmptyResourceStorage,
   createEmptyResources,
   defaultState,
@@ -18,8 +20,11 @@ import {
   type SaveV1,
   type SaveV2,
   type SaveV3,
+  type SaveV4,
+  type SeasonState
   type SaveV4
 } from './types';
+import { getSeasonDefinition, isSeasonId } from './config/seasons';
 
 function sanitizeResources(
   candidate: Partial<Record<ResourceId, unknown>>,
@@ -166,6 +171,30 @@ function normalizeBuildingInstances(
   }));
 }
 
+function normalizeSeasonState(candidate: unknown): SeasonState {
+  const fallback = createDefaultSeasonState();
+  if (!isRecord(candidate)) {
+    return fallback;
+  }
+
+  const rawActive = candidate.active;
+  const active = isSeasonId(rawActive) ? rawActive : fallback.active;
+  const definition = getSeasonDefinition(active);
+
+  const rawElapsed = typeof candidate.elapsed === 'number' && Number.isFinite(candidate.elapsed)
+    ? candidate.elapsed
+    : fallback.elapsed;
+  const elapsed = Math.max(0, Math.min(rawElapsed, definition.durationSeconds));
+
+  const rawCycle = typeof candidate.cycle === 'number' && Number.isFinite(candidate.cycle)
+    ? Math.max(0, Math.floor(candidate.cycle))
+    : fallback.cycle;
+
+  const rawYear = typeof candidate.year === 'number' && Number.isFinite(candidate.year)
+    ? Math.max(0, Math.floor(candidate.year))
+    : fallback.year;
+
+  return clampSeasonElapsed({ active, elapsed, cycle: rawCycle, year: rawYear });
 function normalizeProductionNodes(candidate: unknown): ProductionNode[] {
   if (!Array.isArray(candidate)) {
     return [];
@@ -263,6 +292,8 @@ function convertBuildJobToConstructionJob(job: BuildJob): ConstructionJob {
   };
 }
 
+function migrateV1ToV3(save: SaveV1, resourceTable: ResourcesTable): SaveV4 {
+  const base = defaultState(resourceTable);
 function assembleV4State(save: Partial<SaveV4> & SaveV3, resourceTable: ResourcesTable): SaveV4 {
   const resources = sanitizeResources(save.resources ?? {}, resourceTable);
   const structures = normalizeStructures(save.structures);
@@ -353,6 +384,8 @@ function migrateV1ToV3(save: SaveV1, resourceTable: ResourcesTable): SaveV3 {
   };
 }
 
+function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV4 {
+  const base = defaultState(resourceTable);
 function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV3 {
   const baseStructures = defaultState(resourceTable).structures;
   return {
@@ -371,6 +404,39 @@ function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV3 {
 
 export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameState | null {
   if (isSaveV4(raw)) {
+    const buildQueue = normalizeBuildQueue(raw.buildQueue);
+    return {
+      v: 1,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      seed: typeof raw.seed === 'number' ? raw.seed : 0,
+      resources: sanitizeResources(raw.resources ?? {}, resourceTable),
+      structures: normalizeStructures(raw.structures),
+      buildQueue,
+      constructionQueue: normalizeConstructionQueue(raw.constructionQueue, buildQueue),
+      buildings: normalizeBuildingInstances(raw.buildings),
+      nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
+      nextBuildingInstanceId:
+        typeof raw.nextBuildingInstanceId === 'number' ? raw.nextBuildingInstanceId : 1,
+      season: normalizeSeasonState(raw.season)
+    };
+  }
+
+  if (isSaveV3(raw)) {
+    const buildQueue = normalizeBuildQueue(raw.buildQueue);
+    return {
+      v: 1,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      seed: typeof raw.seed === 'number' ? raw.seed : 0,
+      resources: sanitizeResources(raw.resources ?? {}, resourceTable),
+      structures: normalizeStructures(raw.structures),
+      buildQueue,
+      constructionQueue: normalizeConstructionQueue(raw.constructionQueue, buildQueue),
+      buildings: normalizeBuildingInstances(raw.buildings),
+      nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
+      nextBuildingInstanceId:
+        typeof raw.nextBuildingInstanceId === 'number' ? raw.nextBuildingInstanceId : 1,
+      season: createDefaultSeasonState()
+    };
     return assembleV4State(raw, resourceTable);
   }
 
@@ -388,6 +454,8 @@ export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameSt
       structures: normalizeStructures(raw.structures),
       buildQueue,
       constructionQueue: buildQueue.map(convertBuildJobToConstructionJob),
+      nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
+      season: createDefaultSeasonState()
       buildings: [],
       nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
       nextBuildingInstanceId: 1
@@ -396,6 +464,13 @@ export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameSt
   }
 
   if (isSaveV1(raw)) {
+    const migrated = migrateV1ToV3(raw, resourceTable);
+    return { ...migrated, season: createDefaultSeasonState(), schemaVersion: CURRENT_SCHEMA_VERSION };
+  }
+
+  if (isSaveV0(raw)) {
+    const migrated = migrateV0ToV3(raw, resourceTable);
+    return { ...migrated, season: createDefaultSeasonState(), schemaVersion: CURRENT_SCHEMA_VERSION };
     return assembleV4State(migrateV1ToV3(raw, resourceTable), resourceTable);
   }
 

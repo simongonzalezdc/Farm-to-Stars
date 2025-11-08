@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { gridToScreen, TILE_H, TILE_W } from './iso';
 import { defaultState, type GameState, type Structure } from './types';
 import { load, save } from './storage';
+import { enableAudio, toggleMute } from './audio';
+import { fmt, initWorld, SIM_DT, tick } from './world';
 import { enableAudio, playSfx, toggleMute } from './audio';
 import {
   EVENT_RESOURCES_UPDATED,
@@ -13,6 +15,12 @@ import {
   type ResourcesUpdatedDetail
 } from './world';
 import { getUiBuildingDefinition } from './buildings';
+import {
+  getSeasonDefinition,
+  SEASON_ORDER,
+  type SeasonDefinition,
+  type SeasonId
+} from './config/seasons';
 import {
   clearArea,
   createOccupancyMap,
@@ -34,6 +42,9 @@ const queueDetailsEl = document.getElementById('queueDetails')!;
 const feedbackEl = document.getElementById('buildFeedback')!;
 const selectedCostEl = document.getElementById('selectedCost')!;
 const modeEl = document.getElementById('modeIndicator')!;
+const seasonNameEl = document.getElementById('seasonName')!;
+const seasonEffectsEl = document.getElementById('seasonEffects')!;
+const seasonTimerEl = document.getElementById('seasonTimer')!;
 const buildButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-building]'));
 
 (document.getElementById('installAudio') as HTMLButtonElement).addEventListener(
@@ -109,6 +120,8 @@ class IsoScene extends Phaser.Scene {
   private ground!: Phaser.GameObjects.Container;
   private overlays!: Phaser.GameObjects.Container;
   private props!: Phaser.GameObjects.Container;
+  private seasonOverlay?: Phaser.GameObjects.Rectangle;
+  private currentSeasonId: SeasonId | null = null;
   private occupancy: OccupancyMap = createOccupancyMap();
   private structureSprites = new Map<number, Phaser.GameObjects.Image>();
   private jobMarkers = new Map<number, Phaser.GameObjects.Image>();
@@ -296,6 +309,13 @@ class IsoScene extends Phaser.Scene {
 
     this.time.addEvent({ delay: 5000, loop: true, callback: () => save(this.state) });
 
+    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
+      if (this.seasonOverlay) {
+        this.seasonOverlay.setSize(gameSize.width, gameSize.height);
+      }
+    });
+
+    this.syncSeasonState(true);
     const updateHud = (resources: GameState['resources']) => {
       woodEl.textContent = fmt(resources.wood ?? 0);
       stoneEl.textContent = fmt(resources.stone ?? 0);
@@ -322,6 +342,11 @@ class IsoScene extends Phaser.Scene {
     }
 
     debugOverlay.update(deltaMs);
+
+    woodEl.textContent = fmt(this.state.resources.wood ?? 0);
+    stoneEl.textContent = fmt(this.state.resources.stone ?? 0);
+
+    this.syncSeasonState();
 
     this.props.list.sort((a, b) => {
       const aImg = a as Phaser.GameObjects.Image;
@@ -412,6 +437,52 @@ class IsoScene extends Phaser.Scene {
     queueDetailsEl.textContent = `${def.label} (${remaining}s remaining)`;
   }
 
+  private ensureSeasonOverlay(): Phaser.GameObjects.Rectangle {
+    if (!this.seasonOverlay) {
+      this.seasonOverlay = this.add
+        .rectangle(0, 0, this.scale.width, this.scale.height, 0xffffff, 0)
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(900);
+    }
+    return this.seasonOverlay;
+  }
+
+  private syncSeasonState(force = false) {
+    const definition = getSeasonDefinition(this.state.season.active);
+    const changed = force || this.currentSeasonId !== definition.id;
+    if (changed) {
+      this.applySeasonVisuals(definition);
+      this.currentSeasonId = definition.id;
+    }
+    this.updateSeasonHud(definition);
+  }
+
+  private applySeasonVisuals(definition: SeasonDefinition) {
+    const { visuals } = definition;
+    this.cameras.main.setBackgroundColor(visuals.background);
+    this.tintContainer(this.ground, visuals.groundTint);
+    this.tintContainer(this.props, visuals.propTint);
+    const overlay = this.ensureSeasonOverlay();
+    overlay.setFillStyle(visuals.overlayColor, visuals.overlayAlpha);
+  }
+
+  private tintContainer(container: Phaser.GameObjects.Container, tint: number) {
+    for (const child of container.list) {
+      if (child instanceof Phaser.GameObjects.Image) {
+        child.setTint(tint);
+      }
+    }
+  }
+
+  private updateSeasonHud(definition: SeasonDefinition) {
+    const remaining = Math.max(0, definition.durationSeconds - this.state.season.elapsed);
+    seasonNameEl.textContent = `${definition.visuals.icon} ${definition.label}`;
+    seasonEffectsEl.textContent = definition.summary;
+    const yearLabel = `Year ${this.state.season.year + 1}`;
+    const cycleIndex = (this.state.season.cycle % SEASON_ORDER.length) + 1;
+    const cycleLabel = `Cycle ${cycleIndex}/${SEASON_ORDER.length}`;
+    seasonTimerEl.textContent = `${yearLabel} • ${cycleLabel} • Next in ${formatDuration(remaining)}`;
   destroy(fromScene?: boolean) {
     this.detachHudListener?.();
     super.destroy(fromScene);
@@ -434,3 +505,10 @@ async function boot() {
 }
 
 void boot();
+
+function formatDuration(seconds: number): string {
+  const clamped = Math.max(0, seconds);
+  const minutes = Math.floor(clamped / 60);
+  const secs = Math.floor(clamped % 60);
+  return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}

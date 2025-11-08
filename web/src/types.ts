@@ -1,3 +1,5 @@
+import { DEFAULT_SEASON_ID, getSeasonDefinition, type SeasonId } from './config/seasons';
+
 export type ResourceId = string;
 export type BuildingId = string;
 export type RecipeId = string;
@@ -97,6 +99,13 @@ export interface ProductionNode {
   active: boolean;
 }
 
+export interface SeasonState {
+  active: SeasonId;
+  elapsed: number;
+  /** Count of total season transitions that have occurred. */
+  cycle: number;
+  /** Completed yearly loops (each loop is a full season order). */
+  year: number;
 export interface ProductionQueueItem {
   nodeId: number;
   recipeId: RecipeId;
@@ -110,6 +119,7 @@ export interface ProductionModifiers {
 export type GameEvent =
   | { type: 'construction.completed'; building: Structure }
   | { type: 'resource.collected'; resource: ResourceId; amount: number }
+  | { type: 'season.changed'; season: SeasonId };
   | { type: 'production.cycle'; nodeId: number; recipeId: RecipeId; outputs: RecipeIO };
 
 export const CURRENT_SCHEMA_VERSION = 4;
@@ -151,6 +161,7 @@ export interface SaveV4 extends SaveV1 {
   productionModifiers: ProductionModifiers;
   nextBuildId: number;
   nextBuildingInstanceId: number;
+  season: SeasonState;
   nextProductionNodeId: number;
 }
 
@@ -170,6 +181,22 @@ export function createEmptyResources(resourceTable?: ResourcesTable): Resources 
   return Object.fromEntries(entries) as Resources;
 }
 
+export function createDefaultSeasonState(): SeasonState {
+  return {
+    active: DEFAULT_SEASON_ID,
+    elapsed: 0,
+    cycle: 0,
+    year: 0
+  };
+}
+
+export function clampSeasonElapsed(state: SeasonState): SeasonState {
+  const definition = getSeasonDefinition(state.active);
+  const clampedElapsed = Math.max(
+    0,
+    Math.min(state.elapsed, Number.isFinite(definition.durationSeconds) ? definition.durationSeconds : state.elapsed)
+  );
+  return { ...state, elapsed: clampedElapsed };
 export function createEmptyResourceStorage(
   resourceTable?: ResourcesTable
 ): ResourceStorageState {
@@ -211,6 +238,7 @@ export function defaultState(resourceTable?: ResourcesTable): GameState {
     productionModifiers: { speedMultiplier: 1, outputMultiplier: 1 },
     nextBuildId: 1,
     nextBuildingInstanceId: 1,
+    season: createDefaultSeasonState()
     nextProductionNodeId: 1
   };
 }
