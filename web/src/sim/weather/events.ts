@@ -21,42 +21,42 @@ const EVENT_DEFINITIONS: Record<WeatherType, WeatherEventDefinition[]> = {
   clear: [
     {
       type: 'gusts',
-      weight: 1,
-      minDuration: 45,
-      maxDuration: 90,
-      moistureModifier: -0.002
+      weight: 1.25,
+      minDuration: 60,
+      maxDuration: 120,
+      moistureModifier: -0.0015
     }
   ],
   rain: [
     {
       type: 'downpour',
-      weight: 2,
-      minDuration: 60,
-      maxDuration: 140,
-      moistureModifier: 0.015
+      weight: 2.2,
+      minDuration: 70,
+      maxDuration: 160,
+      moistureModifier: 0.018
     },
     {
       type: 'gusts',
-      weight: 1,
-      minDuration: 40,
-      maxDuration: 80,
-      moistureModifier: -0.001
+      weight: 1.1,
+      minDuration: 55,
+      maxDuration: 110,
+      moistureModifier: -0.0006
     }
   ],
   storm: [
     {
       type: 'lightning',
-      weight: 2.5,
-      minDuration: 30,
-      maxDuration: 90,
-      moistureModifier: 0.02
+      weight: 3.2,
+      minDuration: 35,
+      maxDuration: 95,
+      moistureModifier: 0.024
     },
     {
       type: 'downpour',
-      weight: 1.2,
-      minDuration: 60,
-      maxDuration: 150,
-      moistureModifier: 0.02
+      weight: 1.5,
+      minDuration: 70,
+      maxDuration: 170,
+      moistureModifier: 0.022
     }
   ]
 };
@@ -118,7 +118,7 @@ function attemptSpawnEvent(state: WeatherState, started: WeatherEventInstance[])
   }
 
   const duration = Math.max(chosen.minDuration, randomBetween(state, chosen.minDuration, chosen.maxDuration));
-  const intensity = 0.6 + nextRandom(state) * 0.8;
+  const intensity = 0.5 + nextRandom(state) * 0.9;
 
   state.events.serial += 1;
   const instance: WeatherEventInstance = {
@@ -133,9 +133,9 @@ function attemptSpawnEvent(state: WeatherState, started: WeatherEventInstance[])
 }
 
 function resetRollTimer(state: WeatherState) {
-  const base = state.current === 'storm' ? 45 : state.current === 'rain' ? 70 : 120;
-  const span = state.current === 'storm' ? 40 : state.current === 'rain' ? 90 : 120;
-  state.events.nextRollIn = Math.max(30, base + (nextRandom(state) - 0.5) * span);
+  const base = state.current === 'storm' ? 40 : state.current === 'rain' ? 65 : 110;
+  const span = state.current === 'storm' ? 36 : state.current === 'rain' ? 80 : 130;
+  state.events.nextRollIn = Math.max(24, base + (nextRandom(state) - 0.5) * span);
 }
 
 function computeMoistureModifier(state: WeatherState): number {
