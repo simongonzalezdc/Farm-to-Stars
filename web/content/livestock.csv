@@ -1,0 +1,5 @@
+id,label,growthDays,feedResource,feedPerDay,produceResource,produceAmount,produceIntervalSeconds,hungerToleranceDays,buyCost,sellValue,penSize,localizationNotes
+chicken,Hen,3,wheat,1,eggs,2,420,1.5,120,60,1,"Use generic 'Hen' rather than breed-specific term so translations can stay broad."
+cow,Dairy Cow,6,food,3,milk,3,600,2.5,450,220,3,"Keep 'Dairy' as adjective; OK to swap for equivalent milk-producing breed name in locale."
+goat,Mountain Goat,5,berries,2,milk,2,540,2.0,380,190,2,"'Mountain' emphasizes hardy tone; allow translators to reference regional alpine goats."
+alpaca,Starglaze Alpaca,7,fiber,2,fiber,4,720,2.2,520,260,3,"Compound proper noun; retain 'Starglaze' branding untranslated, localize 'Alpaca'."

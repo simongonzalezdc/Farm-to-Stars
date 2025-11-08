@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import '../styles/build.scss';
+import '../styles/hud.scss';
 import { gridToScreen, TILE_H, TILE_W } from './iso';
 import {
   defaultState,

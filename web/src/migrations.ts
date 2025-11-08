@@ -27,6 +27,7 @@ import {
   type FieldState,
   type GameState,
   type HomesteadState,
+  type ToolMasteryState,
   type LivestockHerdState,
   type MailState,
   type ProductionModifiers,
@@ -36,6 +37,8 @@ import {
   type ResourceId,
   type ResourcesTable,
   type ResourceStorageState,
+  type ToolPerkId,
+  type ToolId,
   type SaveV0,
   type SaveV1,
   type SaveV2,
@@ -386,8 +389,45 @@ function normalizeHomesteadState(candidate: unknown): HomesteadState {
   const stamina = normalizeStaminaState((candidate as { stamina?: unknown }).stamina);
   const weather = normalizeWeatherState((candidate as { weather?: unknown }).weather);
   const livestock = normalizeLivestockState((candidate as { livestock?: unknown }).livestock);
+  const toolMastery = normalizeToolMastery((candidate as { toolMastery?: unknown }).toolMastery);
 
-  return { field, time, stamina, weather, livestock };
+  return { field, time, stamina, weather, livestock, toolMastery };
+}
+
+function normalizeToolMastery(candidate: unknown): ToolMasteryState {
+  const mastery: ToolMasteryState = {};
+  if (!isRecord(candidate)) {
+    return mastery;
+  }
+
+  for (const [key, value] of Object.entries(candidate)) {
+    if (!isRecord(value)) {
+      continue;
+    }
+
+    const usesRaw = (value as { uses?: unknown }).uses;
+    const uses =
+      typeof usesRaw === 'number' && Number.isFinite(usesRaw)
+        ? Math.max(0, Math.floor(usesRaw))
+        : 0;
+
+    const unlockedRaw = (value as { unlocked?: unknown }).unlocked;
+    const unlocked: ToolPerkId[] = [];
+    if (Array.isArray(unlockedRaw)) {
+      for (const entry of unlockedRaw) {
+        if (typeof entry === 'string') {
+          unlocked.push(entry as ToolPerkId);
+        }
+      }
+    }
+
+    mastery[key as ToolId] = {
+      uses,
+      unlocked: Array.from(new Set(unlocked))
+    };
+  }
+
+  return mastery;
 }
 
 function normalizeFieldState(candidate: unknown, fallback: FieldState): FieldState {
