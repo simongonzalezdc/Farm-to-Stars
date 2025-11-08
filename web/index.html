@@ -8,29 +8,175 @@
   <style>
     html, body, #app { height: 100%; margin: 0; background: #0e0e10; color: #e5e7eb; }
     .hud {
-      position: fixed; left: 12px; top: 12px; padding: 12px 16px;
-      border-radius: 10px; border: 1px solid #ffffff22;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: #111a; backdrop-filter: blur(6px);
-      max-width: 360px;
-      line-height: 1.4;
+      position: fixed;
+      left: 16px;
+      top: 16px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      border: 1px solid #ffffff22;
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #111826dd, #0f172ad0);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 36px rgba(8, 11, 23, 0.45);
+      max-width: min(420px, 90vw);
+      line-height: 1.45;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 20;
     }
-    .hud h2 { margin: 0 0 6px; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #cbd5f5; }
-    .hud .row { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 8px; align-items: center; }
-    .hud .row:last-child { margin-bottom: 0; }
-    .hud span { display: inline-flex; gap: 4px; align-items: baseline; }
-    .hud b { color: #f8fafc; font-weight: 600; }
-    .hud button { font-family: inherit; border-radius: 6px; border: 1px solid #ffffff33; background: #1f293780; color: #f3f4f6; padding: 4px 8px; cursor: pointer; }
-    .hud button:hover { background: #334155a6; }
-    .hud button[aria-pressed='true'] { background: #2563ebb5; border-color: #3b82f6; }
-    .hud .feedback { font-size: 13px; color: #f9fafb; background: #1d3b5ab8; padding: 6px 8px; border-radius: 6px; }
-    .hud .labels { font-size: 12px; opacity: 0.8; }
-    .hud .queue { font-size: 13px; }
-    .hud small { opacity: 0.75; }
-    .hud .season-row { flex-direction: column; align-items: flex-start; gap: 4px; }
-    .hud .season-name { font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
-    .hud .season-effects { font-size: 12px; opacity: 0.85; }
-    .hud .season-timer { font-size: 11px; opacity: 0.75; letter-spacing: 0.02em; }
+    .hud h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #d8e4ff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hud h2::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #38bdf8;
+      box-shadow: 0 0 12px #38bdf8aa;
+    }
+    .hud .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      align-items: center;
+    }
+    .hud span {
+      display: inline-flex;
+      gap: 4px;
+      align-items: baseline;
+    }
+    .hud b {
+      color: #f8fafc;
+      font-weight: 600;
+      transition: color 180ms ease;
+    }
+    .hud button {
+      font-family: inherit;
+      border-radius: 8px;
+      border: 1px solid #ffffff26;
+      background: linear-gradient(145deg, #1d2a41cc, #1b273bcf);
+      color: #f3f4f6;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: transform 150ms ease, box-shadow 150ms ease, background 180ms ease;
+    }
+    .hud button:hover,
+    .hud button:focus-visible {
+      transform: translateY(-1px);
+      background: linear-gradient(145deg, #2a3b5fcc, #22324dcc);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.36);
+      outline: none;
+    }
+    .hud button:focus-visible {
+      border-color: #38bdf8;
+    }
+    .hud button[aria-pressed='true'] {
+      background: linear-gradient(145deg, #2563ebb5, #1d4ed8b8);
+      border-color: #60a5fa;
+      box-shadow: 0 12px 22px rgba(37, 99, 235, 0.35);
+    }
+    .hud .feedback {
+      font-size: 13px;
+      color: #f9fafb;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(37, 99, 235, 0.22);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+    }
+    .hud .feedback[data-tone='warn'] {
+      background: rgba(250, 204, 21, 0.18);
+      border-color: rgba(250, 204, 21, 0.45);
+      color: #fde68a;
+    }
+    .hud .feedback[data-tone='error'] {
+      background: rgba(248, 113, 113, 0.22);
+      border-color: rgba(239, 68, 68, 0.45);
+      color: #fecaca;
+    }
+    .hud .feedback[data-tone='success'] {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: rgba(34, 197, 94, 0.45);
+      color: #bbf7d0;
+    }
+    .hud .labels {
+      font-size: 12px;
+      opacity: 0.85;
+      letter-spacing: 0.04em;
+    }
+    .hud .queue {
+      font-size: 13px;
+    }
+    .hud small {
+      opacity: 0.82;
+    }
+    .hud .season-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    .hud .season-name {
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hud .season-effects {
+      font-size: 12px;
+      opacity: 0.88;
+    }
+    .hud .season-timer {
+      font-size: 11px;
+      opacity: 0.78;
+      letter-spacing: 0.02em;
+    }
+    #selectedCost[data-state='warn'] {
+      color: #facc15;
+    }
+    #selectedCost[data-state='ok'] {
+      color: #4ade80;
+    }
+    @media (max-width: 720px) {
+      .hud {
+        left: 12px;
+        right: 12px;
+        top: auto;
+        bottom: 16px;
+        padding: 14px 16px 16px;
+        max-width: unset;
+        gap: 10px;
+      }
+      .hud .row {
+        gap: 6px 10px;
+      }
+      .hud button {
+        flex: 1 1 120px;
+      }
+    }
+    @media (pointer: coarse) {
+      .hud button {
+        padding: 10px 14px;
+        font-size: 15px;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hud button,
+      .hud .feedback,
+      .hud b {
+        transition: none;
+      }
+    }
     button { font-family: inherit; }
   </style>
 </head>
@@ -42,7 +188,7 @@
       <span>Wood: <b id="wood">0</b></span>
       <span>Stone: <b id="stone">0</b></span>
       <span>Mode: <b id="modeIndicator">Camera</b></span>
-      <span>Cost: <b id="selectedCost">—</b></span>
+      <span>Cost: <b id="selectedCost" data-state="idle">—</b></span>
     </div>
     <div class="row season-row">
       <span id="seasonName" class="season-name">🌱 Spring Awakening</span>
@@ -65,7 +211,7 @@
       <small id="queueDetails">No active construction.</small>
     </div>
     <div class="row">
-      <div id="buildFeedback" class="feedback">Camera pan + zoom enabled.</div>
+      <div id="buildFeedback" class="feedback" aria-live="polite" data-tone="info">Camera pan + zoom enabled.</div>
     </div>
   </div>
   <script type="module" src="/src/main.ts"></script>

@@ -52,6 +52,12 @@ const bell = new Tone.FMSynth({
   envelope: { attack: 0.02, decay: 0.8, sustain: 0, release: 1.2 }
 }).connect(eventsBus);
 
+const uiFeedback = new Tone.Synth({
+  oscillator: { type: 'triangle' },
+  envelope: { attack: 0.001, decay: 0.18, sustain: 0, release: 0.2 }
+}).connect(eventsBus);
+uiFeedback.volume.value = -6;
+
 const ui = new Howl({
   src: [UI_SPRITE_DATA],
   volume: 0.7,
@@ -90,6 +96,23 @@ function playSprite(name: UiSpriteId) {
 
 export function playSfx(name: UiSpriteId) {
   playSprite(name);
+}
+
+export function playUiHover() {
+  if (!started || muted) return;
+  uiFeedback.triggerAttackRelease('C6', '32n');
+}
+
+export function playPlace() {
+  playSfx('place');
+  if (!started || muted) return;
+  uiFeedback.triggerAttackRelease('E5', '16n');
+}
+
+export function playInvalidPlacement() {
+  playSfx('invalidPlacement');
+  if (!started || muted) return;
+  uiFeedback.triggerAttackRelease('G3', '16n');
 }
 
 const resourceNotes: Record<ResourceId, string> = {
