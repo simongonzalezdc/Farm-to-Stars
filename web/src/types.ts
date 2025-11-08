@@ -49,6 +49,42 @@ export type RecipeId = 'gatherLogs' | 'quarryStone' | 'growFood';
 
 export type RecipeIO = Partial<Record<ResourceId, number>>;
 
+export type BuildingType = 'cottage';
+
+export interface Footprint {
+  w: number;
+  h: number;
+}
+
+export interface Structure {
+  id: number;
+  type: BuildingType;
+  x: number;
+  y: number;
+  footprint: Footprint;
+}
+
+export interface BuildJob {
+  id: number;
+  type: BuildingType;
+  x: number;
+  y: number;
+  footprint: Footprint;
+  duration: number;
+  remaining: number;
+  status: 'queued' | 'building';
+}
+
+export type SaveV1 = {
+  v: 1;
+  seed: number;
+  resources: Resources;
+  structures: Structure[];
+  buildQueue: BuildJob[];
+  nextBuildId: number;
+};
+
+export type GameState = SaveV1;
 export type RecipeDefinition = {
   id: RecipeId;
   label: string;
@@ -139,6 +175,18 @@ export const defaultState = (resourceTable?: ResourcesTable): GameState => ({
   v: 1,
   schemaVersion: CURRENT_SCHEMA_VERSION,
   seed: 12345,
+  resources: { wood: 0, stone: 0, food: 0, coins: 0 },
+  structures: [
+    {
+      id: 0,
+      type: 'cottage',
+      x: 10,
+      y: 10,
+      footprint: { w: 1, h: 1 }
+    }
+  ],
+  buildQueue: [],
+  nextBuildId: 1
   resources: createEmptyResources(resourceTable),
   world: { buildings: [] },
   buildQueue: [],
