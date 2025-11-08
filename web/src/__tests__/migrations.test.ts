@@ -12,7 +12,13 @@ const RESOURCE_TABLE: ResourcesTable = {
   stone: { display: 'Stone', stack: 9999 },
   water: { display: 'Water', stack: 9999 },
   food: { display: 'Food', stack: 9999 },
-  coins: { display: 'Coins', stack: 999999 }
+  coins: { display: 'Coins', stack: 999999 },
+  wheat: { display: 'Wheat', stack: 500 },
+  berries: { display: 'Berries', stack: 250 },
+  fiber: { display: 'Fiber', stack: 750 },
+  eggs: { display: 'Eggs', stack: 250 },
+  milk: { display: 'Milk', stack: 250 },
+  letters: { display: 'Mail', stack: 99 }
 };
 
 describe('save migrations', () => {
@@ -42,7 +48,13 @@ describe('save migrations', () => {
       stone: 0,
       water: 0,
       food: 3,
-      coins: 0
+      coins: 0,
+      wheat: 0,
+      berries: 0,
+      fiber: 0,
+      eggs: 0,
+      milk: 0,
+      letters: 0
     });
     expect(migrated?.resourceStorage).toMatchObject({
       wood: { capacity: 9999, current: 10 },
@@ -51,6 +63,9 @@ describe('save migrations', () => {
     });
     expect(migrated?.productionNodes).toEqual([]);
     expect(migrated?.productionQueue).toEqual([]);
+    expect(migrated?.mail.inbox).toEqual([]);
+    expect(migrated?.jobQueue.jobs).toEqual([]);
+    expect(migrated?.homestead.livestock.animals.length).toBeGreaterThan(0);
   });
 
   it('upgrades v0 saves into the latest structure', () => {
@@ -76,8 +91,15 @@ describe('save migrations', () => {
       stone: 6,
       water: 0,
       food: 7,
-      coins: 8
+      coins: 8,
+      wheat: 0,
+      berries: 0,
+      fiber: 0,
+      eggs: 0,
+      milk: 0,
+      letters: 0
     });
+    expect(migrated?.mail.scheduled).toEqual([]);
   });
 
   it('falls back to default state when migration fails', () => {
