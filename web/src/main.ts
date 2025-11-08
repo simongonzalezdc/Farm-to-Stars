@@ -1,9 +1,13 @@
 import Phaser from 'phaser';
 import { gridToScreen, TILE_W, TILE_H } from './iso';
-import { defaultState, type GameState } from './types';
+import type { GameState } from './types';
 import { load, save } from './storage';
 import { enableAudio, toggleMute } from './audio';
+import { defaultState, hydrateState, tick, fmt, SIM_DT } from './world';
 import { tick, fmt } from './world';
+import { loadDataTables, type DataTables } from './data';
+
+const dataTablesPromise = loadDataTables();
 
 const woodEl = document.getElementById('wood')!;
 const stoneEl = document.getElementById('stone')!;
@@ -67,6 +71,7 @@ const debugOverlay = new DebugOverlay();
 
 class IsoScene extends Phaser.Scene {
   state: GameState = defaultState();
+  tables!: DataTables;
   private accum = 0;
   private ground!: Phaser.GameObjects.Container;
   private props!: Phaser.GameObjects.Container;
@@ -102,7 +107,10 @@ class IsoScene extends Phaser.Scene {
 
   async create() {
     const loaded = await load();
-    this.state = loaded ?? defaultState();
+    this.state = hydrateState(loaded);
+    this.tables = await dataTablesPromise;
+    const loaded = await load(this.tables.resources);
+    this.state = loaded ?? defaultState(this.tables.resources);
 
     const cam = this.cameras.main;
     cam.setBackgroundColor('#0e0e10');
@@ -147,15 +155,20 @@ class IsoScene extends Phaser.Scene {
   }
 
   update(_time: number, deltaMs: number) {
-    // fixed 10 Hz sim (you can switch to 20 Hz by changing 0.1 → 0.05)
+    // fixed 10 Hz sim (SIM_DT = 0.1s by default)
     this.accum += deltaMs / 1000;
-    while (this.accum >= 0.1) {
-      tick(this.state, 0.1);
-      this.accum -= 0.1;
+    while (this.accum >= SIM_DT) {
+      const events = tick(this.state, SIM_DT);
+      if (events.length > 0) {
+        // Surface the last event for easy debug hooks in Phaser's registry.
+        const last = events[events.length - 1];
+        this.registry.set('lastEvent', last.type);
+      }
+      this.accum -= SIM_DT;
     }
 
-    woodEl.textContent = fmt(this.state.resources.wood);
-    stoneEl.textContent = fmt(this.state.resources.stone);
+    woodEl.textContent = fmt(this.state.resources.wood ?? 0);
+    stoneEl.textContent = fmt(this.state.resources.stone ?? 0);
 
     // y-sort props by screen y
     this.props.list.sort((a, b) => (a as any).y - (b as any).y);
@@ -174,4 +187,9 @@ const config: Phaser.Types.Core.GameConfig = {
   scale: { mode: Phaser.Scale.RESIZE }
 };
 
-new Phaser.Game(config);
+async function boot() {
+  await dataTablesPromise;
+  new Phaser.Game(config);
+}
+
+void boot();
