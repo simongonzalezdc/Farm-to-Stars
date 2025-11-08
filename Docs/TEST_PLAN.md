@@ -3,6 +3,7 @@
 ## 1) Manual
 - **Visual:** pixels are crisp at 3 zooms; y‑sort walk‑behind OK; day/night switch OK.
 - **Build/Economy:** road/plot/cottage/market place; plot yields; market sells; counters move.
+- **Pacing:** passive income + farm/market loop fund the Week 3 set (road, plot, market, cottage) within 8–10 minutes; first harvest lands <4 minutes; seasons cycle every 2.5 minutes.
 - **Platform:** PWA install; offline reload; audio unlock on tap.
 - **Perf:**
   - Launch build with `npm run build && npm run preview`, open on target hardware.
