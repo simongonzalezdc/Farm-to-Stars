@@ -5,6 +5,7 @@ import {
   type BuildingDefinition,
   type BuildingId,
   type CropsTable,
+  type LivestockTable,
   type RecipeDefinition,
   type RecipeId
 } from '../types';
@@ -23,7 +24,7 @@ describe('world simulation', () => {
   it('emits resource collection events when resources increase externally', () => {
     const state = defaultState();
     initWorld(state);
-    tick(state, 1.0, buildingDefs);
+    tick(state, 1.0, buildingDefs, {} as Record<RecipeId, RecipeDefinition>, {} as CropsTable, {} as LivestockTable);
     const springDef = getSeasonDefinition(state.season.active);
     expect(state.resources.wood).toBeGreaterThan(0);
     const baseGain = 0.1 * springDef.multipliers.resourceRate;
@@ -35,7 +36,8 @@ describe('world simulation', () => {
       0.1,
       buildingDefs,
       {} as Record<RecipeId, RecipeDefinition>,
-      {} as CropsTable
+      {} as CropsTable,
+      {} as LivestockTable
     );
 
     expect(events).toEqual([
@@ -53,7 +55,14 @@ describe('world simulation', () => {
     const initialDef = getSeasonDefinition(state.season.active);
     state.season.elapsed = initialDef.durationSeconds - 0.01;
 
-    const events = tick(state, 0.02, buildingDefs);
+    const events = tick(
+      state,
+      0.02,
+      buildingDefs,
+      {} as Record<RecipeId, RecipeDefinition>,
+      {} as CropsTable,
+      {} as LivestockTable
+    );
 
     const expectedSeason = getNextSeason(initialDef.id);
     expect(state.season.active).toBe(expectedSeason);
@@ -62,7 +71,7 @@ describe('world simulation', () => {
     const winterState = defaultState();
     winterState.season.active = SeasonId.Winter;
     initWorld(winterState);
-    tick(winterState, 1.0, buildingDefs);
+    tick(winterState, 1.0, buildingDefs, {} as Record<RecipeId, RecipeDefinition>, {} as CropsTable, {} as LivestockTable);
 
     const winterDef = getSeasonDefinition(SeasonId.Winter);
     const winterGain = 0.1 * winterDef.multipliers.resourceRate;

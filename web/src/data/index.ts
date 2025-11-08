@@ -4,6 +4,8 @@ import type {
   BuildingEffects,
   CropDefinition,
   CropsTable,
+  LivestockDefinition,
+  LivestockTable,
   RecipeDefinition,
   RecipesTable,
   ResourceDefinition,
@@ -18,6 +20,7 @@ export interface DataTables {
   recipes: RecipesTable;
   crops: CropsTable;
   tools: ToolsTable;
+  livestock: LivestockTable;
 }
 
 let cachedTables: DataTables | null = null;
@@ -27,18 +30,20 @@ const BUILDING_URL = new URL('./buildings.json', import.meta.url);
 const RECIPE_URL = new URL('./recipes.json', import.meta.url);
 const CROPS_URL = new URL('./crops.json', import.meta.url);
 const TOOLS_URL = new URL('./tools.json', import.meta.url);
+const LIVESTOCK_URL = new URL('./livestock.json', import.meta.url);
 
 export async function loadDataTables(): Promise<DataTables> {
   if (cachedTables) {
     return cachedTables;
   }
 
-  const [resourcesRaw, buildingsRaw, recipesRaw, cropsRaw, toolsRaw] = await Promise.all([
+  const [resourcesRaw, buildingsRaw, recipesRaw, cropsRaw, toolsRaw, livestockRaw] = await Promise.all([
     fetchJson(RESOURCE_URL),
     fetchJson(BUILDING_URL),
     fetchJson(RECIPE_URL),
     fetchJson(CROPS_URL),
-    fetchJson(TOOLS_URL)
+    fetchJson(TOOLS_URL),
+    fetchJson(LIVESTOCK_URL)
   ]);
 
   const resources = validateResourcesTable(resourcesRaw);
@@ -46,8 +51,9 @@ export async function loadDataTables(): Promise<DataTables> {
   const recipes = validateRecipesTable(recipesRaw);
   const crops = validateCropsTable(cropsRaw);
   const tools = validateToolsTable(toolsRaw);
+  const livestock = validateLivestockTable(livestockRaw);
 
-  cachedTables = { resources, buildings, recipes, crops, tools };
+  cachedTables = { resources, buildings, recipes, crops, tools, livestock };
   return cachedTables;
 }
 
@@ -94,6 +100,67 @@ function validateResourcesTable(raw: unknown): ResourcesTable {
       throw new Error(`Resource "${key}" is missing required fields.`);
     }
     table[key] = { display, stack };
+  }
+
+  return table;
+}
+
+function validateLivestockTable(raw: unknown): LivestockTable {
+  if (!isRecord(raw)) {
+    throw new Error('livestock.json must be an object map.');
+  }
+
+  const table: Record<string, LivestockDefinition> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!isRecord(value)) {
+      throw new Error(`Livestock "${key}" must be an object.`);
+    }
+
+    const label = value.label;
+    const growthDays = value.growthDays;
+    const feedResource = value.feedResource;
+    const feedPerDay = value.feedPerDay;
+    const produceResource = value.produceResource;
+    const produceAmount = value.produceAmount;
+    const produceIntervalSeconds = value.produceIntervalSeconds;
+    const hungerToleranceDays = value.hungerToleranceDays;
+
+    if (!isString(label)) {
+      throw new Error(`Livestock "${key}" is missing label.`);
+    }
+    if (!isNumber(growthDays) || growthDays < 0) {
+      throw new Error(`Livestock "${key}" has invalid growthDays.`);
+    }
+    if (!isString(feedResource)) {
+      throw new Error(`Livestock "${key}" must declare a feed resource.`);
+    }
+    if (!isNumber(feedPerDay) || feedPerDay <= 0) {
+      throw new Error(`Livestock "${key}" feedPerDay must be >0.`);
+    }
+    if (!isString(produceResource)) {
+      throw new Error(`Livestock "${key}" must declare produceResource.`);
+    }
+    if (!isNumber(produceAmount) || produceAmount <= 0) {
+      throw new Error(`Livestock "${key}" produceAmount must be >0.`);
+    }
+    if (!isNumber(produceIntervalSeconds) || produceIntervalSeconds <= 0) {
+      throw new Error(`Livestock "${key}" produceIntervalSeconds must be >0.`);
+    }
+    if (!isNumber(hungerToleranceDays) || hungerToleranceDays <= 0) {
+      throw new Error(`Livestock "${key}" hungerToleranceDays must be >0.`);
+    }
+
+    table[key] = {
+      id: key,
+      label,
+      growthDays,
+      feedResource,
+      feedPerDay,
+      produceResource,
+      produceAmount,
+      produceIntervalSeconds,
+      hungerToleranceDays
+    };
   }
 
   return table;
