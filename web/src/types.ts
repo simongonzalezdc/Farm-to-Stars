@@ -1,6 +1,7 @@
 export type ResourceId = 'wood' | 'stone' | 'food' | 'coins';
 export type Resources = Record<ResourceId, number>;
 
+export type SaveV0 = { seed: number } & Resources;
 export type SaveV1 = { v: 1; seed: number; resources: Resources };
 export type GameState = SaveV1;
 
