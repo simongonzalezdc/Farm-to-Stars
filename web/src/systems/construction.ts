@@ -21,8 +21,7 @@ export interface ConstructionOptions {
 export function processConstruction(
   state: GameState,
   dt: number,
-  buildingDefs: Partial<Record<BuildingId, BuildingDefinition>>
-  buildingDefs: Record<BuildingId, BuildingDefinition>,
+  buildingDefs: Partial<Record<BuildingId, BuildingDefinition>>,
   options: ConstructionOptions = {}
 ): ConstructionResult {
   const completed: CompletedConstruction[] = [];

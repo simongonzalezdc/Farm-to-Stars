@@ -3,13 +3,11 @@ import { fmt, initWorld, tick } from '../world';
 import {
   defaultState,
   type BuildingDefinition,
-  type BuildingId
-} from '../types';
-import { getSeasonDefinition, getNextSeason, SeasonId } from '../config/seasons';
   type BuildingId,
   type RecipeDefinition,
   type RecipeId
 } from '../types';
+import { getSeasonDefinition, getNextSeason, SeasonId } from '../config/seasons';
 
 const buildingDefs = {
   cottage: {
