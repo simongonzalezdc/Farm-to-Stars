@@ -11,6 +11,8 @@ Wave Delta is the final sprint cluster before Homestead playtests. The bundles b
 | D3 | Playtest Ops & Packaging | RC build, perf targets signed off, playtest scenarios from Q2 | Playtest build, onboarding packet, telemetry routing |
 | D4 | Homestead→Township Export Prototype | Homestead progression complete, schema v6 stable | Export snapshot tooling, UI trigger, documentation |
 
+> **Agent pods:** Each lane is owned by a dedicated Wave Delta pod—Delta-Bash, Delta-Perf, Delta-Play, and Delta-Bridge. Their charters, automation hooks, and sync cadences are captured in [`Docs/HOMESTEAD_WAVE_DELTA_AGENTS.md`](./HOMESTEAD_WAVE_DELTA_AGENTS.md) so crews can spin up in parallel without waiting for further direction.
+
 ## D1 — Bug Bash & Stabilization
 
 - **Definition of Ready**
