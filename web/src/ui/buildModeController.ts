@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 
 import { playInvalidPlacement, playPlace, playUiHover } from '../audio';
+import { PlacementGhost, type PlacementGhostState } from '../hud/build/PlacementGhost';
+import { wireBuildControls } from '../input/buildControls';
 import { gridToScreen, screenToGrid } from '../iso';
 import {
   applyCost,
@@ -17,7 +19,7 @@ import {
   type PlacementIssue,
   type PlacementResult
 } from '../maps/tilemap';
-import type { BuildJob, BuildingType, GameState } from '../types';
+import type { BuildJob, BuildingType, Footprint, GameState, Orientation } from '../types';
 
 interface HudElements {
   modeIndicator: HTMLElement;
@@ -50,12 +52,15 @@ export class BuildModeController {
   private selected?: BuildingType;
   private currentDefinition?: UiBuildingDefinition;
   private hover?: { x: number; y: number };
-  private readonly ghost: Phaser.GameObjects.Image;
+  private lastPointerWorld?: { x: number; y: number };
+  private readonly ghost: PlacementGhost;
   private readonly footprintOverlay: Phaser.GameObjects.Container;
   private readonly footprintTiles: Phaser.GameObjects.Image[] = [];
   private selectedButton: HTMLButtonElement | null = null;
   private ghostMoveTween: Phaser.Tweens.Tween | null = null;
   private feedbackHoldUntil = 0;
+  private rotation: Orientation = 0;
+  private detachControls: (() => void) | null = null;
 
   constructor(options: BuildModeControllerOptions) {
     this.scene = options.scene;
@@ -66,12 +71,7 @@ export class BuildModeController {
     this.buttons = options.buttons;
     this.onJobQueued = options.onJobQueued;
 
-    this.ghost = this.scene.add
-      .image(0, 0, 'prop:cottage')
-      .setVisible(false)
-      .setAlpha(0.7)
-      .setOrigin(0.5, 1.0)
-      .setDepth(950);
+    this.ghost = new PlacementGhost(this.scene, 'prop:cottage');
 
     this.footprintOverlay = this.scene.add.container(0, 0);
     this.footprintOverlay.setDepth(900);
@@ -96,6 +96,21 @@ export class BuildModeController {
 
     this.setupButtons();
     this.resetHud();
+
+    this.detachControls = wireBuildControls(this.scene, {
+      onRotate: (delta) => this.rotate(delta),
+      onConfirm: () => {
+        if (this.mode === 'build') {
+          this.attemptPlacement();
+        }
+      },
+      onCancel: () => this.cancel()
+    });
+
+    this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.detachControls?.();
+      this.detachControls = null;
+    });
   }
 
   isActive(): boolean {
@@ -113,6 +128,7 @@ export class BuildModeController {
     if (this.mode !== 'build' || !this.selected) {
       return;
     }
+    this.lastPointerWorld = { x: worldX, y: worldY };
     this.updatePlacementPreview(worldX, worldY);
   }
 
@@ -174,12 +190,16 @@ export class BuildModeController {
   private enterBuildMode(type: BuildingType, button: HTMLButtonElement, def?: UiBuildingDefinition) {
     this.mode = 'build';
     this.selected = type;
+    this.rotation = 0;
     this.selectedButton?.setAttribute('aria-pressed', 'false');
     this.selectedButton = button;
     this.selectedButton.setAttribute('aria-pressed', 'true');
 
     const resolved = def ?? getUiBuildingDefinition(type);
     this.currentDefinition = resolved;
+    this.ghost.setTexture(resolved.texture);
+    this.ghost.setOrientation(this.rotation);
+    this.ghost.setState('valid');
     this.hud.modeIndicator.textContent = 'Placement';
     this.hud.selectedCost.textContent = formatCost(resolved.cost);
     const affordable = canAfford(this.state.resources, resolved.cost);
@@ -190,11 +210,11 @@ export class BuildModeController {
         : 'Gather more resources before placing this building.',
       affordable ? 'info' : 'warn'
     );
-    this.ghost.setTexture(resolved.texture);
-    this.ghost.setVisible(false);
+    this.ghost.hide();
     this.footprintOverlay.setVisible(false);
 
     const pointer = this.scene.input.activePointer;
+    this.lastPointerWorld = { x: pointer.worldX, y: pointer.worldY };
     this.updatePlacementPreview(pointer.worldX, pointer.worldY);
   }
 
@@ -203,12 +223,16 @@ export class BuildModeController {
     this.selected = undefined;
     this.currentDefinition = undefined;
     this.hover = undefined;
+    this.lastPointerWorld = undefined;
     this.feedbackHoldUntil = 0;
     this.selectedButton?.setAttribute('aria-pressed', 'false');
     this.selectedButton = null;
     this.ghostMoveTween?.stop();
     this.ghostMoveTween = null;
-    this.ghost.setVisible(false);
+    this.rotation = 0;
+    this.ghost.hide();
+    this.ghost.setOrientation(0);
+    this.ghost.setState('valid');
     this.footprintOverlay.setVisible(false);
     this.footprintTiles.forEach((tile) => tile.setVisible(false));
     this.placementEmitter.stop();
@@ -225,23 +249,34 @@ export class BuildModeController {
     }
   }
 
+  private getOrientedFootprint(def: UiBuildingDefinition): Footprint {
+    const base = def.footprint;
+    if (this.rotation % 2 !== 0) {
+      return { w: base.h, h: base.w };
+    }
+    return { w: base.w, h: base.h };
+  }
+
   private updatePlacementPreview(worldX: number, worldY: number) {
     if (!this.selected) {
       return;
     }
     const def = this.currentDefinition ?? getUiBuildingDefinition(this.selected);
     this.currentDefinition = def;
+    this.lastPointerWorld = { x: worldX, y: worldY };
     const { ix, iy } = screenToGrid(worldX, worldY);
     this.hover = { x: ix, y: iy };
 
-    const placement = validatePlacement(this.occupancy, ix, iy, def.footprint.w, def.footprint.h);
+    const footprint = this.getOrientedFootprint(def);
+    const placement = validatePlacement(this.occupancy, ix, iy, footprint.w, footprint.h);
     const affordable = canAfford(this.state.resources, def.cost);
     const valid = placement.ok && affordable;
 
-    this.drawFootprint(ix, iy, def, placement.issues);
+    this.drawFootprint(ix, iy, footprint, placement.issues);
 
     const { x, y } = gridToScreen(ix, iy, def.elevation ?? 0);
-    this.ghost.setVisible(true);
+    this.ghost.show();
+    this.ghost.setOrientation(this.rotation);
     const targetY = y - (def.anchorOffset ?? 0);
     if (this.ghostMoveTween) {
       this.ghostMoveTween.stop();
@@ -254,15 +289,14 @@ export class BuildModeController {
       ease: valid ? 'Sine.easeOut' : 'Cubic.easeOut'
     });
 
-    if (!affordable) {
-      this.ghost.setTint(0xffd166);
-    } else if (placement.ok) {
-      this.ghost.setTint(0x82ff9a);
-    } else {
-      this.ghost.setTint(0xff6b6b);
-    }
-
-    this.ghost.setAlpha(valid ? 0.85 : 0.65);
+    const ghostState: PlacementGhostState = !affordable
+      ? 'unaffordable'
+      : placement.ok
+        ? 'valid'
+        : placement.issues.some((issue) => issue.reason === 'occupied')
+          ? 'blocked'
+          : 'invalid';
+    this.ghost.setState(ghostState);
     this.updateCostState(affordable ? 'ok' : 'warn');
 
     if (this.feedbackHoldUntil <= performance.now()) {
@@ -276,14 +310,31 @@ export class BuildModeController {
     }
   }
 
-  private drawFootprint(x: number, y: number, def: UiBuildingDefinition, issues: PlacementIssue[]) {
-    const totalTiles = def.footprint.w * def.footprint.h;
+  private rotate(delta: number) {
+    if (this.mode !== 'build' || !this.selected) {
+      return;
+    }
+    const normalized = ((this.rotation + delta) % 4 + 4) % 4 as Orientation;
+    if (normalized === this.rotation) {
+      return;
+    }
+    this.rotation = normalized;
+    this.ghost.setOrientation(this.rotation);
+    const pointer = this.lastPointerWorld ?? {
+      x: this.scene.input.activePointer.worldX,
+      y: this.scene.input.activePointer.worldY
+    };
+    this.updatePlacementPreview(pointer.x, pointer.y);
+  }
+
+  private drawFootprint(x: number, y: number, footprint: Footprint, issues: PlacementIssue[]) {
+    const totalTiles = footprint.w * footprint.h;
     this.ensureFootprintTiles(totalTiles);
     const blocked = new Set(issues.map((issue) => `${issue.x},${issue.y}`));
 
     let tileIndex = 0;
-    for (let iy = 0; iy < def.footprint.h; iy++) {
-      for (let ix = 0; ix < def.footprint.w; ix++) {
+    for (let iy = 0; iy < footprint.h; iy++) {
+      for (let ix = 0; ix < footprint.w; ix++) {
         const tile = this.footprintTiles[tileIndex++];
         const tx = x + ix;
         const ty = y + iy;
@@ -313,12 +364,13 @@ export class BuildModeController {
     }
     const def = this.currentDefinition ?? getUiBuildingDefinition(this.selected);
     const { x, y } = this.hover;
-    const placement = validatePlacement(this.occupancy, x, y, def.footprint.w, def.footprint.h);
+    const footprint = this.getOrientedFootprint(def);
+    const placement = validatePlacement(this.occupancy, x, y, footprint.w, footprint.h);
 
     if (!placement.ok) {
       playInvalidPlacement();
       this.setFeedback(this.describeIssues(placement), 'error', 1400);
-      this.drawFootprint(x, y, def, placement.issues);
+      this.drawFootprint(x, y, footprint, placement.issues);
       playInvalidPlacementSfx();
       return;
     }
@@ -338,18 +390,19 @@ export class BuildModeController {
       type: this.selected,
       x,
       y,
-      footprint: def.footprint,
+      footprint,
+      orientation: this.rotation,
       duration: def.buildTime,
       remaining: def.buildTime,
       status: 'queued'
     };
     this.state.buildQueue.push(job);
-    markJob(this.occupancy, x, y, def.footprint.w, def.footprint.h, this.selected, jobId);
+    markJob(this.occupancy, x, y, footprint.w, footprint.h, this.selected, jobId);
     playPlacementSfx();
 
     this.onJobQueued(job);
 
-    this.emitPlacementCelebration(x, y, def);
+    this.emitPlacementCelebration(x, y, def, footprint);
     this.setFeedback(`${def.label} queued for construction.`, 'success', 1600);
     const stillAffordable = canAfford(this.state.resources, def.cost);
     this.updateCostState(stillAffordable ? 'ok' : 'warn');
@@ -380,13 +433,13 @@ export class BuildModeController {
     return 'Cannot place there.';
   }
 
-  private emitPlacementCelebration(x: number, y: number, def: UiBuildingDefinition) {
-    const cx = x + (def.footprint.w - 1) / 2;
-    const cy = y + (def.footprint.h - 1) / 2;
+  private emitPlacementCelebration(x: number, y: number, def: UiBuildingDefinition, footprint: Footprint) {
+    const cx = x + (footprint.w - 1) / 2;
+    const cy = y + (footprint.h - 1) / 2;
     const { x: sx, y: sy } = gridToScreen(cx, cy, def.elevation ?? 0);
     this.particleManager.setVisible(true);
     this.placementEmitter.explode(
-      Math.min(30, 12 + def.footprint.w * def.footprint.h * 2),
+      Math.min(30, 12 + footprint.w * footprint.h * 2),
       sx,
       sy - (def.anchorOffset ?? 0)
     );

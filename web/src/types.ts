@@ -115,12 +115,15 @@ export interface Footprint {
   h: number;
 }
 
+export type Orientation = 0 | 1 | 2 | 3;
+
 export interface Structure {
   id: number;
   type: BuildingType;
   x: number;
   y: number;
   footprint: Footprint;
+  orientation: Orientation;
 }
 
 export interface BuildJob {
@@ -129,6 +132,7 @@ export interface BuildJob {
   x: number;
   y: number;
   footprint: Footprint;
+  orientation: Orientation;
   duration: number;
   remaining: number;
   status: 'queued' | 'building';
@@ -147,6 +151,7 @@ export interface ConstructionJob {
   duration: number;
   remaining: number;
   footprint: Footprint;
+  orientation: Orientation;
 }
 
 export interface ProductionNode {
@@ -584,7 +589,8 @@ export function defaultState(resourceTable?: ResourcesTable): GameState {
         type: 'cottage',
         x: 10,
         y: 10,
-        footprint: { w: 2, h: 2 }
+        footprint: { w: 2, h: 2 },
+        orientation: 0
       }
     ],
     buildQueue: [],
