@@ -1,0 +1,21 @@
+{
+  "hoe": {
+    "label": "Stone Hoe",
+    "action": "Till",
+    "staminaCost": 9,
+    "description": "Turns packed soil into plant-ready rows."
+  },
+  "wateringCan": {
+    "label": "Copper Watering Can",
+    "action": "Water",
+    "staminaCost": 6,
+    "moistureDelta": 0.25,
+    "description": "Restores moisture to a single tile."
+  },
+  "sickle": {
+    "label": "Harvesting Sickle",
+    "action": "Harvest",
+    "staminaCost": 5,
+    "description": "Cuts mature crops without damaging regrowth."
+  }
+}
