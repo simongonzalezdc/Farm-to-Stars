@@ -92,6 +92,22 @@ export interface ResourceStorageSlot {
 
 export type ResourceStorageState = Record<ResourceId, ResourceStorageSlot>;
 
+export type LivestockId = string;
+
+export interface LivestockDefinition {
+  id: LivestockId;
+  label: string;
+  growthDays: number;
+  feedResource: ResourceId;
+  feedPerDay: number;
+  produceResource: ResourceId;
+  produceAmount: number;
+  produceIntervalSeconds: number;
+  hungerToleranceDays: number;
+}
+
+export type LivestockTable = Record<LivestockId, LivestockDefinition>;
+
 export type BuildingType = BuildingId;
 
 export interface Footprint {
@@ -197,6 +213,24 @@ export interface WeatherState {
   duration: number;
   /** Net moisture delta applied to tiles per simulated second. */
   moistureDeltaPerSecond: number;
+  events: WeatherEventsState;
+  rngState: number;
+}
+
+export type WeatherEventType = 'gusts' | 'downpour' | 'lightning';
+
+export interface WeatherEventInstance {
+  id: string;
+  type: WeatherEventType;
+  remaining: number;
+  duration: number;
+  intensity: number;
+}
+
+export interface WeatherEventsState {
+  active: WeatherEventInstance[];
+  nextRollIn: number;
+  serial: number;
 }
 
 export interface HomesteadState {
@@ -204,6 +238,62 @@ export interface HomesteadState {
   time: TimeOfDayState;
   stamina: StaminaState;
   weather: WeatherState;
+  livestock: LivestockHerdState;
+}
+
+export interface LivestockAnimalState {
+  id: number;
+  speciesId: LivestockId;
+  ageDays: number;
+  growth: number;
+  hunger: number;
+  produceProgress: number;
+  lastFedDay: number;
+  alive: boolean;
+}
+
+export interface LivestockHerdState {
+  animals: LivestockAnimalState[];
+  nextAnimalId: number;
+}
+
+export interface MailMessage {
+  id: number;
+  sender: string;
+  subject: string;
+  body: string;
+  attachments: Partial<Record<ResourceId, number>>;
+  deliveredAtSeconds: number;
+  read: boolean;
+}
+
+export interface ScheduledMail {
+  id: number;
+  templateId: string;
+  npcId: string;
+  subject: string;
+  body: string;
+  attachments: Partial<Record<ResourceId, number>>;
+  scheduledAtSeconds: number;
+}
+
+export interface MailState {
+  nextId: number;
+  inbox: MailMessage[];
+  scheduled: ScheduledMail[];
+  lastGeneratedDay: number;
+}
+
+export interface BackgroundJob<TType extends string = string, TPayload = unknown> {
+  id: number;
+  type: TType;
+  scheduledAt: number;
+  payload: TPayload;
+}
+
+export interface BackgroundJobQueueState {
+  nextJobId: number;
+  jobs: BackgroundJob[];
 }
 
 export interface ProductionQueueItem {
@@ -224,9 +314,16 @@ export type GameEvent =
   | { type: 'homestead.weather.changed'; weather: WeatherType; moistureDeltaPerSecond: number }
   | { type: 'homestead.crop.matured'; cropId: CropId; x: number; y: number }
   | { type: 'homestead.crop.withered'; cropId: CropId; x: number; y: number }
-  | { type: 'production.cycle'; nodeId: number; recipeId: RecipeId; outputs: RecipeIO };
+  | { type: 'production.cycle'; nodeId: number; recipeId: RecipeId; outputs: RecipeIO }
+  | { type: 'livestock.produce'; livestockId: number; speciesId: LivestockId; resource: ResourceId; amount: number }
+  | { type: 'livestock.starved'; livestockId: number; speciesId: LivestockId }
+  | { type: 'weather.event.started'; eventId: string; eventType: WeatherEventType; intensity: number }
+  | { type: 'weather.event.ended'; eventId: string; eventType: WeatherEventType }
+  | { type: 'mail.delivered'; messageId: number; attachments: Partial<Record<ResourceId, number>> };
 
-export const CURRENT_SCHEMA_VERSION = 5;
+export const CURRENT_SCHEMA_VERSION = 6;
+
+export const PREVIOUS_SCHEMA_VERSION = 5;
 
 export const LEGACY_SCHEMA_VERSION = 4;
 
@@ -272,11 +369,17 @@ export interface SaveV4 extends SaveV1 {
 }
 
 export interface SaveV5 extends SaveV4 {
-  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  schemaVersion: typeof PREVIOUS_SCHEMA_VERSION;
   homestead: HomesteadState;
 }
 
-export type GameState = SaveV5;
+export interface SaveV6 extends SaveV5 {
+  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  mail: MailState;
+  jobQueue: BackgroundJobQueueState;
+}
+
+export type GameState = SaveV6;
 
 export const LEGACY_RESOURCE_IDS: ResourceId[] = ['wood', 'stone', 'food', 'coins'];
 
@@ -360,7 +463,9 @@ export function createDefaultWeatherState(): WeatherState {
     current: 'clear',
     elapsed: 0,
     duration: 180,
-    moistureDeltaPerSecond: -0.005
+    moistureDeltaPerSecond: -0.005,
+    events: { active: [], nextRollIn: 90, serial: 0 },
+    rngState: 0x9e3779b9
   };
 }
 
@@ -369,7 +474,52 @@ export function createDefaultHomesteadState(): HomesteadState {
     field: createEmptyFieldState(),
     time: createDefaultTimeState(),
     stamina: createDefaultStaminaState(),
-    weather: createDefaultWeatherState()
+    weather: createDefaultWeatherState(),
+    livestock: createDefaultLivestockState()
+  };
+}
+
+export function createDefaultLivestockState(): LivestockHerdState {
+  return {
+    animals: [
+      {
+        id: 0,
+        speciesId: 'chicken',
+        ageDays: 1,
+        growth: 0.35,
+        hunger: 0,
+        produceProgress: 0,
+        lastFedDay: 1,
+        alive: true
+      },
+      {
+        id: 1,
+        speciesId: 'cow',
+        ageDays: 2,
+        growth: 0.45,
+        hunger: 0,
+        produceProgress: 0,
+        lastFedDay: 1,
+        alive: true
+      }
+    ],
+    nextAnimalId: 2
+  };
+}
+
+export function createDefaultMailState(): MailState {
+  return {
+    nextId: 1,
+    inbox: [],
+    scheduled: [],
+    lastGeneratedDay: 0
+  };
+}
+
+export function createDefaultJobQueueState(): BackgroundJobQueueState {
+  return {
+    nextJobId: 1,
+    jobs: []
   };
 }
 
@@ -403,11 +553,30 @@ export function createEmptyResourceStorage(resourceTable?: ResourcesTable): Reso
 }
 
 export function defaultState(resourceTable?: ResourcesTable): GameState {
+  const resources = createEmptyResources(resourceTable);
+  if (resources.wheat === undefined) {
+    resources.wheat = 0;
+  }
+  if (resources.food === undefined) {
+    resources.food = 0;
+  }
+  if (resources.eggs === undefined) {
+    resources.eggs = 0;
+  }
+  if (resources.milk === undefined) {
+    resources.milk = 0;
+  }
+  if (resources.letters === undefined) {
+    resources.letters = 0;
+  }
+  resources.wheat = Math.max(resources.wheat, 8);
+  resources.food = Math.max(resources.food, 6);
+
   return {
     v: 1,
     schemaVersion: CURRENT_SCHEMA_VERSION,
     seed: 12345,
-    resources: createEmptyResources(resourceTable),
+    resources,
     resourceStorage: createEmptyResourceStorage(resourceTable),
     structures: [
       {
@@ -428,6 +597,8 @@ export function defaultState(resourceTable?: ResourcesTable): GameState {
     nextBuildingInstanceId: 1,
     season: createDefaultSeasonState(),
     nextProductionNodeId: 1,
-    homestead: createDefaultHomesteadState()
+    homestead: createDefaultHomesteadState(),
+    mail: createDefaultMailState(),
+    jobQueue: createDefaultJobQueueState()
   };
 }

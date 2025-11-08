@@ -14,6 +14,8 @@
 ## 2) Automated
 - **Unit tests:** economy math, construction timers, save migrations.
 - **E2E smoke (Playwright):** load → place road → save → reload → verify persisted.
+- **Migration CLI:** `npm run migrate -- --input web/scripts/migrate/__fixtures__/v5-basic.json --output tmp.json` should emit a
+  schema v6 save with populated mail/livestock fields (verify via diff or `jq '.schemaVersion'`).
 
 ## 3) Week 1–4 Playtest Checklist
 

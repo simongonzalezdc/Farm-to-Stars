@@ -7,5 +7,8 @@
   "wheat": {"display": "Wheat Bundles", "stack": 500},
   "potato": {"display": "Potatoes", "stack": 500},
   "berries": {"display": "Wild Berries", "stack": 250},
-  "fiber": {"display": "Plant Fiber", "stack": 750}
+  "fiber": {"display": "Plant Fiber", "stack": 750},
+  "eggs": {"display": "Farm Eggs", "stack": 250},
+  "milk": {"display": "Fresh Milk", "stack": 250},
+  "letters": {"display": "Unread Mail", "stack": 99}
 }
