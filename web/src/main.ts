@@ -4,6 +4,16 @@ import { defaultState, type GameState, type Structure } from './types';
 import { load, save } from './storage';
 import { enableAudio, toggleMute } from './audio';
 import { fmt, initWorld, SIM_DT, tick } from './world';
+import { enableAudio, playSfx, toggleMute } from './audio';
+import {
+  EVENT_RESOURCES_UPDATED,
+  fmt,
+  gameEvents,
+  initWorld,
+  SIM_DT,
+  tick,
+  type ResourcesUpdatedDetail
+} from './world';
 import { getUiBuildingDefinition } from './buildings';
 import {
   getSeasonDefinition,
@@ -116,6 +126,7 @@ class IsoScene extends Phaser.Scene {
   private structureSprites = new Map<number, Phaser.GameObjects.Image>();
   private jobMarkers = new Map<number, Phaser.GameObjects.Image>();
   private buildMode!: BuildModeController;
+  private detachHudListener?: () => void;
 
   preload() {
     const g = this.add.graphics({ x: 0, y: 0 });
@@ -305,12 +316,24 @@ class IsoScene extends Phaser.Scene {
     });
 
     this.syncSeasonState(true);
+    const updateHud = (resources: GameState['resources']) => {
+      woodEl.textContent = fmt(resources.wood ?? 0);
+      stoneEl.textContent = fmt(resources.stone ?? 0);
+    };
+
+    const listener = (event: Event) => {
+      const detail = (event as CustomEvent<ResourcesUpdatedDetail>).detail;
+      updateHud(detail.resources);
+    };
+    gameEvents.addEventListener(EVENT_RESOURCES_UPDATED, listener);
+    this.detachHudListener = () => gameEvents.removeEventListener(EVENT_RESOURCES_UPDATED, listener);
+    updateHud(this.state.resources);
   }
 
   update(_time: number, deltaMs: number) {
     this.accum += deltaMs / 1000;
     while (this.accum >= SIM_DT) {
-      const events = tick(this.state, SIM_DT, this.buildingDefs);
+      const events = tick(this.state, SIM_DT, this.buildingDefs, this.tables.recipes);
       if (events.length > 0) {
         const last = events[events.length - 1];
         this.registry.set('lastEvent', last.type);
@@ -460,6 +483,9 @@ class IsoScene extends Phaser.Scene {
     const cycleIndex = (this.state.season.cycle % SEASON_ORDER.length) + 1;
     const cycleLabel = `Cycle ${cycleIndex}/${SEASON_ORDER.length}`;
     seasonTimerEl.textContent = `${yearLabel} • ${cycleLabel} • Next in ${formatDuration(remaining)}`;
+  destroy(fromScene?: boolean) {
+    this.detachHudListener?.();
+    super.destroy(fromScene);
   }
 }
 

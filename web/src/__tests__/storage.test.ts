@@ -22,6 +22,7 @@ vi.mock('idb-keyval', () => {
 const RESOURCE_TABLE: ResourcesTable = {
   wood: { display: 'Wood', stack: 9999 },
   stone: { display: 'Stone', stack: 9999 },
+  water: { display: 'Water', stack: 9999 },
   food: { display: 'Food', stack: 9999 },
   coins: { display: 'Coins', stack: 999999 }
 };
@@ -65,5 +66,19 @@ describe('storage', () => {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       season: createDefaultSeasonState()
     });
+    const expected = defaultState(RESOURCE_TABLE);
+    expected.seed = 77;
+    expected.resources = {
+      ...expected.resources,
+      wood: 10,
+      stone: 5,
+      food: 2,
+      coins: 1
+    };
+    expected.resourceStorage.wood.current = 10;
+    expected.resourceStorage.stone.current = 5;
+    expected.resourceStorage.food.current = 2;
+    expected.resourceStorage.coins.current = 1;
+    expect(loaded).toEqual(expected);
   });
 });

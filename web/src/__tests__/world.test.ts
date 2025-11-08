@@ -6,6 +6,10 @@ import {
   type BuildingId
 } from '../types';
 import { getSeasonDefinition, getNextSeason, SeasonId } from '../config/seasons';
+  type BuildingId,
+  type RecipeDefinition,
+  type RecipeId
+} from '../types';
 
 const buildingDefs = {
   cottage: {
@@ -17,13 +21,20 @@ const buildingDefs = {
 } as Record<BuildingId, BuildingDefinition>;
 
 describe('world simulation', () => {
-  it('increments wood based on elapsed time', () => {
+  it('emits resource collection events when resources increase externally', () => {
     const state = defaultState();
     initWorld(state);
     tick(state, 1.0, buildingDefs);
     const springDef = getSeasonDefinition(state.season.active);
     expect(state.resources.wood).toBeGreaterThan(0);
     expect(state.resources.wood).toBeCloseTo(0.1 * springDef.multipliers.resourceRate, 5);
+    state.resources.wood = 1.25;
+
+    const events = tick(state, 0.1, buildingDefs, {} as Record<RecipeId, RecipeDefinition>);
+
+    expect(events).toEqual([
+      { type: 'resource.collected', resource: 'wood', amount: 1 }
+    ]);
   });
 
   it('formats resource counts for display', () => {
