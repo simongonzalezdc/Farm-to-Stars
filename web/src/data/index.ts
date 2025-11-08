@@ -2,16 +2,22 @@ import type {
   BuildingsTable,
   BuildingDefinition,
   BuildingEffects,
+  CropDefinition,
+  CropsTable,
   RecipeDefinition,
   RecipesTable,
   ResourceDefinition,
-  ResourcesTable
+  ResourcesTable,
+  ToolDefinition,
+  ToolsTable
 } from '../types';
 
 export interface DataTables {
   resources: ResourcesTable;
   buildings: BuildingsTable;
   recipes: RecipesTable;
+  crops: CropsTable;
+  tools: ToolsTable;
 }
 
 let cachedTables: DataTables | null = null;
@@ -19,23 +25,29 @@ let cachedTables: DataTables | null = null;
 const RESOURCE_URL = new URL('./resources.json', import.meta.url);
 const BUILDING_URL = new URL('./buildings.json', import.meta.url);
 const RECIPE_URL = new URL('./recipes.json', import.meta.url);
+const CROPS_URL = new URL('./crops.json', import.meta.url);
+const TOOLS_URL = new URL('./tools.json', import.meta.url);
 
 export async function loadDataTables(): Promise<DataTables> {
   if (cachedTables) {
     return cachedTables;
   }
 
-  const [resourcesRaw, buildingsRaw, recipesRaw] = await Promise.all([
+  const [resourcesRaw, buildingsRaw, recipesRaw, cropsRaw, toolsRaw] = await Promise.all([
     fetchJson(RESOURCE_URL),
     fetchJson(BUILDING_URL),
-    fetchJson(RECIPE_URL)
+    fetchJson(RECIPE_URL),
+    fetchJson(CROPS_URL),
+    fetchJson(TOOLS_URL)
   ]);
 
   const resources = validateResourcesTable(resourcesRaw);
   const buildings = validateBuildingsTable(buildingsRaw);
   const recipes = validateRecipesTable(recipesRaw);
+  const crops = validateCropsTable(cropsRaw);
+  const tools = validateToolsTable(toolsRaw);
 
-  cachedTables = { resources, buildings, recipes };
+  cachedTables = { resources, buildings, recipes, crops, tools };
   return cachedTables;
 }
 
@@ -206,22 +218,117 @@ function validateRecipesTable(raw: unknown): RecipesTable {
   return table;
 }
 
+function validateCropsTable(raw: unknown): CropsTable {
+  if (!isRecord(raw)) {
+    throw new Error('crops.json must be an object map.');
+  }
+
+  const table: Record<string, CropDefinition> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!isRecord(value)) {
+      throw new Error(`Crop "${key}" must be an object.`);
+    }
+
+    const label = value.label;
+    const stages = value.stages;
+    const yields = value.yields;
+    const regrow = value.regrow;
+
+    if (!isString(label) || !Array.isArray(stages) || !Array.isArray(yields)) {
+      throw new Error(`Crop "${key}" is missing required fields.`);
+    }
+
+    const normalizedStages = stages.map((stage, index) => {
+      if (!isRecord(stage)) {
+        throw new Error(`Crop "${key}" stage #${index} must be an object.`);
+      }
+      const id = isString(stage.id) ? stage.id : `${key}:stage:${index}`;
+      const duration = isNumber(stage.duration) && stage.duration > 0 ? stage.duration : 1;
+      const minMoisture = isNumber(stage.minMoisture)
+        ? Math.min(Math.max(stage.minMoisture, 0), 1)
+        : 0;
+      const consumption =
+        isNumber(stage.moistureConsumptionPerSecond) && stage.moistureConsumptionPerSecond >= 0
+          ? stage.moistureConsumptionPerSecond
+          : 0;
+      const wiltThreshold = isNumber(stage.wiltThreshold)
+        ? Math.min(Math.max(stage.wiltThreshold, 0), 1)
+        : 0;
+      return {
+        id,
+        duration,
+        minMoisture,
+        moistureConsumptionPerSecond: consumption,
+        wiltThreshold
+      } satisfies CropDefinition['stages'][number];
+    });
+
+    const yieldsRecord = normalizeRecipeIO(key, 'yields', yields);
+    const normalizedRegrow = typeof regrow === 'boolean' ? regrow : false;
+
+    table[key] = {
+      id: key,
+      label,
+      stages: normalizedStages,
+      yields: yieldsRecord,
+      regrow: normalizedRegrow
+    };
+  }
+
+  return table;
+}
+
+function validateToolsTable(raw: unknown): ToolsTable {
+  if (!isRecord(raw)) {
+    throw new Error('tools.json must be an object map.');
+  }
+
+  const table: Record<string, ToolDefinition> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!isRecord(value)) {
+      throw new Error(`Tool "${key}" must be an object.`);
+    }
+
+    const label = value.label;
+    const action = value.action;
+    const staminaCost = value.staminaCost;
+    const moistureDelta = value.moistureDelta;
+    const description = value.description;
+
+    if (!isString(label) || !isString(action) || !isNumber(staminaCost)) {
+      throw new Error(`Tool "${key}" is missing required fields.`);
+    }
+
+    const normalizedMoistureDelta =
+      moistureDelta === undefined ? undefined : Math.max(-1, Math.min(1, Number(moistureDelta)));
+    const normalizedDescription =
+      description === undefined || !isString(description) ? undefined : description;
+
+    table[key] = {
+      id: key,
+      label,
+      action,
+      staminaCost,
+      ...(normalizedMoistureDelta !== undefined ? { moistureDelta: normalizedMoistureDelta } : {}),
+      ...(normalizedDescription ? { description: normalizedDescription } : {})
+    };
+  }
+
+  return table;
+}
+
 function normalizeRecipeIO(
   recipeId: string,
-  field: 'inputs' | 'outputs',
+  field: 'inputs' | 'outputs' | 'yields',
   entries: unknown[]
 ): RecipeDefinition['inputs'] {
   return entries.reduce<RecipeDefinition['inputs']>((acc, entry, index) => {
     if (!Array.isArray(entry) || entry.length !== 2) {
-      throw new Error(
-        `Recipe "${recipeId}" ${field} entry #${index} must be a tuple [resource, amount].`
-      );
+      throw new Error(`Recipe "${recipeId}" ${field} entry #${index} must be a tuple [resource, amount].`);
     }
     const [resource, amount] = entry;
     if (!isString(resource) || !isNumber(amount)) {
-      throw new Error(
-        `Recipe "${recipeId}" ${field} entry #${index} has invalid resource or amount.`
-      );
+      throw new Error(`Recipe "${recipeId}" ${field} entry #${index} has invalid resource or amount.`);
     }
     acc[resource] = amount;
     return acc;

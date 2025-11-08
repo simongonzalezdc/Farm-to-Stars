@@ -7,23 +7,33 @@ import {
 } from './config/seasons';
 import { processConstruction } from './systems/construction';
 import { processEconomyTick } from './systems/economy';
+import { tickCropLifecycle } from './systems/cropLifecycle';
+import { advanceWeather } from './systems/weather';
+import { advanceTime } from './state/time';
+import { regenerateStamina } from './state/stamina';
 import type {
   BuildingDefinition,
   BuildingId,
   ConstructionJob,
+  CropsTable,
+  CropId,
   GameEvent,
   GameState,
   RecipeDefinition,
   RecipeId,
   ResourceId,
   Resources,
-  Structure
+  Structure,
+  WeatherType
 } from './types';
 
 export const EVENT_RESOURCE_PRODUCED = 'world.resource.produced';
 export const EVENT_RESOURCES_UPDATED = 'world.resources.updated';
 export const EVENT_BUILD_COMPLETE = 'world.build.complete';
 export const EVENT_SEASON_CHANGED = 'world.season.changed';
+export const EVENT_HOMESTEAD_TIME = 'world.homestead.time';
+export const EVENT_HOMESTEAD_WEATHER = 'world.homestead.weather';
+export const EVENT_HOMESTEAD_CROP = 'world.homestead.crop';
 
 export interface ResourceProducedDetail {
   resource: ResourceId;
@@ -44,6 +54,24 @@ export interface SeasonChangedDetail {
   definition: SeasonDefinition;
   year: number;
   cycle: number;
+}
+
+export interface HomesteadTimeDetail {
+  day: number;
+  normalizedTime: number;
+  dayChanged: boolean;
+}
+
+export interface HomesteadWeatherDetail {
+  weather: WeatherType;
+  moistureDeltaPerSecond: number;
+}
+
+export interface HomesteadCropDetail {
+  cropId: CropId;
+  x: number;
+  y: number;
+  state: 'matured' | 'withered';
 }
 
 export const gameEvents = new EventTarget();
@@ -91,7 +119,8 @@ export function tick(
   state: GameState,
   dt: number,
   buildingDefs: Partial<Record<BuildingId, BuildingDefinition>> = {},
-  recipes: Record<RecipeId, RecipeDefinition> = {}
+  recipes: Record<RecipeId, RecipeDefinition> = {},
+  crops: CropsTable = {}
 ): GameEvent[] {
   const events: GameEvent[] = [];
 
@@ -233,6 +262,9 @@ export function tick(
     }
   }
 
+  const homesteadEvents = processHomestead(state, dt, finalSeasonDefinition, crops);
+  events.push(...homesteadEvents);
+
   emitResourceEvents(state, events);
 
   return events;
@@ -291,6 +323,62 @@ function advanceSeason(state: GameState, dt: number): SeasonAdvanceResult {
   }
 
   return { changed: entered.length > 0, seasonsEntered: entered, segments };
+}
+
+function processHomestead(
+  state: GameState,
+  dt: number,
+  seasonDefinition: SeasonDefinition,
+  crops: CropsTable
+): GameEvent[] {
+  const events: GameEvent[] = [];
+
+  const timeResult = advanceTime(state.homestead.time, dt);
+  const timeDetail: HomesteadTimeDetail = {
+    day: state.homestead.time.day,
+    normalizedTime: timeResult.normalizedTime,
+    dayChanged: timeResult.dayChanged
+  };
+  gameEvents.dispatchEvent(new CustomEvent(EVENT_HOMESTEAD_TIME, { detail: timeDetail }));
+  if (timeResult.dayChanged) {
+    events.push({
+      type: 'homestead.time.advanced',
+      day: state.homestead.time.day,
+      normalizedTime: timeResult.normalizedTime
+    });
+  }
+
+  regenerateStamina(state.homestead.stamina, { dt });
+
+  const weatherResult = advanceWeather(state.homestead.weather, dt, seasonDefinition.weather);
+  const weatherDetail: HomesteadWeatherDetail = {
+    weather: weatherResult.current,
+    moistureDeltaPerSecond: weatherResult.moistureDeltaPerSecond
+  };
+  gameEvents.dispatchEvent(new CustomEvent(EVENT_HOMESTEAD_WEATHER, { detail: weatherDetail }));
+  if (weatherResult.changed) {
+    events.push({
+      type: 'homestead.weather.changed',
+      weather: weatherResult.current,
+      moistureDeltaPerSecond: weatherResult.moistureDeltaPerSecond
+    });
+  }
+
+  if (dt > 0 && Object.keys(crops).length > 0) {
+    const lifecycle = tickCropLifecycle(state.homestead, dt, crops);
+    for (const entry of lifecycle.matured) {
+      const detail: HomesteadCropDetail = { ...entry, state: 'matured' };
+      gameEvents.dispatchEvent(new CustomEvent(EVENT_HOMESTEAD_CROP, { detail }));
+      events.push({ type: 'homestead.crop.matured', cropId: entry.cropId, x: entry.x, y: entry.y });
+    }
+    for (const entry of lifecycle.withered) {
+      const detail: HomesteadCropDetail = { ...entry, state: 'withered' };
+      gameEvents.dispatchEvent(new CustomEvent(EVENT_HOMESTEAD_CROP, { detail }));
+      events.push({ type: 'homestead.crop.withered', cropId: entry.cropId, x: entry.x, y: entry.y });
+    }
+  }
+
+  return events;
 }
 
 function resetResourceTracking(state: GameState) {

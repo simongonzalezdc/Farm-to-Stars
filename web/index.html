@@ -186,9 +186,8 @@
   <div id="app"></div>
   <div class="hud">
     <h2>Colony HUD</h2>
+    <div class="row" id="resourceRow" aria-live="polite"></div>
     <div class="row">
-      <span>Wood: <b id="wood">0</b></span>
-      <span>Stone: <b id="stone">0</b></span>
       <span>Mode: <b id="modeIndicator">Camera</b></span>
       <span>Cost: <b id="selectedCost" data-state="idle">—</b></span>
     </div>
@@ -196,6 +195,15 @@
       <span id="seasonName" class="season-name">🌱 Spring Awakening</span>
       <small id="seasonEffects" class="season-effects">+20% growth speed, +10% resource yield.</small>
       <small id="seasonTimer" class="season-timer">Year 1 • Cycle 1 • Next in 03:00</small>
+    </div>
+    <div class="row labels">
+      <span>Homestead status:</span>
+    </div>
+    <div class="row">
+      <span>Day: <b id="homesteadDay">1</b></span>
+      <span>Time: <b id="homesteadClock">06:00</b></span>
+      <span>Stamina: <b id="homesteadStamina">100%</b></span>
+      <span>Weather: <b id="homesteadWeather">Clear</b></span>
     </div>
     <div class="row">
       <button id="installAudio">Enable Audio</button>
@@ -205,15 +213,24 @@
     <div class="row labels">
       <span>Build options:</span>
     </div>
-    <div class="row">
-      <button data-building="cottage" aria-pressed="false">Cottage</button>
+    <div class="row" id="buildOptions"></div>
+    <div class="row labels">
+      <span>Tools:</span>
     </div>
+    <div class="row" id="toolbelt"></div>
+    <div class="row labels">
+      <span>Seeds:</span>
+    </div>
+    <div class="row" id="seedBar"></div>
     <div class="row queue">
       <span>Queue: <b id="buildQueue">0</b></span>
       <small id="queueDetails">No active construction.</small>
     </div>
     <div class="row">
       <div id="buildFeedback" class="feedback" aria-live="polite" data-tone="info">Camera pan + zoom enabled.</div>
+    </div>
+    <div class="row">
+      <div id="homesteadFeedback" class="feedback" aria-live="polite" data-tone="info">Select a tool to tend the field.</div>
     </div>
   </div>
   <script type="module" src="/src/main.ts"></script>

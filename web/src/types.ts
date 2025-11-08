@@ -3,6 +3,8 @@ import { DEFAULT_SEASON_ID, getSeasonDefinition, type SeasonId } from './config/
 export type ResourceId = string;
 export type BuildingId = string;
 export type RecipeId = string;
+export type CropId = string;
+export type ToolId = string;
 
 export interface ResourceDefinition {
   display: string;
@@ -41,6 +43,45 @@ export interface RecipeDefinition {
 }
 
 export type RecipesTable = Record<RecipeId, RecipeDefinition>;
+
+export interface CropStageDefinition {
+  id: string;
+  /** Seconds required to progress through the stage under ideal conditions. */
+  duration: number;
+  /** Minimum soil moisture (0-1) required for growth to proceed. */
+  minMoisture: number;
+  /** Moisture consumed per in-game second while the crop is in this stage. */
+  moistureConsumptionPerSecond: number;
+  /** Moisture threshold (0-1) below which the crop immediately withers. */
+  wiltThreshold: number;
+}
+
+export interface CropDefinition {
+  id: CropId;
+  label: string;
+  stages: CropStageDefinition[];
+  /** Harvest yields mapped to resource IDs. */
+  yields: RecipeIO;
+  /** Whether the crop regrows after harvest (remains at final stage). */
+  regrow: boolean;
+}
+
+export type CropsTable = Record<CropId, CropDefinition>;
+
+export interface ToolDefinition {
+  id: ToolId;
+  label: string;
+  /** Primary verb used for analytics/UX copy (e.g., "Till", "Water"). */
+  action: string;
+  /** Base stamina cost applied per use. */
+  staminaCost: number;
+  /** Optional moisture delta applied per use (e.g., watering can adds moisture). */
+  moistureDelta?: number;
+  /** Optional note for UI tooltips. */
+  description?: string;
+}
+
+export type ToolsTable = Record<ToolId, ToolDefinition>;
 
 export type Resources = Record<ResourceId, number>;
 
@@ -108,6 +149,63 @@ export interface SeasonState {
   year: number;
 }
 
+export const HOMESTEAD_FIELD_WIDTH = 200;
+export const HOMESTEAD_FIELD_HEIGHT = 200;
+
+export const WEATHER_TYPES = ['clear', 'rain', 'storm'] as const;
+export type WeatherType = (typeof WEATHER_TYPES)[number];
+
+export interface TimeOfDayState {
+  /** In-game day counter starting at 1. */
+  day: number;
+  /** Seconds elapsed within the current day. */
+  elapsed: number;
+  /** Seconds that make up a full in-game day. */
+  secondsPerDay: number;
+}
+
+export interface StaminaState {
+  current: number;
+  max: number;
+  regenPerSecond: number;
+  exhausted: boolean;
+}
+
+export interface CropTileState {
+  cropId: CropId;
+  stageIndex: number;
+  stageElapsed: number;
+  ready: boolean;
+  withered: boolean;
+}
+
+export interface SoilTileState {
+  tilled: boolean;
+  moisture: number;
+  crop: CropTileState | null;
+}
+
+export interface FieldState {
+  width: number;
+  height: number;
+  tiles: Record<string, SoilTileState>;
+}
+
+export interface WeatherState {
+  current: WeatherType;
+  elapsed: number;
+  duration: number;
+  /** Net moisture delta applied to tiles per simulated second. */
+  moistureDeltaPerSecond: number;
+}
+
+export interface HomesteadState {
+  field: FieldState;
+  time: TimeOfDayState;
+  stamina: StaminaState;
+  weather: WeatherState;
+}
+
 export interface ProductionQueueItem {
   nodeId: number;
   recipeId: RecipeId;
@@ -122,9 +220,15 @@ export type GameEvent =
   | { type: 'construction.completed'; building: Structure }
   | { type: 'resource.collected'; resource: ResourceId; amount: number }
   | { type: 'season.changed'; season: SeasonId }
+  | { type: 'homestead.time.advanced'; day: number; normalizedTime: number }
+  | { type: 'homestead.weather.changed'; weather: WeatherType; moistureDeltaPerSecond: number }
+  | { type: 'homestead.crop.matured'; cropId: CropId; x: number; y: number }
+  | { type: 'homestead.crop.withered'; cropId: CropId; x: number; y: number }
   | { type: 'production.cycle'; nodeId: number; recipeId: RecipeId; outputs: RecipeIO };
 
-export const CURRENT_SCHEMA_VERSION = 4;
+export const CURRENT_SCHEMA_VERSION = 5;
+
+export const LEGACY_SCHEMA_VERSION = 4;
 
 export type SaveV0 = { seed: number } & Record<ResourceId, number>;
 
@@ -152,7 +256,7 @@ export interface SaveV3 extends SaveV1 {
 }
 
 export interface SaveV4 extends SaveV1 {
-  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  schemaVersion: typeof LEGACY_SCHEMA_VERSION;
   structures: Structure[];
   buildQueue: BuildJob[];
   constructionQueue: ConstructionJob[];
@@ -167,7 +271,12 @@ export interface SaveV4 extends SaveV1 {
   nextProductionNodeId: number;
 }
 
-export type GameState = SaveV4;
+export interface SaveV5 extends SaveV4 {
+  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  homestead: HomesteadState;
+}
+
+export type GameState = SaveV5;
 
 export const LEGACY_RESOURCE_IDS: ResourceId[] = ['wood', 'stone', 'food', 'coins'];
 
@@ -199,6 +308,83 @@ export function clampSeasonElapsed(state: SeasonState): SeasonState {
     Math.min(state.elapsed, Number.isFinite(definition.durationSeconds) ? definition.durationSeconds : state.elapsed)
   );
   return { ...state, elapsed: clampedElapsed };
+}
+
+export function isWeatherType(value: unknown): value is WeatherType {
+  return typeof value === 'string' && (WEATHER_TYPES as readonly string[]).includes(value);
+}
+
+export function clamp01(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  if (value <= 0) {
+    return 0;
+  }
+  if (value >= 1) {
+    return 1;
+  }
+  return value;
+}
+
+export function createDefaultTimeState(): TimeOfDayState {
+  return {
+    day: 1,
+    elapsed: 0,
+    secondsPerDay: 900
+  };
+}
+
+export function createDefaultStaminaState(): StaminaState {
+  return {
+    current: 100,
+    max: 100,
+    regenPerSecond: 12,
+    exhausted: false
+  };
+}
+
+export function createEmptyFieldState(
+  width: number = HOMESTEAD_FIELD_WIDTH,
+  height: number = HOMESTEAD_FIELD_HEIGHT
+): FieldState {
+  return {
+    width: Math.max(1, Math.floor(width)),
+    height: Math.max(1, Math.floor(height)),
+    tiles: {}
+  };
+}
+
+export function createDefaultWeatherState(): WeatherState {
+  return {
+    current: 'clear',
+    elapsed: 0,
+    duration: 180,
+    moistureDeltaPerSecond: -0.005
+  };
+}
+
+export function createDefaultHomesteadState(): HomesteadState {
+  return {
+    field: createEmptyFieldState(),
+    time: createDefaultTimeState(),
+    stamina: createDefaultStaminaState(),
+    weather: createDefaultWeatherState()
+  };
+}
+
+export function tileKey(x: number, y: number): string {
+  return `${x},${y}`;
+}
+
+export function parseTileKey(key: string): { x: number; y: number } | null {
+  const [xRaw, yRaw] = key.split(',');
+  const x = Number.parseInt(xRaw ?? '', 10);
+  const y = Number.parseInt(yRaw ?? '', 10);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    return null;
+  }
+  return { x, y };
 }
 
 export function createEmptyResourceStorage(resourceTable?: ResourcesTable): ResourceStorageState {
@@ -241,6 +427,7 @@ export function defaultState(resourceTable?: ResourcesTable): GameState {
     nextBuildId: 1,
     nextBuildingInstanceId: 1,
     season: createDefaultSeasonState(),
-    nextProductionNodeId: 1
+    nextProductionNodeId: 1,
+    homestead: createDefaultHomesteadState()
   };
 }
