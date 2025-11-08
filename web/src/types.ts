@@ -253,7 +253,12 @@ export interface HomesteadState {
   stamina: StaminaState;
   weather: WeatherState;
   livestock: LivestockHerdState;
+  toolMastery: ToolMasteryState;
 }
+
+export type HomesteadStateV6 = Omit<HomesteadState, 'toolMastery'> & {
+  toolMastery?: ToolMasteryState;
+};
 
 export interface LivestockAnimalState {
   id: number;
@@ -333,11 +338,12 @@ export type GameEvent =
   | { type: 'livestock.starved'; livestockId: number; speciesId: LivestockId }
   | { type: 'weather.event.started'; eventId: string; eventType: WeatherEventType; intensity: number }
   | { type: 'weather.event.ended'; eventId: string; eventType: WeatherEventType }
-  | { type: 'mail.delivered'; messageId: number; attachments: Partial<Record<ResourceId, number>> };
+  | { type: 'mail.delivered'; messageId: number; attachments: Partial<Record<ResourceId, number>> }
+  | { type: 'tool.perk.unlocked'; perkId: ToolPerkId; toolId: ToolId; uses: number };
 
-export const CURRENT_SCHEMA_VERSION = 6;
+export const CURRENT_SCHEMA_VERSION = 7;
 
-export const PREVIOUS_SCHEMA_VERSION = 5;
+export const PREVIOUS_SCHEMA_VERSION = 6;
 
 export const LEGACY_SCHEMA_VERSION = 4;
 
@@ -383,17 +389,22 @@ export interface SaveV4 extends SaveV1 {
 }
 
 export interface SaveV5 extends SaveV4 {
-  schemaVersion: typeof PREVIOUS_SCHEMA_VERSION;
-  homestead: HomesteadState;
+  schemaVersion: 5;
+  homestead: HomesteadStateV6;
 }
 
-export interface SaveV6 extends SaveV5 {
-  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+export interface SaveV6 extends Omit<SaveV5, 'schemaVersion'> {
+  schemaVersion: typeof PREVIOUS_SCHEMA_VERSION;
   mail: MailState;
   jobQueue: BackgroundJobQueueState;
 }
 
-export type GameState = SaveV6;
+export interface SaveV7 extends Omit<SaveV6, 'schemaVersion' | 'homestead'> {
+  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  homestead: HomesteadState;
+}
+
+export type GameState = SaveV7;
 
 export const LEGACY_RESOURCE_IDS: ResourceId[] = ['wood', 'stone', 'food', 'coins'];
 
@@ -489,7 +500,8 @@ export function createDefaultHomesteadState(): HomesteadState {
     time: createDefaultTimeState(),
     stamina: createDefaultStaminaState(),
     weather: createDefaultWeatherState(),
-    livestock: createDefaultLivestockState()
+    livestock: createDefaultLivestockState(),
+    toolMastery: createDefaultToolMasteryState()
   };
 }
 
@@ -519,6 +531,10 @@ export function createDefaultLivestockState(): LivestockHerdState {
     ],
     nextAnimalId: 2
   };
+}
+
+export function createDefaultToolMasteryState(): ToolMasteryState {
+  return {};
 }
 
 export function createDefaultMailState(): MailState {
