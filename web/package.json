@@ -15,6 +15,7 @@
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier --check \"src/**/*.{ts,tsx}\"",
     "format:fix": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "validate:data": "node ../tools/cli/validate.mjs",
     "migrate": "node scripts/migrate/run.mjs",
     "build:rc": "node scripts/release/createRcBuild.mjs",
     "build:playtest": "node scripts/release/buildPlaytest.mjs",

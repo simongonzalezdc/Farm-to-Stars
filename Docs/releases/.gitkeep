@@ -1,0 +1,11 @@
+# Release Notes Directory
+
+This directory contains phase-specific release notes for Farm to Stars.
+
+**Files:**
+- `homestead.md` — Homestead phase release notes (Weeks 1-10)
+- `township.md` — Township phase release notes (Weeks 13-24)
+- `nation.md` — Nation phase release notes (Weeks 25-40)
+- `stellar.md` — Stellar phase release notes (Weeks 41-56)
+
+**Format:** See `Docs/RELEASE_CHECKLIST.md` §6 for template.
