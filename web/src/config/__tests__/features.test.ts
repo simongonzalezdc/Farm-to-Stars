@@ -1,3 +1,5 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { getFeatureConfig, isFeatureEnabled, overrideFeatureConfig, resetFeatureConfig } from '../features';
 
 describe('feature config', () => {
@@ -5,6 +7,7 @@ describe('feature config', () => {
     overrideFeatureConfig(null);
     resetFeatureConfig();
     delete (globalThis as { __FARM_FEATURES__?: unknown }).__FARM_FEATURES__;
+    vi.unstubAllGlobals();
   });
 
   it('defaults to township export being disabled', () => {
@@ -17,6 +20,17 @@ describe('feature config', () => {
   it('reads township export flag from global overrides', () => {
     resetFeatureConfig();
     (globalThis as { __FARM_FEATURES__?: unknown }).__FARM_FEATURES__ = { exportTownship: true };
+    const config = getFeatureConfig();
+    expect(config.exportTownship).toBe(true);
+    expect(isFeatureEnabled('exportTownship')).toBe(true);
+  });
+
+  it('parses feature overrides from query string', () => {
+    resetFeatureConfig();
+    vi.stubGlobal('window', {
+      location: { search: '?feature.exportTownship=true' }
+    } as Window & typeof globalThis);
+
     const config = getFeatureConfig();
     expect(config.exportTownship).toBe(true);
     expect(isFeatureEnabled('exportTownship')).toBe(true);

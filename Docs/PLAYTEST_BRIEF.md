@@ -24,6 +24,7 @@ _Last updated: Wave Delta hardening sprint._
 
 ### Day 3 – Export Prep
 - Play until the “Export to Township” button reports ≥1 shipment ready.
+- If the control is hidden in an RC build, reload with `?feature.exportTownship=true` appended to the URL to surface it.
 - Download the performance log once per day and attach it to the daily survey.
 - Generate an export snapshot at end-of-day; upload JSON to the feedback form.
 

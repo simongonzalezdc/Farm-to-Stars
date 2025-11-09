@@ -83,6 +83,7 @@ Use this page as a printable or digital worksheet during guided playtests. Check
     - **Fail:** Download disabled, file empty/corrupt, profile script errors.
     - **Observer Notes / Hash:** ________________________________
 15. [ ] **Township snapshot export** – Trigger “Export to Township” with mature crops & livestock.
+    - **Setup:** If the RC build hides the export control, append `?feature.exportTownship=true` to the URL (or set `window.__FARM_FEATURES__`) before loading the save.
     - **Pass:** JSON payload downloads, contains structures/livestock summaries, shipments include mail attachments when present.
     - **Fail:** Button inert, payload missing entities, schema mismatch (validate against `web/content/township/import.json`).
     - **Observer Notes / Seed:** ________________________________

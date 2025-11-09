@@ -16,7 +16,9 @@ inventory HUD, tool/seed bars, and tent/well/crate visual overrides now pull str
 - [x] **Week 9:** Balance Homestead pacing, tune weather, add audio/visual polish. _Complete — 13-minute days, stamina tuning, richer weather audio, and HUD glow bring the Homestead loop to life._
 - [x] **Week 10:** Regression sweep, QA checklist updates, and playtest instrumentation for Homestead. _Complete — daily telemetry now flows into the playtest buffer alongside refreshed QA checklists and Homestead pacing scenarios._
 
-**Next Step — Wave Delta Prep:** With the Homestead arc wrapped, focus shifts to the guarded Week 12 Wave Delta sprint: harden the export prototype, finish bug bashes, and package integration notes for Township leads as outlined in the Build Guide (§4.1.2). The following phase then ramps Township proper (Weeks 13–24) with city-scale simulation, HUD, and content bundles.
+**Status — Wave Delta Complete:** Bug bash, perf soak, playtest packaging, and the guarded export prototype all cleared their readiness gates. The Township export now rides behind `feature.exportTownship` and can be toggled for RC builds via `?feature.exportTownship=true`.
+
+**Next Phase — Township Ramp (Weeks 13–24):** Spin up the city-building simulation, advisor/HUD layers, and supporting content/audio/QA bundles as outlined in the Build Guide (§4.2). Coordinate daily with Township leads while handing off the Homestead export payload samples captured during Delta.
 
 ## Leadership Summary — QA Enablement Additions
 
