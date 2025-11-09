@@ -404,4 +404,25 @@ export class TownshipController {
 
     return null;
   }
+
+  /**
+   * Generate heatmap for visualization
+   */
+  public generateHeatmap(type: import('../../../sim/township/systems/heatmapVisualization').HeatmapType) {
+    return this.manager.generateHeatmap(type);
+  }
+
+  /**
+   * Repair a building
+   */
+  public repairBuilding(buildingId: string) {
+    return this.manager.repairBuilding(buildingId);
+  }
+
+  /**
+   * Get buildings in outage
+   */
+  public getBuildingsInOutage() {
+    return this.manager.getBuildingsInOutage();
+  }
 }

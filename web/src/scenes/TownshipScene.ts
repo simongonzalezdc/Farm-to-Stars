@@ -12,8 +12,10 @@ import { ZonePlacementUI } from '../ui/township/ZonePlacementUI';
 import { BuildingMenuUI } from '../ui/township/BuildingMenuUI';
 import { MetricsDashboardUI } from '../ui/township/MetricsDashboardUI';
 import { AdvisorDialogueUI, AdvisorMessages } from '../ui/township/AdvisorDialogueUI';
+import { HeatmapUI } from '../ui/township/HeatmapUI';
 import { gridToScreen, TILE_H, TILE_W } from '../iso';
 import { saveTownship } from '../storage.township';
+import type { HeatmapType } from '../sim/township/systems/heatmapVisualization';
 
 export interface TownshipSceneConfig {
   civilization: CivilizationId;
@@ -32,11 +34,13 @@ export class TownshipScene extends Phaser.Scene {
   private buildingMenuUI!: BuildingMenuUI;
   private metricsUI!: MetricsDashboardUI;
   private advisorUI!: AdvisorDialogueUI;
+  private heatmapUI!: HeatmapUI;
 
   private ground!: Phaser.GameObjects.Container;
   private zones!: Phaser.GameObjects.Container;
   private buildings!: Phaser.GameObjects.Container;
   private overlays!: Phaser.GameObjects.Container;
+  private heatmapLayer!: Phaser.GameObjects.Container;
 
   // UI Containers
   private uiContainer!: HTMLElement;
@@ -44,10 +48,14 @@ export class TownshipScene extends Phaser.Scene {
   private buildingMenuContainer!: HTMLElement;
   private metricsContainer!: HTMLElement;
   private advisorContainer!: HTMLElement;
+  private heatmapContainer!: HTMLElement;
 
   // Mouse state
   private isDragging = false;
   private dragStartCell: { x: number; y: number } | null = null;
+
+  // Heatmap state
+  private activeHeatmap: HeatmapType | null = null;
 
   constructor() {
     super({ key: 'TownshipScene' });

@@ -21,6 +21,8 @@ import { calculateHappiness } from './systems/metrics';
 import { ZoneMaturationSystem } from './systems/zoneMaturation';
 import { UtilitiesPropagationSystem, type UtilityNetwork } from './systems/utilitiesPropagation';
 import { DemandCalculationSystem } from './systems/demandCalculation';
+import { OutageWorkflowSystem, type OutageEvent } from './systems/outageWorkflow';
+import { HeatmapVisualizationSystem, type HeatmapData, type HeatmapType } from './systems/heatmapVisualization';
 
 /**
  * Township Manager
@@ -37,6 +39,8 @@ export class TownshipManager {
   private zoneMaturation: ZoneMaturationSystem;
   private utilitiesPropagation: UtilitiesPropagationSystem;
   private demandCalculation: DemandCalculationSystem;
+  private outageWorkflow: OutageWorkflowSystem;
+  private heatmapVisualization: HeatmapVisualizationSystem;
   private utilityNetwork: UtilityNetwork | null = null;
 
   // Performance optimization: cache dirty flags
@@ -61,6 +65,8 @@ export class TownshipManager {
     this.zoneMaturation = new ZoneMaturationSystem();
     this.utilitiesPropagation = new UtilitiesPropagationSystem();
     this.demandCalculation = new DemandCalculationSystem();
+    this.outageWorkflow = new OutageWorkflowSystem();
+    this.heatmapVisualization = new HeatmapVisualizationSystem();
   }
 
   /**
@@ -179,6 +185,21 @@ export class TownshipManager {
         }
       }
     }
+
+    // S4: Outage workflow - random failures and health degradation
+    const outageEvents = this.outageWorkflow.tick(this.state, this.buildings, dt);
+    if (outageEvents.length > 0) {
+      this.markDirty('coverage');
+
+      // Emit outage events
+      outageEvents.forEach(event => {
+        if (event.type === 'outage_started') {
+          this.emit({ type: 'service_outage', buildingId: event.buildingId });
+        } else if (event.type === 'building_damaged') {
+          this.emit({ type: 'building_health_critical', buildingId: event.buildingId });
+        }
+      });
+    }
   }
 
   /**
@@ -270,6 +291,61 @@ export class TownshipManager {
    */
   off(handler: TownshipEventHandler): void {
     this.eventHandlers = this.eventHandlers.filter(h => h !== handler);
+  }
+
+  /**
+   * Generate heatmap for visualization
+   */
+  public generateHeatmap(type: HeatmapType): HeatmapData | null {
+    if (!this.utilityNetwork) {
+      // Force coverage calculation
+      this.utilityNetwork = this.utilitiesPropagation.calculateCoverage(this.state, this.buildings);
+    }
+
+    switch (type) {
+      case 'power':
+        return this.heatmapVisualization.generatePowerHeatmap(this.utilityNetwork);
+      case 'water':
+        return this.heatmapVisualization.generateWaterHeatmap(this.utilityNetwork);
+      case 'safety':
+        return this.heatmapVisualization.generateSafetyHeatmap(this.utilityNetwork);
+      case 'education':
+        return this.heatmapVisualization.generateEducationHeatmap(this.utilityNetwork);
+      case 'happiness':
+        return this.heatmapVisualization.generateHappinessHeatmap(this.state, this.utilityNetwork);
+      case 'demand_r':
+        return this.heatmapVisualization.generateResidentialDemandHeatmap(this.state);
+      case 'demand_c':
+        return this.heatmapVisualization.generateCommercialDemandHeatmap(this.state);
+      case 'demand_i':
+        return this.heatmapVisualization.generateIndustrialDemandHeatmap(this.state);
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Repair a building (player action)
+   */
+  public repairBuilding(buildingId: string): { success: boolean; cost?: Record<string, number>; reason?: string } {
+    const result = this.outageWorkflow.repairBuilding(this.state, this.buildings, buildingId);
+
+    if (result.success) {
+      this.markDirty('coverage');
+      this.emit({
+        type: 'building_repaired',
+        buildingId
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Get buildings currently in outage
+   */
+  public getBuildingsInOutage() {
+    return this.outageWorkflow.getBuildingsInOutage(this.state);
   }
 
   /**
