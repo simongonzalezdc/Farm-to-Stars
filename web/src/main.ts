@@ -11,6 +11,7 @@ import {
   defaultState,
   type BuildingDefinition,
   type BuildingId,
+  type CivilizationId,
   type CropId,
   type GameState,
   type ResourceId,
@@ -49,6 +50,7 @@ import {
 import { loadDataTables, type DataTables } from './data';
 import { BuildModeController } from './ui/buildModeController';
 import { HomesteadController } from './ui/homesteadController';
+import { CivilizationChoice } from './ui/civilizationChoice';
 import { getNormalizedTime } from './state/time';
 import { getStaminaRatio } from './state/stamina';
 import { TelemetryTracker, type TelemetrySnapshot } from './telemetry/telemetry';
@@ -378,7 +380,33 @@ class IsoScene extends Phaser.Scene {
   async create() {
     this.tables = await dataTablesPromise;
     const loaded = await load(this.tables.resources);
-    this.state = loaded ?? defaultState(this.tables.resources);
+
+    // Show civilization choice for new games or games without civilization
+    if (!loaded || !loaded.civilization) {
+      const chosenCivilization = await new Promise<CivilizationId>((resolve) => {
+        const civilizationChoice = new CivilizationChoice(this.tables.civilizations, (civId) => {
+          resolve(civId);
+        });
+        civilizationChoice.show();
+      });
+
+      // Create new game state with chosen civilization
+      this.state = defaultState(this.tables.resources);
+      this.state.civilization = chosenCivilization;
+
+      // Apply starting resources from civilization
+      const civDef = this.tables.civilizations[chosenCivilization];
+      if (civDef.startingResources) {
+        Object.entries(civDef.startingResources).forEach(([resourceId, amount]) => {
+          this.state.resources[resourceId] = (this.state.resources[resourceId] ?? 0) + amount;
+        });
+      }
+
+      // Save the new game with civilization
+      await save(this.state);
+    } else {
+      this.state = loaded;
+    }
 
     this.buildingDefs = Object.fromEntries(
       Object.values(this.tables.buildings).map((def) => [
