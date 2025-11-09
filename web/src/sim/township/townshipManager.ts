@@ -17,9 +17,7 @@ import { TOWNSHIP_CONFIG } from '../../types.township';
 
 import { tickZoneGrowth } from './systems/zoneGrowth';
 import { tickPopulation } from './systems/population';
-import { calculateHappiness } from './systems/happiness';
-import { calculateDemand } from './systems/demand';
-import { calculateCoverage } from './systems/coverage';
+import { calculateHappiness, calculateDemand, calculateCoverage } from './systems/metrics';
 
 /**
  * Township Manager
