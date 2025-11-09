@@ -24,6 +24,12 @@
   --hud-tip-info-border: rgba(56, 189, 248, 0.35);
   --hud-tip-warn-border: rgba(234, 179, 8, 0.35);
   --hud-tip-critical-border: rgba(239, 68, 68, 0.5);
+
+  // Civilization theme colors (set dynamically by hudTheme.ts)
+  // These provide cultural identity while maintaining readability
+  --civ-primary: #f4a261; // Default fallback
+  --civ-secondary: #e76f51; // Default fallback
+  --civ-accent: #e9c46a; // Default fallback
 }
 
 .hud-layout {
@@ -572,6 +578,71 @@
 .hud-stamina-tips__item--critical {
   background: var(--hud-tip-critical-bg);
   border: 1px solid var(--hud-tip-critical-border);
+}
+
+// =========================================
+// Civilization Theming
+// =========================================
+
+// Apply civilization-themed border to main HUD panels
+.hud-panel {
+  position: relative;
+
+  // Subtle civilization-colored top border for cultural identity
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+      to right,
+      var(--civ-primary),
+      var(--civ-secondary)
+    );
+    border-radius: var(--hud-radius) var(--hud-radius) 0 0;
+    opacity: 0.6;
+  }
+}
+
+// Progress fills use civilization colors for cultural theming
+.hud-calendar__progress-fill {
+  background: linear-gradient(
+    135deg,
+    var(--civ-primary),
+    var(--civ-accent)
+  );
+}
+
+// Active season uses civilization accent color
+.hud-calendar__season.is-active {
+  border-color: var(--civ-primary);
+
+  .hud-calendar__season-fill {
+    background: linear-gradient(
+      to right,
+      var(--civ-primary),
+      var(--civ-accent)
+    );
+  }
+}
+
+// Quest card active states use civilization colors
+.hud-quest-card:hover,
+.hud-quest-card:focus-within {
+  border-color: var(--civ-primary);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.35);
+  transform: translateY(-2px);
+}
+
+// Objective progress uses civilization colors
+.hud-quest-card__objective-fill {
+  background: linear-gradient(
+    to right,
+    var(--civ-primary),
+    var(--civ-accent)
+  );
 }
 
 @media (max-width: 900px) {

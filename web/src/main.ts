@@ -51,6 +51,7 @@ import { loadDataTables, type DataTables } from './data';
 import { BuildModeController } from './ui/buildModeController';
 import { HomesteadController } from './ui/homesteadController';
 import { CivilizationChoice } from './ui/civilizationChoice';
+import { applyCivilizationTheme } from './ui/hudTheme';
 import { getNormalizedTime } from './state/time';
 import { getStaminaRatio } from './state/stamina';
 import { TelemetryTracker, type TelemetrySnapshot } from './telemetry/telemetry';
@@ -406,6 +407,12 @@ class IsoScene extends Phaser.Scene {
       await save(this.state);
     } else {
       this.state = loaded;
+    }
+
+    // Apply civilization theme to HUD
+    if (this.state.civilization && this.tables.civilizations[this.state.civilization]) {
+      const civDef = this.tables.civilizations[this.state.civilization];
+      applyCivilizationTheme(civDef.aesthetics);
     }
 
     this.buildingDefs = Object.fromEntries(
