@@ -650,7 +650,7 @@ class IsoScene extends Phaser.Scene {
         this.tables.recipes,
         this.tables.crops,
         this.tables.livestock,
-        this.tables.civilizations
+        this.tables.civilizations || {}
       );
       this.telemetry.recordTick(this.state, events, SIM_DT);
       this.homesteadMetrics.recordTick(this.state, events, SIM_DT);
@@ -676,15 +676,19 @@ class IsoScene extends Phaser.Scene {
     updateResourceDisplay(this.state.resources);
 
     this.syncSeasonState();
-    this.homestead.updateField();
+    if (this.homestead) {
+      this.homestead.updateField();
+    }
     this.updateHomesteadHud();
     this.updatePlaytestStatus(snapshot);
 
-    this.props.list.sort((a, b) => {
-      const aImg = a as Phaser.GameObjects.Image;
-      const bImg = b as Phaser.GameObjects.Image;
-      return aImg.y - bImg.y;
-    });
+    if (this.props?.list) {
+      this.props.list.sort((a, b) => {
+        const aImg = a as Phaser.GameObjects.Image;
+        const bImg = b as Phaser.GameObjects.Image;
+        return aImg.y - bImg.y;
+      });
+    }
 
     this.syncJobMarkers();
     this.syncStructures();
@@ -708,7 +712,9 @@ class IsoScene extends Phaser.Scene {
       .image(x, y - (def.anchorOffset ?? 0), def.texture)
       .setOrigin(0.5, def.anchorOffset !== undefined ? 1.0 : 0.5);
     sprite.setRotation((Math.PI / 2) * (structure.orientation ?? 0));
-    this.props.add(sprite);
+    if (this.props) {
+      this.props.add(sprite);
+    }
     this.structureSprites.set(structure.id, sprite);
   }
 

@@ -46,7 +46,7 @@ export class BuildModeController {
   private readonly onJobQueued: (job: BuildJob) => void;
   private readonly buttons: HTMLButtonElement[];
   private readonly particleManager: Phaser.GameObjects.Particles.ParticleEmitterManager;
-  private readonly placementEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
+  private readonly placementEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null;
 
   private mode: 'pan' | 'build' = 'pan';
   private selected?: BuildingType;
@@ -83,31 +83,50 @@ export class BuildModeController {
     this.particleManager.setDepth(940);
     this.particleManager.setVisible(false);
     // In Phaser 3.80+, createEmitter was removed. Use addParticleEmitter instead.
-    try {
-      this.placementEmitter = (this.particleManager as any).addParticleEmitter({
-        speed: { min: 70, max: 140 },
-        lifespan: { min: 260, max: 420 },
-        scale: { start: 0.55, end: 0 },
-        alpha: { start: 0.85, end: 0 },
-        rotate: { min: -45, max: 45 },
-        gravityY: -160,
-        quantity: 18,
-        blendMode: Phaser.BlendModes.ADD,
-        emitting: false
-      });
-    } catch (e) {
-      // Fallback: if addParticleEmitter doesn't exist, create emitter using the old API
-      this.placementEmitter = (this.particleManager as any).createEmitter({
-        speed: { min: 70, max: 140 },
-        lifespan: { min: 260, max: 420 },
-        scale: { start: 0.55, end: 0 },
-        alpha: { start: 0.85, end: 0 },
-        rotate: { min: -45, max: 45 },
-        gravityY: -160,
-        quantity: 18,
-        blendMode: Phaser.BlendModes.ADD,
-        emitting: false
-      }) || this.particleManager;
+    const emitterConfig = {
+      speed: { min: 70, max: 140 },
+      lifespan: { min: 260, max: 420 },
+      scale: { start: 0.55, end: 0 },
+      alpha: { start: 0.85, end: 0 },
+      rotate: { min: -45, max: 45 },
+      gravityY: -160,
+      quantity: 18,
+      blendMode: Phaser.BlendModes.ADD,
+      emitting: false
+    };
+
+    // Try to create the particle emitter, but make it optional if it fails
+    // Phaser 3.80+ removed createEmitter and uses addParticleEmitter instead
+    this.placementEmitter = null;
+    
+    // Check for new API first (Phaser 3.80+)
+    if (typeof (this.particleManager as any).addParticleEmitter === 'function') {
+      try {
+        this.placementEmitter = (this.particleManager as any).addParticleEmitter(emitterConfig);
+      } catch (e) {
+        // addParticleEmitter failed, continue without particles
+        if (import.meta.env.DEV) {
+          console.warn('addParticleEmitter failed:', e);
+        }
+      }
+    } else if (typeof (this.particleManager as any).createEmitter === 'function') {
+      // Old API (pre-3.80) - but in 3.80+ this throws "createEmitter removed"
+      // We'll try it but wrap in try-catch to handle the error gracefully
+      try {
+        this.placementEmitter = (this.particleManager as any).createEmitter(emitterConfig);
+      } catch (e: any) {
+        // In Phaser 3.80+, createEmitter throws "createEmitter removed"
+        // This is expected, so we silently continue without particles
+        if (import.meta.env.DEV && !e?.message?.includes('createEmitter removed')) {
+          console.warn('createEmitter failed:', e);
+        }
+      }
+    }
+
+    // Validate the emitter if we got one
+    if (this.placementEmitter && typeof this.placementEmitter.stop !== 'function') {
+      console.warn('Created particle emitter but it lacks required methods');
+      this.placementEmitter = null;
     }
 
     this.setupButtons();
@@ -251,7 +270,7 @@ export class BuildModeController {
     this.ghost.setState('valid');
     this.footprintOverlay.setVisible(false);
     this.footprintTiles.forEach((tile) => tile.setVisible(false));
-    this.placementEmitter.stop();
+    this.placementEmitter?.stop();
     this.particleManager.setVisible(false);
     this.resetHud();
   }
@@ -454,7 +473,7 @@ export class BuildModeController {
     const cy = y + (footprint.h - 1) / 2;
     const { x: sx, y: sy } = gridToScreen(cx, cy, def.elevation ?? 0);
     this.particleManager.setVisible(true);
-    this.placementEmitter.explode(
+    this.placementEmitter?.explode(
       Math.min(30, 12 + footprint.w * footprint.h * 2),
       sx,
       sy - (def.anchorOffset ?? 0)

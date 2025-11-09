@@ -119,6 +119,16 @@ function isSaveV0(candidate: unknown): candidate is SaveV0 {
   return LEGACY_RESOURCE_IDS.every((id) => typeof candidate[id] === 'number');
 }
 
+function coerceOrientation(value: unknown, fallback: Orientation = 0): Orientation {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const normalized = Math.floor(value) % 4;
+    if (normalized >= 0 && normalized <= 3) {
+      return normalized as Orientation;
+    }
+  }
+  return fallback;
+}
+
 function cloneStructure(structure: SaveV3['structures'][number]): SaveV3['structures'][number] {
   return {
     ...structure,
@@ -179,7 +189,7 @@ function normalizeBuildQueue(candidate: SaveV3['buildQueue'] | unknown): SaveV3[
     type: typeof job?.type === 'string' ? job.type : 'cottage',
     x: typeof job?.x === 'number' ? job.x : 0,
     y: typeof job?.y === 'number' ? job.y : 0,
-    orientation: coerceOrientation((job as { orientation?: unknown })?.orientation),
+    orientation: coerceOrientation((job as { orientation?: unknown })?.orientation, 0),
     footprint:
       job && typeof job === 'object' && job.footprint
         ? {

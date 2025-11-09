@@ -13,7 +13,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true
       },
       devOptions: {
-        enabled: true,
+        enabled: false, // Disabled in dev to prevent caching issues
         suppressWarnings: true,
         navigateFallback: 'index.html'
       }

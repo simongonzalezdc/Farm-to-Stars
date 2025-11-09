@@ -129,8 +129,42 @@ interface FestivalLayer {
   dispose(): void;
 }
 
+// Helper to safely start Tone.js nodes after AudioContext is running
+// Stores nodes that need to be started and starts them after user interaction
+const pendingNodes: Array<{ start: () => void }> = [];
+
+function safeStart(node: { start: () => void }): void {
+  // Only start if AudioContext is running, otherwise defer
+  if (Tone.context.state === 'running') {
+    try {
+      node.start();
+    } catch (e) {
+      // If start fails, add to pending list
+      pendingNodes.push(node);
+    }
+  } else {
+    // AudioContext not running yet, defer starting
+    pendingNodes.push(node);
+  }
+}
+
+// Start all pending nodes after AudioContext is running
+export function startPendingNodes(): void {
+  while (pendingNodes.length > 0) {
+    const node = pendingNodes.shift();
+    if (node) {
+      try {
+        node.start();
+      } catch (e) {
+        // Ignore errors - node may already be started
+      }
+    }
+  }
+}
+
 function createFestivalLayer(destination: Tone.Gain, resolveDefinition: () => FestivalDefinition | null): FestivalLayer {
-  const autoPan = new Tone.AutoPanner({ frequency: 0.03, depth: 0.35 }).start();
+  const autoPan = new Tone.AutoPanner({ frequency: 0.03, depth: 0.35 });
+  safeStart(autoPan);
   const gain = new Tone.Gain(0).connect(autoPan);
   autoPan.connect(destination);
 

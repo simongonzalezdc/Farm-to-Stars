@@ -30,37 +30,77 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+// Helper to safely start Tone.js nodes after AudioContext is running
+// Stores nodes that need to be started and starts them after user interaction
+const pendingNodes: Array<{ start: () => void }> = [];
+
+function safeStart(node: { start: () => void }): void {
+  // Only start if AudioContext is running, otherwise defer
+  if (Tone.context.state === 'running') {
+    try {
+      node.start();
+    } catch (e) {
+      // If start fails, add to pending list
+      pendingNodes.push(node);
+    }
+  } else {
+    // AudioContext not running yet, defer starting
+    pendingNodes.push(node);
+  }
+}
+
+// Start all pending nodes after AudioContext is running
+export function startPendingNodes(): void {
+  while (pendingNodes.length > 0) {
+    const node = pendingNodes.shift();
+    if (node) {
+      try {
+        node.start();
+      } catch (e) {
+        // Ignore errors - node may already be started
+      }
+    }
+  }
+}
+
 export function createWeatherAmbience(
   destination: Tone.Gain,
   options: WeatherAmbienceOptions
 ): WeatherAmbienceController {
   const { shouldPlay, onDuckChange, debug = false, rampSeconds = 0.6 } = options;
 
-  const windPan = new Tone.AutoPanner({ frequency: 0.025, depth: 0.4 }).start();
-  const rainPan = new Tone.AutoPanner({ frequency: 0.07, depth: 0.35 }).start();
+  const windPan = new Tone.AutoPanner({ frequency: 0.025, depth: 0.4 });
+  const rainPan = new Tone.AutoPanner({ frequency: 0.07, depth: 0.35 });
+  safeStart(windPan);
+  safeStart(rainPan);
 
   const windGain = new Tone.Gain(0).connect(windPan);
   const rainGain = new Tone.Gain(0).connect(rainPan);
   windPan.connect(destination);
   rainPan.connect(destination);
 
-  const windNoise = new Tone.Noise('pink').start();
+  const windNoise = new Tone.Noise('pink');
   const windFilter = new Tone.Filter({ type: 'lowpass', frequency: 900, Q: 0.5 });
+  safeStart(windNoise);
   windNoise.connect(windFilter).connect(windGain);
 
-  const rainNoise = new Tone.Noise('brown').start();
+  const rainNoise = new Tone.Noise('brown');
   const rainFilter = new Tone.Filter({ type: 'bandpass', frequency: 1800, Q: 1.2 });
-  const rainAutoFilter = new Tone.AutoFilter({ frequency: 0.3, depth: 0.6 }).start();
+  const rainAutoFilter = new Tone.AutoFilter({ frequency: 0.3, depth: 0.6 });
+  safeStart(rainNoise);
+  safeStart(rainAutoFilter);
   rainNoise.connect(rainFilter).connect(rainAutoFilter).connect(rainGain);
 
   const thunderGain = new Tone.Gain(0).connect(destination);
   const thunderFilter = new Tone.Filter({ type: 'lowpass', frequency: 500, Q: 0.8 }).connect(thunderGain);
   const thunderEnvelope = new Tone.AmplitudeEnvelope({ attack: 0.08, decay: 0.7, sustain: 0, release: 1.8 });
-  const thunderNoise = new Tone.Noise('brown').start();
+  const thunderNoise = new Tone.Noise('brown');
+  safeStart(thunderNoise);
   thunderNoise.connect(thunderEnvelope).connect(thunderFilter);
 
-  const rumble = new Tone.Oscillator({ type: 'sine', frequency: 42, volume: -18 }).start();
+  const rumble = new Tone.Oscillator({ type: 'sine', frequency: 42, volume: -18 });
   const rumbleGain = new Tone.Gain(0).connect(destination);
+  safeStart(rumble);
   rumble.connect(rumbleGain);
 
   let thunderCooldown = 0;

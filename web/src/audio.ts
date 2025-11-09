@@ -202,6 +202,14 @@ export async function enableAudio() {
   if (started) return;
   await Tone.start();
   started = true;
+  
+  // After Tone.start(), start all pending nodes that were deferred
+  // Import and call the function to start nodes that were created before AudioContext was running
+  const { startPendingNodes: startWeatherNodes } = await import('./audio/weather');
+  const { startPendingNodes: startFestivalNodes } = await import('./audio/festivals');
+  startWeatherNodes();
+  startFestivalNodes();
+  
   updateMusicDuck();
   weatherAmbience.refresh();
   festivalMusic.refresh();

@@ -315,7 +315,7 @@ export function tick(
     }
   }
 
-  const homestead = processHomestead(state, dt, finalSeasonDefinition, crops, livestock);
+  const homestead = processHomestead(state, dt, finalSeasonDefinition, crops, livestock, civilizations);
   events.push(...homestead.events);
   for (const resource of Object.keys(homestead.feedConsumed) as ResourceId[]) {
     syncStorageSlot(state, resource);
@@ -409,7 +409,8 @@ function processHomestead(
   dt: number,
   seasonDefinition: SeasonDefinition,
   crops: CropsTable,
-  livestockDefs: LivestockTable
+  livestockDefs: LivestockTable,
+  civilizations: Record<string, any> = {}
 ): HomesteadTickResult {
   const events: GameEvent[] = [];
   const feedConsumed: Partial<Record<ResourceId, number>> = {};
@@ -477,7 +478,7 @@ function processHomestead(
   if (dt > 0 && Object.keys(crops).length > 0) {
     // Apply civilization water efficiency bonus (Moche: 1.20 = 20% less water consumption)
     let waterEfficiency = 1.0;
-    if (state.civilization && civilizations[state.civilization]) {
+    if (state.civilization && civilizations && civilizations[state.civilization]) {
       const civManager = createCivilizationManager(state.civilization, civilizations);
       waterEfficiency = civManager.getBonusMultiplier('waterEfficiency');
     }
