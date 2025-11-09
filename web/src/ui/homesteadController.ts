@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
 import { playInvalidPlacement, playPlace, playUiHover } from '../audio';
-import { gridToScreen, screenToGrid } from '../iso';
+import { gridToScreen, screenToGrid, TILE_W, TILE_H } from '../iso';
 import type { DataTables } from '../data';
 import {
   clamp01,
@@ -175,7 +175,18 @@ export class HomesteadController {
     let sprite = this.fieldSprites.get(key);
     if (!sprite) {
       const { x: sx, y: sy } = gridToScreen(x, y, 0);
-      sprite = this.scene.add.image(sx, sy, 'tile:ground').setOrigin(0.5, 0.5);
+      sprite = this.scene.add.image(sx, sy, 'tile:plot').setOrigin(0.5, 0.5);
+      if (this.scene.textures.exists('tile:plot')) {
+        const texture = this.scene.textures.get('tile:plot');
+        const source = texture?.source?.[0];
+        if (source) {
+          const scaleX = TILE_W / source.width;
+          const scaleY = TILE_H / source.height;
+          if (Number.isFinite(scaleX) && Number.isFinite(scaleY)) {
+            sprite.setScale(scaleX, scaleY);
+          }
+        }
+      }
       sprite.setDepth(880 + y);
       this.layer.add(sprite);
       this.fieldSprites.set(key, sprite);

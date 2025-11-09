@@ -1,0 +1,31 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-11-09T18:24:44.930Z",
+  "sources": [
+    {
+      "id": "kenney",
+      "name": "Kenney Assets",
+      "license": "CC0",
+      "url": "https://kenney.nl/assets"
+    },
+    {
+      "id": "opengameart",
+      "name": "OpenGameArt",
+      "license": "Various (CC0/CC-BY)",
+      "url": "https://opengameart.org"
+    },
+    {
+      "id": "itch",
+      "name": "Itch.io Free Assets",
+      "license": "Various (check per asset)",
+      "url": "https://itch.io/game-assets/free"
+    }
+  ],
+  "assets": {
+    "tiles": [],
+    "buildings": [],
+    "crops": [],
+    "ui": [],
+    "icons": []
+  }
+}

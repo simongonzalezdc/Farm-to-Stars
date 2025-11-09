@@ -24,6 +24,7 @@ export function isOverlaySupported(doc: DocumentLike = typeof document !== 'unde
 interface DebugOverlayOptions {
   defaultTab?: DebugOverlayTabId;
   containerId?: string;
+  parentContainer?: HTMLElement | null;
 }
 
 interface PerformanceWithMemory extends Performance {
@@ -55,13 +56,22 @@ export class DebugOverlay {
     const doc = document;
     const container = doc.createElement('div');
     container.id = options.containerId ?? 'debug-overlay';
-    container.style.position = 'fixed';
-    container.style.right = '0.75rem';
-    container.style.bottom = '0.75rem';
+    
+    // If parent container is provided, use it; otherwise use fixed positioning
+    if (options.parentContainer) {
+      container.style.position = 'relative';
+      container.style.width = '100%';
+      container.style.maxHeight = '100%';
+    } else {
+      container.style.position = 'fixed';
+      container.style.right = '0.75rem';
+      container.style.bottom = '0.75rem';
+      container.style.width = 'min(28rem, 90vw)';
+      container.style.maxHeight = '45vh';
+    }
+    
     container.style.display = 'flex';
     container.style.flexDirection = 'column';
-    container.style.width = 'min(28rem, 90vw)';
-    container.style.maxHeight = '45vh';
     container.style.padding = '0.5rem 0.75rem 0.75rem';
     container.style.background = 'rgba(10, 12, 20, 0.82)';
     container.style.border = '1px solid rgba(148, 163, 184, 0.35)';
@@ -127,7 +137,12 @@ export class DebugOverlay {
 
     this.updateTabStates();
 
-    doc.body.appendChild(container);
+    // Append to parent container if provided, otherwise to body
+    if (options.parentContainer) {
+      options.parentContainer.appendChild(container);
+    } else {
+      doc.body.appendChild(container);
+    }
   }
 
   update(deltaMs: number, state: Parameters<TelemetryTracker['snapshot']>[0], snapshot?: TelemetrySnapshot) {

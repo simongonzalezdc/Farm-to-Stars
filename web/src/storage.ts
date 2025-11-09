@@ -1,4 +1,4 @@
-import { get, set } from 'idb-keyval';
+import { del, get, set } from 'idb-keyval';
 import { migrateSave } from './migrations';
 import { CURRENT_SCHEMA_VERSION, type GameState, type ResourcesTable } from './types';
 
@@ -42,4 +42,16 @@ export async function load(resourceTable: ResourcesTable): Promise<GameState | n
 
 export async function save(state: GameState) {
   await set(STORAGE_KEY, state);
+}
+
+/**
+ * Clear all save data (reset the game)
+ */
+export async function clear(): Promise<void> {
+  // Delete the main storage key
+  await del(STORAGE_KEY);
+  // Also delete legacy keys
+  for (const key of LEGACY_KEYS) {
+    await del(key);
+  }
 }

@@ -8,14 +8,16 @@ export interface UiBuildingDefinition extends BuildingDefinition {
   elevation?: number;
 }
 
-const VISUAL_OVERRIDES: Partial<Record<BuildingType, Pick<UiBuildingDefinition, 'texture' | 'anchorOffset' | 'elevation'>>> = {
-  road: { texture: 'tile:road' },
-  plot: { texture: 'tile:ground' },
-  cottage: { texture: 'prop:cottage', anchorOffset: 8, elevation: 8 },
-  market: { texture: 'prop:cottage', anchorOffset: 8, elevation: 8 },
-  tent: { texture: 'prop:tent', anchorOffset: 10, elevation: 6 },
-  well: { texture: 'prop:well', anchorOffset: 6, elevation: 4 },
-  crate: { texture: 'prop:crate', anchorOffset: 6, elevation: 4 }
+const VISUAL_OVERRIDES: Partial<
+  Record<BuildingType, Pick<UiBuildingDefinition, 'texture' | 'anchorOffset' | 'elevation'>>
+> = {
+  road: { texture: 'tile:road:horizontal' },
+  plot: { texture: 'tile:plot' },
+  cottage: { texture: 'prop:cottage', anchorOffset: 32, elevation: 12 },
+  market: { texture: 'prop:market', anchorOffset: 28, elevation: 10 },
+  tent: { texture: 'prop:tent', anchorOffset: 22, elevation: 6 },
+  well: { texture: 'prop:well', anchorOffset: 18, elevation: 6 },
+  crate: { texture: 'prop:crate', anchorOffset: 16, elevation: 4 }
 };
 
 let cachedUiDefinitions: Record<BuildingType, UiBuildingDefinition> | null = null;

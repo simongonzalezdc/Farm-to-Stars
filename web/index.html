@@ -79,12 +79,35 @@
         </div>
         <div class="hud-colony__feedback" id="buildFeedback" aria-live="polite" data-tone="info">Camera pan + zoom enabled.</div>
         <div class="hud-colony__feedback" id="homesteadFeedback" aria-live="polite" data-tone="info">Select a tool to tend the field.</div>
+        <div class="hud-colony__group">
+          <button id="showTutorial" type="button" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #3b82f6; border: none; border-radius: 4px; color: white; cursor: pointer; width: 100%;">📚 Show Tutorial</button>
+          <button id="showLegend" type="button" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #374151; border: 1px solid #4b5563; border-radius: 4px; color: #e5e7eb; cursor: pointer; width: 100%;">🗺️ Map Legend</button>
+          <button id="resetGame" type="button" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #dc2626; border: none; border-radius: 4px; color: white; cursor: pointer; width: 100%;">🔄 Reset Game</button>
+          <div style="margin-top: 0.5rem; padding: 0.5rem; background: #1f2937; border-radius: 4px; font-size: 0.85rem; color: #9ca3af;">
+            <strong>Camera Controls:</strong><br>
+            Q/E: Rotate camera left/right<br>
+            Shift+Drag: Rotate camera<br>
+            Scroll: Zoom in/out
+          </div>
+        </div>
       </section>
     </div>
     <div class="hud-layout__column">
+      <!-- Right column content moved to bottom bar -->
+    </div>
+  </div>
+  <div id="bottomBar" class="bottom-bar">
+    <div class="bottom-bar__section">
       <div id="calendarMount"></div>
+    </div>
+    <div class="bottom-bar__section">
       <div id="questMount"></div>
+    </div>
+    <div class="bottom-bar__section">
       <div id="staminaTipsMount"></div>
+    </div>
+    <div class="bottom-bar__section">
+      <div id="debugMount"></div>
     </div>
   </div>
   <script type="module" src="/src/main.ts"></script>

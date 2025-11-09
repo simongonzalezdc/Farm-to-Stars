@@ -1,6 +1,11 @@
-// 96×48 pixel-iso diamond helpers
-export const TILE_W = 96;
-export const TILE_H = 48;
+// 160×80 pixel-iso diamond helpers
+// Higher resolution for better visual clarity and reduced pixelation
+// - 160×80 = 10×16 × 5×16 (clean scaling from 16×16 assets)
+// - Much better detail and clarity than 96×48
+// - Reduces pixelation while maintaining good performance
+// - Large enough to see details clearly
+export const TILE_W = 160;
+export const TILE_H = 80;
 
 export function gridToScreen(ix: number, iy: number, height = 0) {
   const x = (ix - iy) * (TILE_W / 2);

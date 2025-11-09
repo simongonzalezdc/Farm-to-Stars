@@ -75,11 +75,11 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
     summary: '+25% gather, +30% build speed, gentle rains improve soil.',
     durationSeconds: 165,
     visuals: {
-      background: '#0e2017',
-      groundTint: 0xa2f0c4,
-      propTint: 0xffffff,
+      background: '#203826',
+      groundTint: 0xbdf7d4,
+      propTint: 0xf5fff8,
       overlayColor: 0x7fe0b8,
-      overlayAlpha: 0.12,
+      overlayAlpha: 0.1,
       icon: '🌱'
     },
     multipliers: {
@@ -103,11 +103,11 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
     summary: '+12% gather, +18% sell value with brighter afternoons.',
     durationSeconds: 165,
     visuals: {
-      background: '#1b1f0e',
-      groundTint: 0xfff2a8,
-      propTint: 0xfff0d0,
+      background: '#2f3317',
+      groundTint: 0xffed9e,
+      propTint: 0xfff5d8,
       overlayColor: 0xffd966,
-      overlayAlpha: 0.08,
+      overlayAlpha: 0.07,
       icon: '☀️'
     },
     multipliers: {
@@ -131,11 +131,11 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
     summary: 'Steady yields, -8% build speed, +10% sell value.',
     durationSeconds: 165,
     visuals: {
-      background: '#1f140b',
+      background: '#362315',
       groundTint: 0xffb680,
-      propTint: 0xf7d1a6,
+      propTint: 0xf9d6af,
       overlayColor: 0xff9f5c,
-      overlayAlpha: 0.14,
+      overlayAlpha: 0.12,
       icon: '🍂'
     },
     multipliers: {
@@ -159,11 +159,11 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
     summary: '-12% gather, -22% build speed, -8% sell value.',
     durationSeconds: 165,
     visuals: {
-      background: '#0e1420',
-      groundTint: 0xc9d8ff,
-      propTint: 0xdde7ff,
+      background: '#1b2f46',
+      groundTint: 0xd3e3ff,
+      propTint: 0xe1ecff,
       overlayColor: 0x6aa8ff,
-      overlayAlpha: 0.18,
+      overlayAlpha: 0.15,
       icon: '❄️'
     },
     multipliers: {
