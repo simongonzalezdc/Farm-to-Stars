@@ -35,6 +35,7 @@ import {
   type SeasonDefinition,
   type SeasonId
 } from './config/seasons';
+import { isFeatureEnabled } from './config/features';
 import {
   clearArea,
   createOccupancyMap,
@@ -260,6 +261,7 @@ class IsoScene extends Phaser.Scene {
   tables!: DataTables;
   private readonly telemetry = new TelemetryTracker();
   private readonly homesteadMetrics = new HomesteadMetrics();
+  private readonly exportFeatureEnabled = isFeatureEnabled('exportTownship');
   private debugOverlay: DebugOverlay | null = null;
   private calendarHud: CalendarHud | null = null;
   private questLog: QuestLog | null = null;
@@ -580,8 +582,17 @@ class IsoScene extends Phaser.Scene {
     }
 
     if (exportTownshipButton) {
-      this.exportHandler = () => this.handleExport();
-      exportTownshipButton.addEventListener('click', this.exportHandler);
+      exportTownshipButton.hidden = !this.exportFeatureEnabled;
+      if (this.exportFeatureEnabled) {
+        exportTownshipButton.removeAttribute('aria-hidden');
+        exportTownshipButton.removeAttribute('disabled');
+        this.exportHandler = () => this.handleExport();
+        exportTownshipButton.addEventListener('click', this.exportHandler);
+      } else {
+        exportTownshipButton.setAttribute('aria-hidden', 'true');
+        exportTownshipButton.setAttribute('disabled', 'true');
+        exportTownshipButton.title = 'Township export is disabled in this build.';
+      }
     }
 
     this.updatePlaytestStatus();
@@ -881,14 +892,26 @@ class IsoScene extends Phaser.Scene {
     }
     const optedIn = getPlaytestTelemetryOptIn();
     if (!optedIn) {
-      playtestStatusEl.textContent = 'Telemetry opt-in required before exporting.';
-      exportTownshipButton?.setAttribute('disabled', 'true');
       downloadPerfButton?.setAttribute('disabled', 'true');
+      if (this.exportFeatureEnabled) {
+        exportTownshipButton?.setAttribute('disabled', 'true');
+        playtestStatusEl.textContent = 'Telemetry opt-in required before exporting.';
+      } else {
+        playtestStatusEl.textContent = 'Township export disabled in this build. Opt into telemetry to capture perf logs.';
+      }
+      return;
+    }
+
+    downloadPerfButton?.removeAttribute('disabled');
+    if (!this.exportFeatureEnabled) {
+      exportTownshipButton?.setAttribute('disabled', 'true');
+      const events = peekPlaytestEvents();
+      const perf = (snapshot ?? this.telemetry.snapshot(this.state)).performance;
+      playtestStatusEl.textContent = `Opted in • ${perf.sampleCount} perf samples • ${events.length} buffered events • Township export unavailable.`;
       return;
     }
 
     exportTownshipButton?.removeAttribute('disabled');
-    downloadPerfButton?.removeAttribute('disabled');
     const events = peekPlaytestEvents();
     const perf = (snapshot ?? this.telemetry.snapshot(this.state)).performance;
     const daySummaries = events.filter((event) => event.type === 'homestead.daySummary').length;
@@ -925,6 +948,11 @@ class IsoScene extends Phaser.Scene {
   }
 
   private handleExport() {
+    if (!this.exportFeatureEnabled) {
+      this.setPlaytestStatus('Township export disabled in this build.');
+      return;
+    }
+
     if (!getPlaytestTelemetryOptIn()) {
       this.setPlaytestStatus('Enable telemetry opt-in before exporting to Township.');
       return;
