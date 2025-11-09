@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import '../styles/build.scss';
 import '../styles/hud.scss';
 import '../styles/civilization.scss';
+import '../styles/township.scss';
 import { CalendarHud } from './hud/calendar/Calendar';
 import { QuestLog, type QuestEntry, type QuestStatus } from './hud/quests/QuestLog';
 import { StaminaTipsOverlay } from './hud/stamina/Tips';
@@ -57,6 +58,7 @@ import { getStaminaRatio } from './state/stamina';
 import { TelemetryTracker, type TelemetrySnapshot } from './telemetry/telemetry';
 import { HomesteadMetrics } from './telemetry/homesteadMetrics';
 import { exportHomesteadToTownship } from './sim/export/homesteadToTownship';
+import { TownshipScene } from './scenes/TownshipScene';
 import {
   flushPlaytestEvents,
   getPlaytestTelemetryOptIn,
@@ -1008,8 +1010,17 @@ class IsoScene extends Phaser.Scene {
     const encoder = new TextEncoder();
     const bytes = encoder.encode(json).length;
     recordExportGenerated(bytes, payload.township.shipments.length);
-    this.setPlaytestStatus(`Exported snapshot with ${payload.township.shipments.length} shipments.`);
+    this.setPlaytestStatus(`Exported snapshot with ${payload.township.shipments.length} shipments. Launching Township...`);
     this.updatePlaytestStatus();
+
+    // Launch Township scene
+    setTimeout(() => {
+      this.scene.start('TownshipScene', {
+        civilization: payload.civilization,
+        seed: payload.seed,
+        initialState: payload.township
+      });
+    }, 1000);
   }
 
   private setPlaytestStatus(message: string) {
@@ -1024,7 +1035,7 @@ const config: Phaser.Types.Core.GameConfig = {
   parent: 'app',
   width: window.innerWidth,
   height: window.innerHeight,
-  scene: [IsoScene],
+  scene: [IsoScene, TownshipScene],
   render: { pixelArt: true, antialias: false },
   scale: { mode: Phaser.Scale.RESIZE }
 };
