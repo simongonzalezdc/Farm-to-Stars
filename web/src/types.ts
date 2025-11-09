@@ -386,9 +386,9 @@ export type GameEvent =
   | { type: 'mail.delivered'; messageId: number; attachments: Partial<Record<ResourceId, number>> }
   | { type: 'tool.perk.unlocked'; perkId: ToolPerkId; toolId: ToolId; uses: number };
 
-export const CURRENT_SCHEMA_VERSION = 7;
+export const CURRENT_SCHEMA_VERSION = 8;
 
-export const PREVIOUS_SCHEMA_VERSION = 6;
+export const PREVIOUS_SCHEMA_VERSION = 7;
 
 export const LEGACY_SCHEMA_VERSION = 4;
 
@@ -445,11 +445,16 @@ export interface SaveV6 extends Omit<SaveV5, 'schemaVersion'> {
 }
 
 export interface SaveV7 extends Omit<SaveV6, 'schemaVersion' | 'homestead'> {
-  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  schemaVersion: typeof PREVIOUS_SCHEMA_VERSION;
   homestead: HomesteadState;
 }
 
-export type GameState = SaveV7;
+export interface SaveV8 extends Omit<SaveV7, 'schemaVersion'> {
+  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  civilization: CivilizationId;
+}
+
+export type GameState = SaveV8;
 
 export const LEGACY_RESOURCE_IDS: ResourceId[] = ['wood', 'stone', 'food', 'coins'];
 
@@ -651,6 +656,7 @@ export function defaultState(resourceTable?: ResourcesTable): GameState {
     v: 1,
     schemaVersion: CURRENT_SCHEMA_VERSION,
     seed: 12345,
+    civilization: 'teotihuacan', // Default civilization (can be chosen at game start)
     resources,
     resourceStorage: createEmptyResourceStorage(resourceTable),
     structures: [
