@@ -25,6 +25,8 @@ import type {
   LivestockId,
   LivestockTable,
   MailMessage,
+  ToolId,
+  ToolPerkId,
   RecipeDefinition,
   RecipeId,
   ResourceId,
@@ -46,6 +48,7 @@ export const EVENT_LIVESTOCK_STARVED = 'world.livestock.starved';
 export const EVENT_WEATHER_EVENT_STARTED = 'world.weather.event.started';
 export const EVENT_WEATHER_EVENT_ENDED = 'world.weather.event.ended';
 export const EVENT_MAIL_DELIVERED = 'world.mail.delivered';
+export const EVENT_TOOL_PERK_UNLOCKED = 'world.tool.perk.unlocked';
 
 export interface ResourceProducedDetail {
   resource: ResourceId;
@@ -106,6 +109,15 @@ export interface WeatherDynamicEventDetail {
 
 export interface MailDeliveredDetail {
   message: MailMessage;
+}
+
+export interface ToolPerkUnlockedDetail {
+  perkId: ToolPerkId;
+  toolId: ToolId;
+  title: string;
+  headline: string;
+  milestoneCount: number;
+  milestoneLabel: string;
 }
 
 export const gameEvents = new EventTarget();

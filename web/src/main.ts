@@ -35,6 +35,7 @@ import {
   type SeasonDefinition,
   type SeasonId
 } from './config/seasons';
+import { isFeatureEnabled } from './config/features';
 import {
   clearArea,
   createOccupancyMap,
@@ -50,12 +51,14 @@ import { HomesteadController } from './ui/homesteadController';
 import { getNormalizedTime } from './state/time';
 import { getStaminaRatio } from './state/stamina';
 import { TelemetryTracker, type TelemetrySnapshot } from './telemetry/telemetry';
+import { HomesteadMetrics } from './telemetry/homesteadMetrics';
 import { exportHomesteadToTownship } from './sim/export/homesteadToTownship';
 import {
   flushPlaytestEvents,
   getPlaytestTelemetryOptIn,
   peekPlaytestEvents,
   recordExportGenerated,
+  recordHomesteadDaySummary,
   setPlaytestTelemetryOptIn
 } from './telemetry/playtest';
 import { HOMESTEAD_QUESTS, type QuestMetricId } from './config/quests';
@@ -257,6 +260,8 @@ class IsoScene extends Phaser.Scene {
   state: GameState = defaultState();
   tables!: DataTables;
   private readonly telemetry = new TelemetryTracker();
+  private readonly homesteadMetrics = new HomesteadMetrics();
+  private readonly exportFeatureEnabled = isFeatureEnabled('exportTownship');
   private debugOverlay: DebugOverlay | null = null;
   private calendarHud: CalendarHud | null = null;
   private questLog: QuestLog | null = null;
@@ -414,6 +419,7 @@ class IsoScene extends Phaser.Scene {
 
     initWorld(this.state);
     this.telemetry.reset(this.state);
+    this.homesteadMetrics.reset(this.state);
     this.occupancy = createOccupancyMap();
 
     const cam = this.cameras.main;
@@ -480,7 +486,10 @@ class IsoScene extends Phaser.Scene {
       toolButtons,
       seedButtons,
       restButton,
-      feedbackEl: homesteadFeedbackEl
+      feedbackEl: homesteadFeedbackEl,
+      onRest: ({ previousDay, nextDay }) => {
+        this.homesteadMetrics.recordManualAdvance(this.state, previousDay, nextDay);
+      }
     });
     this.homestead.updateField();
     this.updateHomesteadHud();
@@ -573,8 +582,17 @@ class IsoScene extends Phaser.Scene {
     }
 
     if (exportTownshipButton) {
-      this.exportHandler = () => this.handleExport();
-      exportTownshipButton.addEventListener('click', this.exportHandler);
+      exportTownshipButton.hidden = !this.exportFeatureEnabled;
+      if (this.exportFeatureEnabled) {
+        exportTownshipButton.removeAttribute('aria-hidden');
+        exportTownshipButton.removeAttribute('disabled');
+        this.exportHandler = () => this.handleExport();
+        exportTownshipButton.addEventListener('click', this.exportHandler);
+      } else {
+        exportTownshipButton.setAttribute('aria-hidden', 'true');
+        exportTownshipButton.setAttribute('disabled', 'true');
+        exportTownshipButton.title = 'Township export is disabled in this build.';
+      }
     }
 
     this.updatePlaytestStatus();
@@ -596,6 +614,7 @@ class IsoScene extends Phaser.Scene {
         this.tables.livestock
       );
       this.telemetry.recordTick(this.state, events, SIM_DT);
+      this.homesteadMetrics.recordTick(this.state, events, SIM_DT);
       simMs += performance.now() - tickStart;
       steps += 1;
       if (events.length > 0) {
@@ -604,6 +623,8 @@ class IsoScene extends Phaser.Scene {
       }
       this.accum -= SIM_DT;
     }
+
+    this.flushHomesteadSummaries();
 
     const frameDuration = performance.now() - frameStart;
     this.telemetry.recordFrame(frameDuration, simMs, steps);
@@ -629,6 +650,16 @@ class IsoScene extends Phaser.Scene {
     this.syncJobMarkers();
     this.syncStructures();
     this.refreshQueueHud();
+  }
+
+  private flushHomesteadSummaries() {
+    const drained = this.homesteadMetrics.buffer.drain();
+    if (!drained.length) {
+      return;
+    }
+    for (const record of drained) {
+      recordHomesteadDaySummary(record.payload);
+    }
   }
 
   private addStructure(structure: Structure) {
@@ -861,17 +892,31 @@ class IsoScene extends Phaser.Scene {
     }
     const optedIn = getPlaytestTelemetryOptIn();
     if (!optedIn) {
-      playtestStatusEl.textContent = 'Telemetry opt-in required before exporting.';
-      exportTownshipButton?.setAttribute('disabled', 'true');
       downloadPerfButton?.setAttribute('disabled', 'true');
+      if (this.exportFeatureEnabled) {
+        exportTownshipButton?.setAttribute('disabled', 'true');
+        playtestStatusEl.textContent = 'Telemetry opt-in required before exporting.';
+      } else {
+        playtestStatusEl.textContent = 'Township export disabled in this build. Opt into telemetry to capture perf logs.';
+      }
+      return;
+    }
+
+    downloadPerfButton?.removeAttribute('disabled');
+    if (!this.exportFeatureEnabled) {
+      exportTownshipButton?.setAttribute('disabled', 'true');
+      const events = peekPlaytestEvents();
+      const perf = (snapshot ?? this.telemetry.snapshot(this.state)).performance;
+      playtestStatusEl.textContent = `Opted in • ${perf.sampleCount} perf samples • ${events.length} buffered events • Township export unavailable.`;
       return;
     }
 
     exportTownshipButton?.removeAttribute('disabled');
-    downloadPerfButton?.removeAttribute('disabled');
     const events = peekPlaytestEvents();
     const perf = (snapshot ?? this.telemetry.snapshot(this.state)).performance;
-    playtestStatusEl.textContent = `Opted in • ${perf.sampleCount} perf samples • ${events.length} buffered events.`;
+    const daySummaries = events.filter((event) => event.type === 'homestead.daySummary').length;
+    const summaryLabel = daySummaries > 0 ? ` • ${daySummaries} day summaries` : '';
+    playtestStatusEl.textContent = `Opted in • ${perf.sampleCount} perf samples • ${events.length} buffered events${summaryLabel}.`;
   }
 
   private handleDownloadPerf() {
@@ -903,6 +948,11 @@ class IsoScene extends Phaser.Scene {
   }
 
   private handleExport() {
+    if (!this.exportFeatureEnabled) {
+      this.setPlaytestStatus('Township export disabled in this build.');
+      return;
+    }
+
     if (!getPlaytestTelemetryOptIn()) {
       this.setPlaytestStatus('Enable telemetry opt-in before exporting to Township.');
       return;
