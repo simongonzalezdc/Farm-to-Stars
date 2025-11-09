@@ -2,9 +2,9 @@
   "wheat": {
     "label": "Homestead Wheat",
     "stages": [
-      { "id": "sprout", "duration": 18, "minMoisture": 0.35, "moistureConsumptionPerSecond": 0.01, "wiltThreshold": 0.08 },
-      { "id": "tiller", "duration": 22, "minMoisture": 0.4, "moistureConsumptionPerSecond": 0.012, "wiltThreshold": 0.1 },
-      { "id": "mature", "duration": 28, "minMoisture": 0.3, "moistureConsumptionPerSecond": 0.008, "wiltThreshold": 0.08 }
+      { "id": "sprout", "duration": 16, "minMoisture": 0.32, "moistureConsumptionPerSecond": 0.009, "wiltThreshold": 0.08 },
+      { "id": "tiller", "duration": 21, "minMoisture": 0.38, "moistureConsumptionPerSecond": 0.011, "wiltThreshold": 0.1 },
+      { "id": "mature", "duration": 26, "minMoisture": 0.28, "moistureConsumptionPerSecond": 0.007, "wiltThreshold": 0.08 }
     ],
     "yields": [["wheat", 4]],
     "regrow": false
@@ -12,9 +12,9 @@
   "potato": {
     "label": "Riverbank Potato",
     "stages": [
-      { "id": "seed", "duration": 24, "minMoisture": 0.45, "moistureConsumptionPerSecond": 0.014, "wiltThreshold": 0.12 },
-      { "id": "sprout", "duration": 28, "minMoisture": 0.5, "moistureConsumptionPerSecond": 0.016, "wiltThreshold": 0.14 },
-      { "id": "bulb", "duration": 34, "minMoisture": 0.4, "moistureConsumptionPerSecond": 0.012, "wiltThreshold": 0.12 }
+      { "id": "seed", "duration": 22, "minMoisture": 0.44, "moistureConsumptionPerSecond": 0.013, "wiltThreshold": 0.12 },
+      { "id": "sprout", "duration": 30, "minMoisture": 0.48, "moistureConsumptionPerSecond": 0.015, "wiltThreshold": 0.14 },
+      { "id": "bulb", "duration": 36, "minMoisture": 0.38, "moistureConsumptionPerSecond": 0.011, "wiltThreshold": 0.12 }
     ],
     "yields": [["potato", 3]],
     "regrow": false
@@ -22,9 +22,9 @@
   "berry": {
     "label": "Shade Berry Bush",
     "stages": [
-      { "id": "seedling", "duration": 20, "minMoisture": 0.3, "moistureConsumptionPerSecond": 0.01, "wiltThreshold": 0.06 },
-      { "id": "flower", "duration": 24, "minMoisture": 0.32, "moistureConsumptionPerSecond": 0.012, "wiltThreshold": 0.08 },
-      { "id": "fruiting", "duration": 26, "minMoisture": 0.28, "moistureConsumptionPerSecond": 0.009, "wiltThreshold": 0.06 }
+      { "id": "seedling", "duration": 18, "minMoisture": 0.28, "moistureConsumptionPerSecond": 0.009, "wiltThreshold": 0.06 },
+      { "id": "flower", "duration": 22, "minMoisture": 0.3, "moistureConsumptionPerSecond": 0.011, "wiltThreshold": 0.08 },
+      { "id": "fruiting", "duration": 24, "minMoisture": 0.26, "moistureConsumptionPerSecond": 0.008, "wiltThreshold": 0.06 }
     ],
     "yields": [["berries", 5]],
     "regrow": true

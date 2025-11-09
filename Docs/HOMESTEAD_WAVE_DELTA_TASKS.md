@@ -2,6 +2,8 @@
 
 Wave Delta is the final sprint cluster before Homestead playtests. The bundles below are structured so crews can run in parallel once Wave Gamma sign-off is complete. Each bundle lists its Definition of Ready, parallel task cards, integration hand-offs, and recommended sync cadences.
 
+> **Status Update:** Delta-Bash, Delta-Perf, Delta-Play, and Delta-Bridge have all shipped their deliverables. Export samples are archived with Township leads, and the guarded HUD control can be enabled per-session with `?feature.exportTownship=true`.
+
 ## Parallel Lanes Overview
 
 | Lane | Focus | Dependencies Cleared | Primary Outputs |

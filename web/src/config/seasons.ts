@@ -72,8 +72,8 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
   [SeasonId.Spring]: {
     id: SeasonId.Spring,
     label: 'Spring Awakening',
-    summary: '+20% gather, +25% build speed, +10% sell value.',
-    durationSeconds: 150,
+    summary: '+25% gather, +30% build speed, gentle rains improve soil.',
+    durationSeconds: 165,
     visuals: {
       background: '#0e2017',
       groundTint: 0xa2f0c4,
@@ -83,25 +83,25 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       icon: '🌱'
     },
     multipliers: {
-      resourceRate: 1.2,
-      constructionSpeed: 1.25,
+      resourceRate: 1.25,
+      constructionSpeed: 1.3,
       economy: 1.1
     },
     weather: {
-      rainChance: 0.35,
-      stormChance: 0.12,
-      minDurationSeconds: 90,
-      maxDurationSeconds: 220,
-      evaporationPerSecond: 0.004,
-      rainPrecipitationPerSecond: 0.025,
-      stormPrecipitationPerSecond: 0.04
+      rainChance: 0.4,
+      stormChance: 0.14,
+      minDurationSeconds: 110,
+      maxDurationSeconds: 240,
+      evaporationPerSecond: 0.0035,
+      rainPrecipitationPerSecond: 0.03,
+      stormPrecipitationPerSecond: 0.045
     }
   },
   [SeasonId.Summer]: {
     id: SeasonId.Summer,
     label: 'Summer Zenith',
-    summary: '+10% gather, +15% sell value.',
-    durationSeconds: 150,
+    summary: '+12% gather, +18% sell value with brighter afternoons.',
+    durationSeconds: 165,
     visuals: {
       background: '#1b1f0e',
       groundTint: 0xfff2a8,
@@ -111,25 +111,25 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       icon: '☀️'
     },
     multipliers: {
-      resourceRate: 1.1,
+      resourceRate: 1.12,
       constructionSpeed: 1.0,
-      economy: 1.15
+      economy: 1.18
     },
     weather: {
-      rainChance: 0.22,
-      stormChance: 0.08,
-      minDurationSeconds: 110,
-      maxDurationSeconds: 260,
-      evaporationPerSecond: 0.006,
-      rainPrecipitationPerSecond: 0.02,
-      stormPrecipitationPerSecond: 0.032
+      rainChance: 0.24,
+      stormChance: 0.09,
+      minDurationSeconds: 120,
+      maxDurationSeconds: 280,
+      evaporationPerSecond: 0.005,
+      rainPrecipitationPerSecond: 0.022,
+      stormPrecipitationPerSecond: 0.034
     }
   },
   [SeasonId.Autumn]: {
     id: SeasonId.Autumn,
     label: 'Autumn Harvest',
-    summary: 'Steady yields, -5% build speed, +10% sell value.',
-    durationSeconds: 150,
+    summary: 'Steady yields, -8% build speed, +10% sell value.',
+    durationSeconds: 165,
     visuals: {
       background: '#1f140b',
       groundTint: 0xffb680,
@@ -139,25 +139,25 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       icon: '🍂'
     },
     multipliers: {
-      resourceRate: 1.0,
-      constructionSpeed: 0.95,
+      resourceRate: 1.05,
+      constructionSpeed: 0.92,
       economy: 1.1
     },
     weather: {
-      rainChance: 0.3,
-      stormChance: 0.1,
-      minDurationSeconds: 100,
-      maxDurationSeconds: 240,
-      evaporationPerSecond: 0.0045,
-      rainPrecipitationPerSecond: 0.022,
-      stormPrecipitationPerSecond: 0.036
+      rainChance: 0.34,
+      stormChance: 0.12,
+      minDurationSeconds: 115,
+      maxDurationSeconds: 250,
+      evaporationPerSecond: 0.0038,
+      rainPrecipitationPerSecond: 0.026,
+      stormPrecipitationPerSecond: 0.04
     }
   },
   [SeasonId.Winter]: {
     id: SeasonId.Winter,
     label: 'Winter Slumber',
-    summary: '-15% gather, -25% build speed, -10% sell value.',
-    durationSeconds: 150,
+    summary: '-12% gather, -22% build speed, -8% sell value.',
+    durationSeconds: 165,
     visuals: {
       background: '#0e1420',
       groundTint: 0xc9d8ff,
@@ -167,18 +167,18 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
       icon: '❄️'
     },
     multipliers: {
-      resourceRate: 0.85,
-      constructionSpeed: 0.75,
-      economy: 0.9
+      resourceRate: 0.88,
+      constructionSpeed: 0.78,
+      economy: 0.92
     },
     weather: {
-      rainChance: 0.18,
-      stormChance: 0.06,
-      minDurationSeconds: 120,
-      maxDurationSeconds: 260,
-      evaporationPerSecond: 0.0025,
-      rainPrecipitationPerSecond: 0.018,
-      stormPrecipitationPerSecond: 0.028
+      rainChance: 0.2,
+      stormChance: 0.08,
+      minDurationSeconds: 130,
+      maxDurationSeconds: 280,
+      evaporationPerSecond: 0.0022,
+      rainPrecipitationPerSecond: 0.02,
+      stormPrecipitationPerSecond: 0.032
     }
   }
 };

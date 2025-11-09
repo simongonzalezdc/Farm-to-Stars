@@ -42,7 +42,7 @@ Each task bundle below is designed to be executed on an isolated branch and merg
 - **Wave Alpha (Weeks 8–9):** Kick off S1, S2, T1, laying contracts. U2 starts with minimal dependencies.
 - **Wave Beta (Weeks 9–10):** Parallelize C1, C2, U1 once simulation contracts land; A1 begins integration with mocked events.
 - **Wave Gamma (Weeks 10–11):** Q1/Q2 activate when feature branches hit feature complete; soak tests run nightly.
-- **Wave Delta (Week 12):** Hardening, bug bashes, release notes, Homestead→Township export prototype validation. Detailed task cards and hand-offs live in `Docs/HOMESTEAD_WAVE_DELTA_TASKS.md`, and the lane-level agent roster is documented in `Docs/HOMESTEAD_WAVE_DELTA_AGENTS.md` so Delta crews can spin up in parallel immediately after Wave Gamma sign-off.
+- **Wave Delta (Week 12):** Hardening, bug bashes, release notes, Homestead→Township export prototype validation. Detailed task cards and hand-offs live in `Docs/HOMESTEAD_WAVE_DELTA_TASKS.md`, and the lane-level agent roster is documented in `Docs/HOMESTEAD_WAVE_DELTA_AGENTS.md` so Delta crews can spin up in parallel immediately after Wave Gamma sign-off. RC builds can surface the guarded HUD control by appending `?feature.exportTownship=true` during validation runs.
 
 #### 4.1.3 Exit criteria
 - 30 in-game day campaign stable with livestock, weather, festivals, and tool mastery loops.

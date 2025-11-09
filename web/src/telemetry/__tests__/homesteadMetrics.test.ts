@@ -49,6 +49,8 @@ describe('HomesteadMetrics', () => {
     expect(payload.crops.productionCycles).toBe(1);
     expect(payload.stamina.minRatio).toBeCloseTo(0.4, 5);
     expect(payload.stamina.exhaustedSeconds).toBeCloseTo(2, 5);
+    expect(payload.stamina.spent).toBeCloseTo(50, 5);
+    expect(payload.stamina.restCount).toBe(0);
     expect(payload.weather.type).toBe('sunny');
     expect(payload.weather.moistureDeltaPerSecond).toBeCloseTo(-0.25, 5);
     expect(payload.resources.food).toBe(12);
@@ -56,6 +58,26 @@ describe('HomesteadMetrics', () => {
 
     // ensure metrics reset for the next day
     metrics.recordTick(state, [], 1);
+    expect(metrics.buffer.size).toBe(0);
+  });
+
+  it('records manual rest transitions with rest counts', () => {
+    const buffer = new TelemetryBuffer<HomesteadDaySummaryEvent>({ storage: null });
+    const metrics = new HomesteadMetrics({ buffer });
+    const state = defaultState();
+    metrics.reset(state);
+
+    state.homestead.stamina.current = 90;
+    metrics.recordTick(state, [], 4);
+
+    const previousDay = state.homestead.time.day;
+    state.homestead.time.day += 1;
+    metrics.recordManualAdvance(state, previousDay, state.homestead.time.day);
+
+    const [record] = buffer.drain();
+    expect(record.payload.day).toBe(previousDay);
+    expect(record.payload.stamina.restCount).toBe(1);
+    expect(record.payload.stamina.spent).toBeCloseTo(30, 5);
     expect(metrics.buffer.size).toBe(0);
   });
 });

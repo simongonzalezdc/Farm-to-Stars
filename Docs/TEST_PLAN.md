@@ -3,7 +3,7 @@
 ## 1) Manual
 - **Visual:** pixels are crisp at 3 zooms; y‑sort walk‑behind OK; day/night switch OK.
 - **Build/Economy:** road/plot/cottage/market place; plot yields; market sells; counters move.
-- **Pacing:** passive income + farm/market loop fund the Week 3 set (road, plot, market, cottage) within 8–10 minutes; first harvest lands <4 minutes; seasons cycle every 2.5 minutes.
+- **Pacing:** passive income + farm/market loop fund the Week 3 set (road, plot, market, cottage) within 7–8 minutes; first harvest lands <3.5 minutes; seasons cycle every ~2.75 minutes with 13-minute days.
 - **Platform:** PWA install; offline reload; audio unlock on tap.
 - **Perf:**
   - Launch build with `npm run build && npm run preview`, open on target hardware.
@@ -83,9 +83,14 @@ Use this page as a printable or digital worksheet during guided playtests. Check
     - **Fail:** Download disabled, file empty/corrupt, profile script errors.
     - **Observer Notes / Hash:** ________________________________
 15. [ ] **Township snapshot export** – Trigger “Export to Township” with mature crops & livestock.
+    - **Setup:** If the RC build hides the export control, append `?feature.exportTownship=true` to the URL (or set `window.__FARM_FEATURES__`) before loading the save.
     - **Pass:** JSON payload downloads, contains structures/livestock summaries, shipments include mail attachments when present.
     - **Fail:** Button inert, payload missing entities, schema mismatch (validate against `web/content/township/import.json`).
     - **Observer Notes / Seed:** ________________________________
+16. [ ] **Homestead telemetry summaries** – Opt in, complete a simulated day (rest or natural) and download telemetry log.
+    - **Pass:** HUD status increments buffered day summaries; downloaded JSON includes `homestead.daySummary` entries with crop/stamina/weather data.
+    - **Fail:** Status text never references day summaries, export lacks Homestead payloads, or JSON parse errors.
+    - **Observer Notes / JSON hash:** ____________________________
 
 ### Debrief & Bugs
 - **Top issues surfaced:** ______________________________________
@@ -97,10 +102,11 @@ Use this page as a printable or digital worksheet during guided playtests. Check
 ## 4) Homestead Phase Checks
 
 - **Farming lifecycle:** Use the toolbelt (Hoe/Water/Sickle) and seed bar to till soil, plant wheat/potato/berry, water through a dry spell, and confirm harvest yields populate the new resources (wheat, potato, berries, fiber) with stamina costs applied.
-- **Time & stamina loop:** Ensure stamina drains on tool use, regenerates via rest, and that the day/night HUD reflects the updated clock cadence (rest button should advance to dawn and clear exhaustion states).
+- **Time & stamina loop:** Ensure stamina drains on tool use, regenerates via rest, and that the day/night HUD reflects the updated 13-minute clock cadence (rest button should advance to dawn, clear exhaustion, and increment telemetry rest counts).
 - **Weather/moisture:** Advance several in-game days to observe rain/storm rolls, verify soil moisture overlays recolor tiles, and confirm crops wither if ignored.
 - **Save migration:** Load a pre-Homestead save to confirm crops/time/weather defaults populate without data loss and that new saves persist field state.
 - **Inventory & build hooks:** Verify the HUD resource row lists fiber/wheat/potato/berries, toolbelt/seed buttons auto-populate from data tables, and the build menu offers tent, well, and crate with updated sprites/costs.
+- **Telemetry & rest instrumentation:** Opt into playtest metrics, rest to skip a day, confirm playtest status displays buffered summaries, and that exported telemetry contains matching `homestead.daySummary` records.
 
 ## 5) Regression Checklists — Livestock, Festivals, Tools
 

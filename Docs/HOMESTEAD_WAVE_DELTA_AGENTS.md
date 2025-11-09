@@ -2,6 +2,8 @@
 
 This roster defines the autonomous agents assigned to Wave Delta's four parallel lanes. Each pod operates semi-independently, sharing artifacts through the Wave Delta playbook and the Homestead parallel task matrix. The goal is to keep every lane unblocked while marching toward the Homestead playtest milestone.
 
+> **Status Note:** All pods have checked in their closure reports. Remaining action item is coordinating Township ramp syncs using the archived export payload samples.
+
 ## Pod overview
 
 | Pod | Focus lane | Primary outputs | Sync rhythm |
