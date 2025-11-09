@@ -19,7 +19,7 @@ function isFeatureFlag(flag: string): flag is keyof FeatureConfig {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __FARM_FEATURES__?: Partial<FeatureConfig>;
+  var __FARM_FEATURES__: Partial<FeatureConfig> | undefined;
   interface Window {
     __FARM_FEATURES__?: Partial<FeatureConfig>;
   }

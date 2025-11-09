@@ -793,7 +793,10 @@ class IsoScene extends Phaser.Scene {
     overlay.setFillStyle(visuals.overlayColor, visuals.overlayAlpha);
   }
 
-  private tintContainer(container: Phaser.GameObjects.Container, tint: number) {
+  private tintContainer(container: Phaser.GameObjects.Container | undefined, tint: number) {
+    if (!container || !container.list) {
+      return;
+    }
     for (const child of container.list) {
       if (child instanceof Phaser.GameObjects.Image) {
         child.setTint(tint);

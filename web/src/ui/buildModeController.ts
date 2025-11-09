@@ -82,17 +82,33 @@ export class BuildModeController {
     this.particleManager = this.scene.add.particles(0, 0, 'ui:placementSpark');
     this.particleManager.setDepth(940);
     this.particleManager.setVisible(false);
-    this.placementEmitter = this.particleManager.createEmitter({
-      speed: { min: 70, max: 140 },
-      lifespan: { min: 260, max: 420 },
-      scale: { start: 0.55, end: 0 },
-      alpha: { start: 0.85, end: 0 },
-      rotate: { min: -45, max: 45 },
-      gravityY: -160,
-      quantity: 18,
-      blendMode: Phaser.BlendModes.ADD,
-      emitting: false
-    });
+    // In Phaser 3.80+, createEmitter was removed. Use addParticleEmitter instead.
+    try {
+      this.placementEmitter = (this.particleManager as any).addParticleEmitter({
+        speed: { min: 70, max: 140 },
+        lifespan: { min: 260, max: 420 },
+        scale: { start: 0.55, end: 0 },
+        alpha: { start: 0.85, end: 0 },
+        rotate: { min: -45, max: 45 },
+        gravityY: -160,
+        quantity: 18,
+        blendMode: Phaser.BlendModes.ADD,
+        emitting: false
+      });
+    } catch (e) {
+      // Fallback: if addParticleEmitter doesn't exist, create emitter using the old API
+      this.placementEmitter = (this.particleManager as any).createEmitter({
+        speed: { min: 70, max: 140 },
+        lifespan: { min: 260, max: 420 },
+        scale: { start: 0.55, end: 0 },
+        alpha: { start: 0.85, end: 0 },
+        rotate: { min: -45, max: 45 },
+        gravityY: -160,
+        quantity: 18,
+        blendMode: Phaser.BlendModes.ADD,
+        emitting: false
+      }) || this.particleManager;
+    }
 
     this.setupButtons();
     this.resetHud();
