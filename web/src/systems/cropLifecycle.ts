@@ -25,7 +25,8 @@ const EPSILON = 1e-6;
 export function tickCropLifecycle(
   homestead: HomesteadState,
   dt: number,
-  crops: CropsTable
+  crops: CropsTable,
+  waterEfficiencyMultiplier: number = 1.0
 ): CropLifecycleResult {
   const result: CropLifecycleResult = { matured: [], withered: [] };
 
@@ -75,7 +76,9 @@ export function tickCropLifecycle(
       continue;
     }
 
-    const moistureConsumption = Math.max(0, stage.moistureConsumptionPerSecond) * dt;
+    // Apply water efficiency bonus (higher multiplier = less consumption)
+    const baseConsumption = Math.max(0, stage.moistureConsumptionPerSecond) * dt;
+    const moistureConsumption = baseConsumption / waterEfficiencyMultiplier;
     if (moistureConsumption > 0) {
       tile.moisture = clamp01(tile.moisture - moistureConsumption);
     }

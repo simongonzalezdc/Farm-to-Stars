@@ -48,6 +48,7 @@ import {
   type SaveV5,
   type SaveV6,
   type SaveV7,
+  type SaveV8,
   type SeasonState,
   type WeatherEventsState,
   type WeatherState
@@ -70,14 +71,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function isSaveV7(candidate: unknown): candidate is SaveV7 {
+function isSaveV8(candidate: unknown): candidate is SaveV8 {
   if (!isRecord(candidate)) return false;
   return candidate.v === 1 && candidate.schemaVersion === CURRENT_SCHEMA_VERSION;
 }
 
-function isSaveV6(candidate: unknown): candidate is SaveV6 {
+function isSaveV7(candidate: unknown): candidate is SaveV7 {
   if (!isRecord(candidate)) return false;
   return candidate.v === 1 && candidate.schemaVersion === PREVIOUS_SCHEMA_VERSION;
+}
+
+function isSaveV6(candidate: unknown): candidate is SaveV6 {
+  if (!isRecord(candidate)) return false;
+  return candidate.v === 1 && candidate.schemaVersion === 6;
 }
 
 function isSaveV5(candidate: unknown): candidate is SaveV5 {
@@ -741,7 +747,7 @@ function normalizeWeatherEvents(candidate: unknown): WeatherEventsState {
   return { active, nextRollIn, serial };
 }
 
-function assembleLatestState(save: Partial<SaveV7> & SaveV3, resourceTable: ResourcesTable): SaveV7 {
+function assembleLatestState(save: Partial<SaveV8> & SaveV3, resourceTable: ResourcesTable): SaveV8 {
   const baseState = defaultState(resourceTable);
   const resources = sanitizeResources(save.resources ?? {}, resourceTable);
   const structures = normalizeStructures(save.structures, baseState.structures);
@@ -816,6 +822,8 @@ function assembleLatestState(save: Partial<SaveV7> & SaveV3, resourceTable: Reso
     v: 1,
     schemaVersion: CURRENT_SCHEMA_VERSION,
     seed: typeof save.seed === 'number' && Number.isFinite(save.seed) ? save.seed : 0,
+    civilization:
+      typeof save.civilization === 'string' && save.civilization ? save.civilization : 'teotihuacan',
     resources,
     resourceStorage,
     structures,
@@ -868,24 +876,29 @@ function migrateV0ToV3(save: SaveV0, resourceTable: ResourcesTable): SaveV3 {
 }
 
 export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameState | null {
-  if (isSaveV7(raw)) {
+  if (isSaveV8(raw)) {
     return assembleLatestState(raw, resourceTable);
   }
 
+  if (isSaveV7(raw)) {
+    // Migrate v7 to v8: add civilization field (defaults to 'teotihuacan')
+    return assembleLatestState(raw as unknown as Partial<SaveV8> & SaveV3, resourceTable);
+  }
+
   if (isSaveV6(raw)) {
-    return assembleLatestState(raw as unknown as Partial<SaveV7> & SaveV3, resourceTable);
+    return assembleLatestState(raw as unknown as Partial<SaveV8> & SaveV3, resourceTable);
   }
 
   if (isSaveV5(raw)) {
-    return assembleLatestState(raw as unknown as Partial<SaveV7> & SaveV3, resourceTable);
+    return assembleLatestState(raw as unknown as Partial<SaveV8> & SaveV3, resourceTable);
   }
 
   if (isSaveV4(raw)) {
-    return assembleLatestState(raw as unknown as Partial<SaveV7> & SaveV3, resourceTable);
+    return assembleLatestState(raw as unknown as Partial<SaveV8> & SaveV3, resourceTable);
   }
 
   if (isSaveV3(raw)) {
-    return assembleLatestState(raw as unknown as Partial<SaveV7> & SaveV3, resourceTable);
+    return assembleLatestState(raw as unknown as Partial<SaveV8> & SaveV3, resourceTable);
   }
 
   if (isSaveV2(raw)) {
@@ -902,15 +915,15 @@ export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameSt
       nextBuildId: typeof raw.nextBuildId === 'number' ? raw.nextBuildId : 1,
       nextBuildingInstanceId: 1
     };
-    return assembleLatestState(partial as unknown as Partial<SaveV7> & SaveV3, resourceTable);
+    return assembleLatestState(partial as unknown as Partial<SaveV8> & SaveV3, resourceTable);
   }
 
   if (isSaveV1(raw)) {
-    return assembleLatestState(migrateV1ToV3(raw, resourceTable) as unknown as Partial<SaveV7> & SaveV3, resourceTable);
+    return assembleLatestState(migrateV1ToV3(raw, resourceTable) as unknown as Partial<SaveV8> & SaveV3, resourceTable);
   }
 
   if (isSaveV0(raw)) {
-    return assembleLatestState(migrateV0ToV3(raw, resourceTable) as unknown as Partial<SaveV7> & SaveV3, resourceTable);
+    return assembleLatestState(migrateV0ToV3(raw, resourceTable) as unknown as Partial<SaveV8> & SaveV3, resourceTable);
   }
 
   return null;

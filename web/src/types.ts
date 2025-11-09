@@ -5,6 +5,7 @@ export type BuildingId = string;
 export type RecipeId = string;
 export type CropId = string;
 export type ToolId = string;
+export type CivilizationId = string;
 
 export interface ResourceDefinition {
   display: string;
@@ -82,6 +83,50 @@ export interface ToolDefinition {
 }
 
 export type ToolsTable = Record<ToolId, ToolDefinition>;
+
+export interface CivilizationBonuses {
+  solarEnergy?: number;
+  research?: number;
+  astronomy?: number;
+  waterEfficiency?: number;
+  resourceConservation?: number;
+  tradeEfficiency?: number;
+  resourceGathering?: number;
+  resourceEfficiency?: number;
+  buildingDurability?: number;
+  [key: string]: number | undefined;
+}
+
+export interface CivilizationAesthetics {
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  pattern: string;
+  architecture: string;
+}
+
+export interface CivilizationFestival {
+  name: string;
+  season: string;
+  description: string;
+  effect: string;
+  duration: number;
+}
+
+export interface CivilizationDefinition {
+  id: CivilizationId;
+  name: string;
+  displayName: string;
+  tagline: string;
+  description: string;
+  bonuses: CivilizationBonuses;
+  aesthetics: CivilizationAesthetics;
+  startingResources?: Partial<Resources>;
+  festivals: CivilizationFestival[];
+  loreSnippet: string;
+}
+
+export type CivilizationsTable = Record<CivilizationId, CivilizationDefinition>;
 
 export type ToolPerkId = string;
 
@@ -341,9 +386,9 @@ export type GameEvent =
   | { type: 'mail.delivered'; messageId: number; attachments: Partial<Record<ResourceId, number>> }
   | { type: 'tool.perk.unlocked'; perkId: ToolPerkId; toolId: ToolId; uses: number };
 
-export const CURRENT_SCHEMA_VERSION = 7;
+export const CURRENT_SCHEMA_VERSION = 8;
 
-export const PREVIOUS_SCHEMA_VERSION = 6;
+export const PREVIOUS_SCHEMA_VERSION = 7;
 
 export const LEGACY_SCHEMA_VERSION = 4;
 
@@ -400,11 +445,16 @@ export interface SaveV6 extends Omit<SaveV5, 'schemaVersion'> {
 }
 
 export interface SaveV7 extends Omit<SaveV6, 'schemaVersion' | 'homestead'> {
-  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  schemaVersion: typeof PREVIOUS_SCHEMA_VERSION;
   homestead: HomesteadState;
 }
 
-export type GameState = SaveV7;
+export interface SaveV8 extends Omit<SaveV7, 'schemaVersion'> {
+  schemaVersion: typeof CURRENT_SCHEMA_VERSION;
+  civilization: CivilizationId;
+}
+
+export type GameState = SaveV8;
 
 export const LEGACY_RESOURCE_IDS: ResourceId[] = ['wood', 'stone', 'food', 'coins'];
 
@@ -606,6 +656,7 @@ export function defaultState(resourceTable?: ResourcesTable): GameState {
     v: 1,
     schemaVersion: CURRENT_SCHEMA_VERSION,
     seed: 12345,
+    civilization: 'teotihuacan', // Default civilization (can be chosen at game start)
     resources,
     resourceStorage: createEmptyResourceStorage(resourceTable),
     structures: [

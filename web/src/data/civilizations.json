@@ -1,0 +1,152 @@
+{
+  "teotihuacan": {
+    "name": "Teotihuacan Empire",
+    "displayName": "Where Gods Are Born",
+    "tagline": "Masters of Solar Technology",
+    "description": "Through centuries of innovation with obsidian mirrors and solar furnaces, the Teotihuacan have become masters of light and energy. Their pyramid cities gleam with focused sunlight, powering advanced metallurgy and optics.",
+    "bonuses": {
+      "solarEnergy": 1.10,
+      "research": 1.05
+    },
+    "aesthetics": {
+      "primaryColor": "#E63946",
+      "secondaryColor": "#F1FAEE",
+      "accentColor": "#FFB703",
+      "pattern": "solar_rays",
+      "architecture": "pyramid"
+    },
+    "startingResources": {
+      "obsidian": 5
+    },
+    "festivals": [
+      {
+        "name": "Festival of the Fifth Sun",
+        "season": "spring",
+        "description": "Celebrate the sun's rebirth with offerings and astronomical observations",
+        "effect": "solarBonus",
+        "duration": 168
+      }
+    ],
+    "loreSnippet": "The Sun gave us life. We give the Sun back to the cosmos. Every photon we capture is a prayer."
+  },
+  "maya": {
+    "name": "Maya City-States League",
+    "displayName": "Keepers of Time",
+    "tagline": "Masters of Knowledge and Mathematics",
+    "description": "The Maya have perfected the art of observation and calculation. Their observatories track celestial movements with precision, while their libraries preserve centuries of accumulated wisdom in elegant glyphs.",
+    "bonuses": {
+      "research": 1.15,
+      "astronomy": 1.20
+    },
+    "aesthetics": {
+      "primaryColor": "#2A9D8F",
+      "secondaryColor": "#264653",
+      "accentColor": "#F4A261",
+      "pattern": "glyphs",
+      "architecture": "observatory"
+    },
+    "startingResources": {
+      "paper": 3
+    },
+    "festivals": [
+      {
+        "name": "K'atun Completion",
+        "season": "autumn",
+        "description": "Mark the completion of a 20-year calendar cycle with mathematical ceremonies",
+        "effect": "researchBonus",
+        "duration": 168
+      }
+    ],
+    "loreSnippet": "Time is not a river—it is an equation. Every moment is part of the Long Count, and every action ripples through the cycles."
+  },
+  "moche": {
+    "name": "Moche Kingdoms",
+    "displayName": "Lords of the Desert Shore",
+    "tagline": "Masters of Water and Efficiency",
+    "description": "In the driest desert on Earth, the Moche have learned to capture every drop. Fog catchers, sophisticated irrigation, and water conservation make life flourish where it shouldn't be possible.",
+    "bonuses": {
+      "waterEfficiency": 1.20,
+      "resourceConservation": 1.10
+    },
+    "aesthetics": {
+      "primaryColor": "#8B4513",
+      "secondaryColor": "#DEB887",
+      "accentColor": "#4682B4",
+      "pattern": "water_waves",
+      "architecture": "adobe"
+    },
+    "startingResources": {
+      "clay": 5
+    },
+    "festivals": [
+      {
+        "name": "Festival of Si",
+        "season": "winter",
+        "description": "Honor the sea goddess and the waters that give life to the desert",
+        "effect": "waterBonus",
+        "duration": 168
+      }
+    ],
+    "loreSnippet": "Water is life, and life is water. To master water is to understand our place in its cycle and flow with it rather than against it."
+  },
+  "hopewell": {
+    "name": "Hopewell Commonwealth",
+    "displayName": "Builders of the Earth",
+    "tagline": "Masters of Trade and Gift Economy",
+    "description": "The Hopewell have created vast trade networks spanning continents. Their earthwork monuments serve as gathering places where goods and knowledge flow freely through reciprocal gift-giving.",
+    "bonuses": {
+      "tradeEfficiency": 1.15,
+      "resourceGathering": 1.10
+    },
+    "aesthetics": {
+      "primaryColor": "#6B4423",
+      "secondaryColor": "#8B7355",
+      "accentColor": "#98D8C8",
+      "pattern": "earthworks",
+      "architecture": "mound"
+    },
+    "startingResources": {
+      "copper": 3
+    },
+    "festivals": [
+      {
+        "name": "Great Gathering",
+        "season": "summer",
+        "description": "Communities come together to exchange gifts and strengthen bonds",
+        "effect": "tradeBonus",
+        "duration": 168
+      }
+    ],
+    "loreSnippet": "What is given freely returns abundantly. The gift economy flows like water, enriching all it touches."
+  },
+  "puebloan": {
+    "name": "Puebloan Federation",
+    "displayName": "Dwellers of the Mesa",
+    "tagline": "Masters of Sustainability and Efficiency",
+    "description": "Living in harmony with their mesa environment for centuries, the Puebloan have perfected sustainable living. Every resource is used fully, nothing is wasted, and communities thrive through careful planning.",
+    "bonuses": {
+      "resourceEfficiency": 1.15,
+      "buildingDurability": 1.10
+    },
+    "aesthetics": {
+      "primaryColor": "#8B7355",
+      "secondaryColor": "#D2B48C",
+      "accentColor": "#CD853F",
+      "pattern": "geometric_mesa",
+      "architecture": "cliff_dwelling"
+    },
+    "startingResources": {
+      "stone": 5
+    },
+    "festivals": [
+      {
+        "name": "Harvest Dance",
+        "season": "autumn",
+        "description": "Celebrate the efficient harvest and give thanks for sustainable abundance",
+        "effect": "efficiencyBonus",
+        "duration": 168
+      }
+    ],
+    "loreSnippet": "Waste nothing. Use everything. Build to last. The mesa teaches us that survival comes from harmony, not excess."
+  }
+}

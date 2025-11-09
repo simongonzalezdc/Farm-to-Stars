@@ -36,12 +36,157 @@
 }
 ```
 
-## 4) Saves
+## 4) Civilizations — `/web/src/data/civilizations.json`
+
+Civilization definitions provide cultural theming, gameplay bonuses, and narrative flavor for the homestead phase.
+
+```json
+{
+  "teotihuacan": {
+    "name": "Teotihuacan Empire",
+    "displayName": "Where Gods Are Born",
+    "tagline": "Masters of Solar Technology",
+    "description": "Through centuries of innovation...",
+    "bonuses": {
+      "solarEnergy": 1.10,
+      "research": 1.05
+    },
+    "aesthetics": {
+      "primaryColor": "#E63946",
+      "secondaryColor": "#F1FAEE",
+      "accentColor": "#FFB703",
+      "pattern": "solar_rays",
+      "architecture": "pyramid"
+    },
+    "startingResources": {
+      "obsidian": 5
+    },
+    "festivals": [
+      {
+        "name": "Sun Ceremony",
+        "season": "spring",
+        "description": "Honor the dawn of new growth",
+        "bonuses": {
+          "solarEnergy": 1.25
+        }
+      }
+    ],
+    "loreSnippet": "The Sun gave us life..."
+  }
+}
+```
+
+### Schema Breakdown
+
+**Core Identity:**
+- `name` (string) — Full civilization name
+- `displayName` (string) — Short tagline shown in UI
+- `tagline` (string) — One-line description for selection screen
+- `description` (string) — Full description of civilization's culture and history
+
+**Gameplay Bonuses:**
+- `bonuses` (object) — Key-value pairs of bonus types and multipliers
+  - Multipliers are expressed as floats where `1.0` = no bonus, `1.15` = +15%
+  - Common bonus types:
+    - `solarEnergy` — Solar panel production multiplier
+    - `research` — Research speed multiplier
+    - `waterEfficiency` — Reduces crop water consumption (applied as divisor)
+    - `tradeEfficiency` — Trade value multiplier
+    - `resourceGathering` — Resource harvest multiplier
+    - `resourceEfficiency` — Resource consumption reduction
+    - `buildingDurability` — Building decay rate reduction
+
+**Visual Theming:**
+- `aesthetics` (object) — Cultural visual identity
+  - `primaryColor` (hex) — Main civilization color for HUD theming
+  - `secondaryColor` (hex) — Secondary color for gradients
+  - `accentColor` (hex) — Accent color for highlights
+  - `pattern` (string) — Visual pattern identifier (e.g., "solar_rays", "glyphs")
+  - `architecture` (string) — Architecture style name (e.g., "pyramid", "step_pyramid")
+
+**Starting Conditions:**
+- `startingResources` (object, optional) — Extra resources granted on new game
+  - Key-value pairs of `resourceId: amount`
+
+**Seasonal Events:**
+- `festivals` (array) — Cultural celebrations that occur during specific seasons
+  - `name` (string) — Festival name
+  - `season` (SeasonId) — When the festival occurs
+  - `description` (string) — Festival description
+  - `bonuses` (object) — Temporary bonuses active during the festival
+
+**Narrative Flavor:**
+- `loreSnippet` (string) — Short quote or flavor text representing civilization philosophy
+
+### Validation Rules
+
+The data loader (`web/src/data/index.ts`) validates:
+1. All required fields are present and non-empty strings
+2. Bonus multipliers are positive numbers
+3. Colors are valid hex codes (3, 4, 6, or 8 digits with # prefix)
+4. All aesthetic fields are non-empty strings
+5. Starting resources reference valid resource IDs
+6. Festival seasons reference valid season IDs
+
+### Save Schema Integration
+
+Civilization choice is stored in the save file (schema v8+):
+
+```typescript
+export interface SaveV8 extends SaveV7 {
+  civilization: CivilizationId; // e.g., "teotihuacan", "maya"
+}
+```
+
+Migration from v7 to v8 automatically assigns `"teotihuacan"` as the default civilization for existing saves.
+
+### Usage in Game Systems
+
+**Bonus Application:**
+```typescript
+// web/src/systems/civilizationManager.ts
+const civManager = createCivilizationManager(
+  gameState.civilization,
+  dataTables.civilizations
+);
+
+// Apply water efficiency bonus (reduces consumption)
+const waterUsage = baseWaterUsage / civManager.getBonusMultiplier('waterEfficiency');
+
+// Apply research bonus (increases speed)
+const researchSpeed = baseResearchSpeed * civManager.applyBonus('research', 1.0);
+```
+
+**HUD Theming:**
+```typescript
+// web/src/ui/hudTheme.ts
+const civDef = civilizations[gameState.civilization];
+applyCivilizationTheme(civDef.aesthetics);
+// Sets CSS custom properties: --civ-primary, --civ-secondary, --civ-accent
+```
+
+### Currently Implemented Civilizations
+
+**Homestead Phase (v1.0):**
+1. **Teotihuacan Empire** — Solar technology specialists
+2. **Maya City-States** — Knowledge and astronomy masters
+3. **Moche Kingdoms** — Water efficiency experts
+4. **Hopewell Commonwealth** — Trade and economy focus
+5. **Puebloan Federation** — Sustainability leaders
+
+**Future Expansion (DLC):**
+- See `Docs/future-expansions.md` for 5 additional civilizations planned for post-launch
+
+## 5) Saves
+
+Current schema version: **v8**
+
 ```ts
 // /web/src/types.ts (excerpt)
-export interface SaveV6 {
+export interface SaveV8 {
   v: 1;
-  schemaVersion: 6;
+  schemaVersion: 8;
+  civilization: CivilizationId; // Added in v8
   seed: number;
   resources: Resources;
   resourceStorage: ResourceStorageState;
@@ -66,8 +211,23 @@ export interface SaveV6 {
   jobQueue: BackgroundJobQueueState;
 }
 ```
-- Migrations promote legacy saves (v0–v5) into the v6 layout, populating default livestock herds, mailboxes, and weather event
-  schedulers.
+
+### Schema Version History
+
+- **v8** (current) — Added `civilization` field for cultural theming and gameplay bonuses
+- **v7** — Added `jobQueue` for background task processing
+- **v6** — Added livestock herds, mail system, and weather events
+- **v0–v5** — Legacy schemas (see `web/src/migrations.ts` for full history)
+
+### Migration System
+
+The migration system (`web/src/migrations.ts`) automatically upgrades old saves to the current schema:
+
+1. **v7 → v8**: Adds `civilization: "teotihuacan"` as default
+2. **v6 → v7**: Adds empty `jobQueue` state
+3. **v0–v6**: Progressively adds livestock, mail, weather, and production systems
+
+All migrations are non-destructive and preserve existing player progress.
 
 ## Homestead → Township Export Payload (Wave Delta)
 

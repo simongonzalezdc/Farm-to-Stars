@@ -1,0 +1,639 @@
+{
+  "$schema": "../../src/types.township.ts#BuildingsTable",
+  "version": 1,
+  "buildings": {
+    "residential_house": {
+      "id": "residential_house",
+      "name": "Small House",
+      "description": "A modest dwelling for a small family. Low density housing.",
+      "type": "residential",
+      "tier": 1,
+      "cost": {
+        "wood": 50,
+        "stone": 30,
+        "coins": 100
+      },
+      "buildTime": 30,
+      "capacity": 4,
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "effects": {
+        "happiness": 2
+      },
+      "maintenance": {
+        "cost": 5,
+        "interval": 120
+      }
+    },
+    "residential_apartment": {
+      "id": "residential_apartment",
+      "name": "Apartment Building",
+      "description": "Multi-story housing for growing populations. Medium density.",
+      "type": "residential",
+      "tier": 2,
+      "cost": {
+        "wood": 150,
+        "stone": 100,
+        "coins": 500
+      },
+      "buildTime": 60,
+      "capacity": 12,
+      "size": {
+        "width": 3,
+        "height": 3
+      },
+      "effects": {
+        "happiness": 3,
+        "environment": -2
+      },
+      "maintenance": {
+        "cost": 15,
+        "interval": 120
+      },
+      "requirements": {
+        "population": 250
+      }
+    },
+    "residential_condo": {
+      "id": "residential_condo",
+      "name": "Luxury Condominium",
+      "description": "High-rise housing for prosperous citizens. High density.",
+      "type": "residential",
+      "tier": 3,
+      "cost": {
+        "wood": 300,
+        "stone": 250,
+        "coins": 1500
+      },
+      "buildTime": 120,
+      "capacity": 30,
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "effects": {
+        "happiness": 8,
+        "environment": -5
+      },
+      "maintenance": {
+        "cost": 40,
+        "interval": 120
+      },
+      "requirements": {
+        "population": 1000
+      }
+    },
+    "commercial_shop": {
+      "id": "commercial_shop",
+      "name": "General Store",
+      "description": "A small shop providing basic goods and services.",
+      "type": "commercial",
+      "tier": 1,
+      "cost": {
+        "wood": 40,
+        "stone": 20,
+        "coins": 150
+      },
+      "buildTime": 25,
+      "capacity": 3,
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "effects": {
+        "happiness": 3
+      },
+      "provides": ["shopping"],
+      "serviceRadius": 8,
+      "maintenance": {
+        "cost": 8,
+        "interval": 100
+      }
+    },
+    "commercial_market": {
+      "id": "commercial_market",
+      "name": "Market Plaza",
+      "description": "A bustling marketplace with diverse vendors and goods.",
+      "type": "commercial",
+      "tier": 2,
+      "cost": {
+        "wood": 120,
+        "stone": 80,
+        "coins": 600
+      },
+      "buildTime": 50,
+      "capacity": 10,
+      "size": {
+        "width": 4,
+        "height": 3
+      },
+      "effects": {
+        "happiness": 8
+      },
+      "provides": ["shopping"],
+      "serviceRadius": 12,
+      "maintenance": {
+        "cost": 20,
+        "interval": 100
+      },
+      "requirements": {
+        "population": 300
+      }
+    },
+    "commercial_office": {
+      "id": "commercial_office",
+      "name": "Office Complex",
+      "description": "Modern office space for administrative and professional work.",
+      "type": "commercial",
+      "tier": 3,
+      "cost": {
+        "wood": 250,
+        "stone": 200,
+        "coins": 1800
+      },
+      "buildTime": 100,
+      "capacity": 25,
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "effects": {
+        "happiness": 5
+      },
+      "maintenance": {
+        "cost": 50,
+        "interval": 100
+      },
+      "requirements": {
+        "population": 1500
+      }
+    },
+    "industrial_workshop": {
+      "id": "industrial_workshop",
+      "name": "Artisan Workshop",
+      "description": "Small-scale production facility for crafted goods.",
+      "type": "industrial",
+      "tier": 1,
+      "cost": {
+        "wood": 60,
+        "stone": 40,
+        "coins": 200
+      },
+      "buildTime": 35,
+      "capacity": 5,
+      "size": {
+        "width": 3,
+        "height": 2
+      },
+      "effects": {
+        "environment": -5
+      },
+      "maintenance": {
+        "cost": 10,
+        "interval": 90
+      }
+    },
+    "industrial_factory": {
+      "id": "industrial_factory",
+      "name": "Manufacturing Plant",
+      "description": "Large-scale production facility for industrial goods.",
+      "type": "industrial",
+      "tier": 2,
+      "cost": {
+        "wood": 200,
+        "stone": 150,
+        "coins": 800
+      },
+      "buildTime": 80,
+      "capacity": 15,
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "effects": {
+        "environment": -15
+      },
+      "maintenance": {
+        "cost": 30,
+        "interval": 90
+      },
+      "requirements": {
+        "population": 400
+      }
+    },
+    "industrial_complex": {
+      "id": "industrial_complex",
+      "name": "Industrial Park",
+      "description": "Massive industrial complex with advanced production capabilities.",
+      "type": "industrial",
+      "tier": 3,
+      "cost": {
+        "wood": 400,
+        "stone": 350,
+        "coins": 2500
+      },
+      "buildTime": 150,
+      "capacity": 40,
+      "size": {
+        "width": 5,
+        "height": 5
+      },
+      "effects": {
+        "environment": -30
+      },
+      "maintenance": {
+        "cost": 80,
+        "interval": 90
+      },
+      "requirements": {
+        "population": 2000
+      }
+    },
+    "service_power_plant": {
+      "id": "service_power_plant",
+      "name": "Power Plant",
+      "description": "Provides electricity to surrounding zones.",
+      "type": "service",
+      "tier": 1,
+      "cost": {
+        "stone": 200,
+        "coins": 1000
+      },
+      "buildTime": 60,
+      "capacity": 0,
+      "size": {
+        "width": 3,
+        "height": 3
+      },
+      "effects": {
+        "environment": -10
+      },
+      "provides": ["power"],
+      "serviceRadius": 15,
+      "maintenance": {
+        "cost": 50,
+        "interval": 100
+      }
+    },
+    "service_solar_array": {
+      "id": "service_solar_array",
+      "name": "Solar Power Array",
+      "description": "Clean energy from the sun. Teotihuacan specialty.",
+      "type": "service",
+      "tier": 2,
+      "cost": {
+        "stone": 300,
+        "coins": 1800
+      },
+      "buildTime": 80,
+      "capacity": 0,
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "effects": {
+        "happiness": 5,
+        "environment": 5
+      },
+      "provides": ["power"],
+      "serviceRadius": 20,
+      "maintenance": {
+        "cost": 30,
+        "interval": 120
+      },
+      "requirements": {
+        "population": 500,
+        "civilization": ["teotihuacan"]
+      }
+    },
+    "service_water_tower": {
+      "id": "service_water_tower",
+      "name": "Water Tower",
+      "description": "Stores and distributes clean water to nearby zones.",
+      "type": "service",
+      "tier": 1,
+      "cost": {
+        "wood": 100,
+        "stone": 150,
+        "coins": 800
+      },
+      "buildTime": 45,
+      "capacity": 0,
+      "size": {
+        "width": 2,
+        "height": 2
+      },
+      "effects": {},
+      "provides": ["water"],
+      "serviceRadius": 12,
+      "maintenance": {
+        "cost": 30,
+        "interval": 80
+      }
+    },
+    "service_water_treatment": {
+      "id": "service_water_treatment",
+      "name": "Water Treatment Facility",
+      "description": "Advanced water purification and distribution system.",
+      "type": "service",
+      "tier": 2,
+      "cost": {
+        "wood": 150,
+        "stone": 250,
+        "coins": 1500
+      },
+      "buildTime": 70,
+      "capacity": 0,
+      "size": {
+        "width": 3,
+        "height": 3
+      },
+      "effects": {
+        "happiness": 3
+      },
+      "provides": ["water"],
+      "serviceRadius": 18,
+      "maintenance": {
+        "cost": 45,
+        "interval": 80
+      },
+      "requirements": {
+        "population": 600
+      }
+    },
+    "service_aqueduct": {
+      "id": "service_aqueduct",
+      "name": "Grand Aqueduct",
+      "description": "Monumental water delivery system. Moche specialty.",
+      "type": "service",
+      "tier": 3,
+      "cost": {
+        "stone": 400,
+        "coins": 2500
+      },
+      "buildTime": 120,
+      "capacity": 0,
+      "size": {
+        "width": 5,
+        "height": 2
+      },
+      "effects": {
+        "happiness": 10
+      },
+      "provides": ["water"],
+      "serviceRadius": 25,
+      "maintenance": {
+        "cost": 40,
+        "interval": 100
+      },
+      "requirements": {
+        "population": 1200,
+        "civilization": ["moche"]
+      }
+    },
+    "service_police": {
+      "id": "service_police",
+      "name": "Police Station",
+      "description": "Maintains law and order in surrounding areas.",
+      "type": "service",
+      "tier": 1,
+      "cost": {
+        "wood": 80,
+        "stone": 100,
+        "coins": 600
+      },
+      "buildTime": 50,
+      "capacity": 0,
+      "size": {
+        "width": 3,
+        "height": 2
+      },
+      "effects": {
+        "happiness": 5
+      },
+      "provides": ["safety"],
+      "serviceRadius": 10,
+      "maintenance": {
+        "cost": 40,
+        "interval": 80
+      },
+      "requirements": {
+        "population": 200
+      }
+    },
+    "service_fire": {
+      "id": "service_fire",
+      "name": "Fire Station",
+      "description": "Emergency response for fires and disasters.",
+      "type": "service",
+      "tier": 1,
+      "cost": {
+        "wood": 70,
+        "stone": 90,
+        "coins": 550
+      },
+      "buildTime": 45,
+      "capacity": 0,
+      "size": {
+        "width": 3,
+        "height": 2
+      },
+      "effects": {
+        "happiness": 4
+      },
+      "provides": ["safety"],
+      "serviceRadius": 12,
+      "maintenance": {
+        "cost": 35,
+        "interval": 80
+      },
+      "requirements": {
+        "population": 200
+      }
+    },
+    "service_school": {
+      "id": "service_school",
+      "name": "School",
+      "description": "Basic education for young citizens.",
+      "type": "service",
+      "tier": 1,
+      "cost": {
+        "wood": 120,
+        "stone": 80,
+        "coins": 700
+      },
+      "buildTime": 60,
+      "capacity": 0,
+      "size": {
+        "width": 3,
+        "height": 3
+      },
+      "effects": {
+        "happiness": 8
+      },
+      "provides": ["education"],
+      "serviceRadius": 10,
+      "maintenance": {
+        "cost": 25,
+        "interval": 100
+      },
+      "requirements": {
+        "population": 300
+      }
+    },
+    "service_observatory": {
+      "id": "service_observatory",
+      "name": "Observatory",
+      "description": "Advanced learning center studying the cosmos. Maya specialty.",
+      "type": "service",
+      "tier": 2,
+      "cost": {
+        "stone": 250,
+        "coins": 1500
+      },
+      "buildTime": 90,
+      "capacity": 0,
+      "size": {
+        "width": 3,
+        "height": 3
+      },
+      "effects": {
+        "happiness": 15
+      },
+      "provides": ["education"],
+      "serviceRadius": 15,
+      "maintenance": {
+        "cost": 35,
+        "interval": 120
+      },
+      "requirements": {
+        "population": 800,
+        "civilization": ["maya"]
+      }
+    },
+    "service_hospital": {
+      "id": "service_hospital",
+      "name": "Medical Center",
+      "description": "Healthcare facility for treating the sick and injured.",
+      "type": "service",
+      "tier": 2,
+      "cost": {
+        "wood": 150,
+        "stone": 150,
+        "coins": 1200
+      },
+      "buildTime": 70,
+      "capacity": 0,
+      "size": {
+        "width": 4,
+        "height": 3
+      },
+      "effects": {
+        "happiness": 10
+      },
+      "provides": ["health"],
+      "serviceRadius": 12,
+      "maintenance": {
+        "cost": 60,
+        "interval": 90
+      },
+      "requirements": {
+        "population": 500
+      }
+    },
+    "service_park": {
+      "id": "service_park",
+      "name": "Community Park",
+      "description": "Green space for recreation and relaxation.",
+      "type": "service",
+      "tier": 1,
+      "cost": {
+        "wood": 50,
+        "coins": 300
+      },
+      "buildTime": 30,
+      "capacity": 0,
+      "size": {
+        "width": 3,
+        "height": 3
+      },
+      "effects": {
+        "happiness": 6,
+        "environment": 10
+      },
+      "provides": ["recreation"],
+      "serviceRadius": 8,
+      "maintenance": {
+        "cost": 10,
+        "interval": 100
+      },
+      "requirements": {
+        "population": 150
+      }
+    },
+    "service_plaza": {
+      "id": "service_plaza",
+      "name": "Central Plaza",
+      "description": "Grand public gathering space with sustainable design. Puebloan specialty.",
+      "type": "service",
+      "tier": 2,
+      "cost": {
+        "stone": 200,
+        "coins": 1000
+      },
+      "buildTime": 60,
+      "capacity": 0,
+      "size": {
+        "width": 4,
+        "height": 4
+      },
+      "effects": {
+        "happiness": 15,
+        "environment": 20
+      },
+      "provides": ["recreation"],
+      "serviceRadius": 12,
+      "maintenance": {
+        "cost": 15,
+        "interval": 120
+      },
+      "requirements": {
+        "population": 700,
+        "civilization": ["puebloan"]
+      }
+    },
+    "service_trading_post": {
+      "id": "service_trading_post",
+      "name": "Trading Post",
+      "description": "Hub for commerce and exchange. Hopewell specialty.",
+      "type": "service",
+      "tier": 2,
+      "cost": {
+        "wood": 150,
+        "stone": 100,
+        "coins": 1200
+      },
+      "buildTime": 65,
+      "capacity": 0,
+      "size": {
+        "width": 4,
+        "height": 3
+      },
+      "effects": {
+        "happiness": 12
+      },
+      "provides": ["shopping"],
+      "serviceRadius": 15,
+      "maintenance": {
+        "cost": 25,
+        "interval": 100
+      },
+      "requirements": {
+        "population": 600,
+        "civilization": ["hopewell"]
+      }
+    }
+  }
+}
