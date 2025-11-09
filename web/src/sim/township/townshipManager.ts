@@ -17,7 +17,10 @@ import { TOWNSHIP_CONFIG } from '../../types.township';
 
 import { tickZoneGrowth } from './systems/zoneGrowth';
 import { tickPopulation } from './systems/population';
-import { calculateHappiness, calculateDemand, calculateCoverage } from './systems/metrics';
+import { calculateHappiness } from './systems/metrics';
+import { ZoneMaturationSystem } from './systems/zoneMaturation';
+import { UtilitiesPropagationSystem, type UtilityNetwork } from './systems/utilitiesPropagation';
+import { DemandCalculationSystem } from './systems/demandCalculation';
 
 /**
  * Township Manager
@@ -29,6 +32,12 @@ export class TownshipManager {
   private civilization: TownshipCivilizationDefinition;
 
   private eventHandlers: TownshipEventHandler[] = [];
+
+  // S4 Systems
+  private zoneMaturation: ZoneMaturationSystem;
+  private utilitiesPropagation: UtilitiesPropagationSystem;
+  private demandCalculation: DemandCalculationSystem;
+  private utilityNetwork: UtilityNetwork | null = null;
 
   // Performance optimization: cache dirty flags
   private dirty = {
@@ -47,6 +56,11 @@ export class TownshipManager {
     this.state = state;
     this.buildings = buildings;
     this.civilization = civilization;
+
+    // Initialize S4 systems
+    this.zoneMaturation = new ZoneMaturationSystem();
+    this.utilitiesPropagation = new UtilitiesPropagationSystem();
+    this.demandCalculation = new DemandCalculationSystem();
   }
 
   /**
@@ -70,13 +84,26 @@ export class TownshipManager {
   }
 
   /**
-   * Zone growth system
+   * Zone growth system (S4 enhanced with auto-spawning)
    */
   private tickZones(dt: number): void {
     const events = tickZoneGrowth(this.state, this.civilization, this.buildings, dt);
 
-    // Mark metrics as dirty if zones changed
-    if (events.length > 0) {
+    // S4: Zone maturation - automatic building spawning
+    const buildingCountBefore = this.state.buildings.length;
+    this.zoneMaturation.tick(this.state, this.buildings, dt);
+    const buildingCountAfter = this.state.buildings.length;
+
+    // Emit event if buildings were spawned
+    if (buildingCountAfter > buildingCountBefore) {
+      this.emit({
+        type: 'building_spawned',
+        count: buildingCountAfter - buildingCountBefore
+      });
+    }
+
+    // Mark metrics as dirty if zones changed or buildings spawned
+    if (events.length > 0 || buildingCountAfter > buildingCountBefore) {
       this.markDirty('demand');
       this.markDirty('coverage');
 
@@ -102,13 +129,40 @@ export class TownshipManager {
   }
 
   /**
-   * Building maintenance and operations
+   * Building construction and maintenance (S4 enhanced)
    */
   private tickBuildings(dt: number): void {
     for (const building of this.state.buildings) {
+      const def = this.buildings[building.definitionId];
+      if (!def) continue;
+
+      // S4: Handle building construction
+      if (building.constructionProgress < 100) {
+        building.constructionTimeRemaining = Math.max(0, building.constructionTimeRemaining - dt);
+
+        if (building.constructionTimeRemaining <= 0) {
+          // Construction complete
+          building.constructionProgress = 100;
+          building.operational = true;
+          this.markDirty('coverage');
+
+          this.emit({
+            type: 'building_completed',
+            buildingId: building.id,
+            definitionId: building.definitionId
+          });
+        } else {
+          // Update construction progress
+          const totalTime = def.buildTime;
+          building.constructionProgress = Math.min(100,
+            ((totalTime - building.constructionTimeRemaining) / totalTime) * 100
+          );
+        }
+        continue; // Skip maintenance for buildings under construction
+      }
+
       // Check if maintenance is due
       const timeSinceMaintenance = this.state.timestamp - building.maintenance.lastMaintained;
-      const def = this.buildings[building.definitionId];
 
       if (timeSinceMaintenance >= def.maintenance.interval) {
         // Deduct maintenance cost
@@ -128,7 +182,7 @@ export class TownshipManager {
   }
 
   /**
-   * Update metrics (lazy evaluation)
+   * Update metrics (lazy evaluation) - S4 enhanced
    */
   private updateMetrics(): void {
     // Recalculate only dirty subsystems
@@ -148,15 +202,18 @@ export class TownshipManager {
       }
     }
 
+    // S4: Dynamic demand calculation
     if (this.dirty.demand) {
-      metrics.demand = calculateDemand(this.state);
+      metrics.demand = this.demandCalculation.calculateDemand(this.state, this.buildings);
       this.dirty.demand = false;
 
       this.emit({ type: 'demand_shift', demand: metrics.demand });
     }
 
+    // S4: Utilities propagation for coverage
     if (this.dirty.coverage) {
-      metrics.coverage = calculateCoverage(this.state, this.buildings, this.civilization);
+      this.utilityNetwork = this.utilitiesPropagation.calculateCoverage(this.state, this.buildings);
+      metrics.coverage = this.utilitiesPropagation.calculateMetrics(this.state, this.utilityNetwork);
       this.dirty.coverage = false;
 
       this.emit({ type: 'service_coverage_updated', coverage: metrics.coverage });
@@ -171,6 +228,13 @@ export class TownshipManager {
     };
 
     this.state.metrics = metrics;
+  }
+
+  /**
+   * Get utility network (for heatmap visualization)
+   */
+  getUtilityNetwork(): UtilityNetwork | null {
+    return this.utilityNetwork;
   }
 
   /**
