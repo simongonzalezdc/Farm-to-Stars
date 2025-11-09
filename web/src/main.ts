@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import '../styles/build.scss';
 import '../styles/hud.scss';
+import '../styles/civilization.scss';
 import { CalendarHud } from './hud/calendar/Calendar';
 import { QuestLog, type QuestEntry, type QuestStatus } from './hud/quests/QuestLog';
 import { StaminaTipsOverlay } from './hud/stamina/Tips';
