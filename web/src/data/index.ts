@@ -2,6 +2,8 @@ import type {
   BuildingsTable,
   BuildingDefinition,
   BuildingEffects,
+  CivilizationDefinition,
+  CivilizationsTable,
   CropDefinition,
   CropsTable,
   LivestockDefinition,
@@ -21,6 +23,7 @@ export interface DataTables {
   crops: CropsTable;
   tools: ToolsTable;
   livestock: LivestockTable;
+  civilizations: CivilizationsTable;
 }
 
 let cachedTables: DataTables | null = null;
@@ -31,20 +34,23 @@ const RECIPE_URL = new URL('./recipes.json', import.meta.url);
 const CROPS_URL = new URL('./crops.json', import.meta.url);
 const TOOLS_URL = new URL('./tools.json', import.meta.url);
 const LIVESTOCK_URL = new URL('./livestock.json', import.meta.url);
+const CIVILIZATIONS_URL = new URL('./civilizations.json', import.meta.url);
 
 export async function loadDataTables(): Promise<DataTables> {
   if (cachedTables) {
     return cachedTables;
   }
 
-  const [resourcesRaw, buildingsRaw, recipesRaw, cropsRaw, toolsRaw, livestockRaw] = await Promise.all([
-    fetchJson(RESOURCE_URL),
-    fetchJson(BUILDING_URL),
-    fetchJson(RECIPE_URL),
-    fetchJson(CROPS_URL),
-    fetchJson(TOOLS_URL),
-    fetchJson(LIVESTOCK_URL)
-  ]);
+  const [resourcesRaw, buildingsRaw, recipesRaw, cropsRaw, toolsRaw, livestockRaw, civilizationsRaw] =
+    await Promise.all([
+      fetchJson(RESOURCE_URL),
+      fetchJson(BUILDING_URL),
+      fetchJson(RECIPE_URL),
+      fetchJson(CROPS_URL),
+      fetchJson(TOOLS_URL),
+      fetchJson(LIVESTOCK_URL),
+      fetchJson(CIVILIZATIONS_URL)
+    ]);
 
   const resources = validateResourcesTable(resourcesRaw);
   const buildings = validateBuildingsTable(buildingsRaw);
@@ -52,8 +58,9 @@ export async function loadDataTables(): Promise<DataTables> {
   const crops = validateCropsTable(cropsRaw);
   const tools = validateToolsTable(toolsRaw);
   const livestock = validateLivestockTable(livestockRaw);
+  const civilizations = validateCivilizationsTable(civilizationsRaw);
 
-  cachedTables = { resources, buildings, recipes, crops, tools, livestock };
+  cachedTables = { resources, buildings, recipes, crops, tools, livestock, civilizations };
   return cachedTables;
 }
 
@@ -417,4 +424,135 @@ function normalizeOutputCaps(recipeId: string, raw: unknown): RecipeDefinition['
     caps[resource as string] = value;
   }
   return caps;
+}
+
+function validateCivilizationsTable(raw: unknown): CivilizationsTable {
+  if (!isRecord(raw)) {
+    throw new Error('civilizations.json must be an object map.');
+  }
+
+  const table: Record<string, CivilizationDefinition> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!isRecord(value)) {
+      throw new Error(`Civilization "${key}" must be an object.`);
+    }
+
+    const name = value.name;
+    const displayName = value.displayName;
+    const tagline = value.tagline;
+    const description = value.description;
+    const bonuses = value.bonuses;
+    const aesthetics = value.aesthetics;
+    const startingResources = value.startingResources;
+    const festivals = value.festivals;
+    const loreSnippet = value.loreSnippet;
+
+    if (
+      !isString(name) ||
+      !isString(displayName) ||
+      !isString(tagline) ||
+      !isString(description) ||
+      !isString(loreSnippet)
+    ) {
+      throw new Error(`Civilization "${key}" is missing required string fields.`);
+    }
+
+    if (!isRecord(bonuses)) {
+      throw new Error(`Civilization "${key}" bonuses must be an object.`);
+    }
+
+    if (!isRecord(aesthetics)) {
+      throw new Error(`Civilization "${key}" aesthetics must be an object.`);
+    }
+
+    if (!Array.isArray(festivals)) {
+      throw new Error(`Civilization "${key}" festivals must be an array.`);
+    }
+
+    // Validate bonuses
+    const normalizedBonuses: CivilizationDefinition['bonuses'] = {};
+    for (const [bonusKey, bonusValue] of Object.entries(bonuses)) {
+      if (!isNumber(bonusValue)) {
+        throw new Error(`Civilization "${key}" bonus "${bonusKey}" must be numeric.`);
+      }
+      normalizedBonuses[bonusKey] = bonusValue;
+    }
+
+    // Validate aesthetics
+    const aestheticsRecord = aesthetics as Record<string, unknown>;
+    if (
+      !isString(aestheticsRecord.primaryColor) ||
+      !isString(aestheticsRecord.secondaryColor) ||
+      !isString(aestheticsRecord.accentColor) ||
+      !isString(aestheticsRecord.pattern) ||
+      !isString(aestheticsRecord.architecture)
+    ) {
+      throw new Error(`Civilization "${key}" aesthetics is missing required fields.`);
+    }
+
+    const normalizedAesthetics: CivilizationDefinition['aesthetics'] = {
+      primaryColor: aestheticsRecord.primaryColor,
+      secondaryColor: aestheticsRecord.secondaryColor,
+      accentColor: aestheticsRecord.accentColor,
+      pattern: aestheticsRecord.pattern,
+      architecture: aestheticsRecord.architecture
+    };
+
+    // Validate starting resources (optional)
+    let normalizedStartingResources: CivilizationDefinition['startingResources'];
+    if (startingResources !== undefined) {
+      if (!isRecord(startingResources)) {
+        throw new Error(`Civilization "${key}" startingResources must be an object.`);
+      }
+      const resources: Record<string, number> = {};
+      for (const [resource, amount] of Object.entries(startingResources)) {
+        if (!isNumber(amount)) {
+          throw new Error(`Civilization "${key}" starting resource "${resource}" must be numeric.`);
+        }
+        resources[resource] = amount;
+      }
+      normalizedStartingResources = resources;
+    }
+
+    // Validate festivals
+    const normalizedFestivals: CivilizationDefinition['festivals'] = festivals.map(
+      (festival, index) => {
+        if (!isRecord(festival)) {
+          throw new Error(`Civilization "${key}" festival #${index} must be an object.`);
+        }
+        const festivalRecord = festival as Record<string, unknown>;
+        if (
+          !isString(festivalRecord.name) ||
+          !isString(festivalRecord.season) ||
+          !isString(festivalRecord.description) ||
+          !isString(festivalRecord.effect) ||
+          !isNumber(festivalRecord.duration)
+        ) {
+          throw new Error(`Civilization "${key}" festival #${index} is missing required fields.`);
+        }
+        return {
+          name: festivalRecord.name,
+          season: festivalRecord.season,
+          description: festivalRecord.description,
+          effect: festivalRecord.effect,
+          duration: festivalRecord.duration
+        };
+      }
+    );
+
+    table[key] = {
+      id: key,
+      name,
+      displayName,
+      tagline,
+      description,
+      bonuses: normalizedBonuses,
+      aesthetics: normalizedAesthetics,
+      ...(normalizedStartingResources ? { startingResources: normalizedStartingResources } : {}),
+      festivals: normalizedFestivals,
+      loreSnippet
+    };
+  }
+
+  return table;
 }

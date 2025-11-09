@@ -5,6 +5,7 @@ export type BuildingId = string;
 export type RecipeId = string;
 export type CropId = string;
 export type ToolId = string;
+export type CivilizationId = string;
 
 export interface ResourceDefinition {
   display: string;
@@ -82,6 +83,50 @@ export interface ToolDefinition {
 }
 
 export type ToolsTable = Record<ToolId, ToolDefinition>;
+
+export interface CivilizationBonuses {
+  solarEnergy?: number;
+  research?: number;
+  astronomy?: number;
+  waterEfficiency?: number;
+  resourceConservation?: number;
+  tradeEfficiency?: number;
+  resourceGathering?: number;
+  resourceEfficiency?: number;
+  buildingDurability?: number;
+  [key: string]: number | undefined;
+}
+
+export interface CivilizationAesthetics {
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  pattern: string;
+  architecture: string;
+}
+
+export interface CivilizationFestival {
+  name: string;
+  season: string;
+  description: string;
+  effect: string;
+  duration: number;
+}
+
+export interface CivilizationDefinition {
+  id: CivilizationId;
+  name: string;
+  displayName: string;
+  tagline: string;
+  description: string;
+  bonuses: CivilizationBonuses;
+  aesthetics: CivilizationAesthetics;
+  startingResources?: Partial<Resources>;
+  festivals: CivilizationFestival[];
+  loreSnippet: string;
+}
+
+export type CivilizationsTable = Record<CivilizationId, CivilizationDefinition>;
 
 export type ToolPerkId = string;
 
