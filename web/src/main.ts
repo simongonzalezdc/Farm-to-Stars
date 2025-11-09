@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import '../styles/build.scss';
 import '../styles/hud.scss';
+import '../styles/civilization.scss';
+import '../styles/township.scss';
 import { CalendarHud } from './hud/calendar/Calendar';
 import { QuestLog, type QuestEntry, type QuestStatus } from './hud/quests/QuestLog';
 import { StaminaTipsOverlay } from './hud/stamina/Tips';
@@ -10,6 +12,7 @@ import {
   defaultState,
   type BuildingDefinition,
   type BuildingId,
+  type CivilizationId,
   type CropId,
   type GameState,
   type ResourceId,
@@ -48,11 +51,14 @@ import {
 import { loadDataTables, type DataTables } from './data';
 import { BuildModeController } from './ui/buildModeController';
 import { HomesteadController } from './ui/homesteadController';
+import { CivilizationChoice } from './ui/civilizationChoice';
+import { applyCivilizationTheme } from './ui/hudTheme';
 import { getNormalizedTime } from './state/time';
 import { getStaminaRatio } from './state/stamina';
 import { TelemetryTracker, type TelemetrySnapshot } from './telemetry/telemetry';
 import { HomesteadMetrics } from './telemetry/homesteadMetrics';
 import { exportHomesteadToTownship } from './sim/export/homesteadToTownship';
+import { TownshipScene } from './scenes/TownshipScene';
 import {
   flushPlaytestEvents,
   getPlaytestTelemetryOptIn,
@@ -377,7 +383,39 @@ class IsoScene extends Phaser.Scene {
   async create() {
     this.tables = await dataTablesPromise;
     const loaded = await load(this.tables.resources);
-    this.state = loaded ?? defaultState(this.tables.resources);
+
+    // Show civilization choice for new games or games without civilization
+    if (!loaded || !loaded.civilization) {
+      const chosenCivilization = await new Promise<CivilizationId>((resolve) => {
+        const civilizationChoice = new CivilizationChoice(this.tables.civilizations, (civId) => {
+          resolve(civId);
+        });
+        civilizationChoice.show();
+      });
+
+      // Create new game state with chosen civilization
+      this.state = defaultState(this.tables.resources);
+      this.state.civilization = chosenCivilization;
+
+      // Apply starting resources from civilization
+      const civDef = this.tables.civilizations[chosenCivilization];
+      if (civDef.startingResources) {
+        Object.entries(civDef.startingResources).forEach(([resourceId, amount]) => {
+          this.state.resources[resourceId] = (this.state.resources[resourceId] ?? 0) + amount;
+        });
+      }
+
+      // Save the new game with civilization
+      await save(this.state);
+    } else {
+      this.state = loaded;
+    }
+
+    // Apply civilization theme to HUD
+    if (this.state.civilization && this.tables.civilizations[this.state.civilization]) {
+      const civDef = this.tables.civilizations[this.state.civilization];
+      applyCivilizationTheme(civDef.aesthetics);
+    }
 
     this.buildingDefs = Object.fromEntries(
       Object.values(this.tables.buildings).map((def) => [
@@ -611,7 +649,8 @@ class IsoScene extends Phaser.Scene {
         this.buildingDefs,
         this.tables.recipes,
         this.tables.crops,
-        this.tables.livestock
+        this.tables.livestock,
+        this.tables.civilizations
       );
       this.telemetry.recordTick(this.state, events, SIM_DT);
       this.homesteadMetrics.recordTick(this.state, events, SIM_DT);
@@ -974,8 +1013,17 @@ class IsoScene extends Phaser.Scene {
     const encoder = new TextEncoder();
     const bytes = encoder.encode(json).length;
     recordExportGenerated(bytes, payload.township.shipments.length);
-    this.setPlaytestStatus(`Exported snapshot with ${payload.township.shipments.length} shipments.`);
+    this.setPlaytestStatus(`Exported snapshot with ${payload.township.shipments.length} shipments. Launching Township...`);
     this.updatePlaytestStatus();
+
+    // Launch Township scene
+    setTimeout(() => {
+      this.scene.start('TownshipScene', {
+        civilization: payload.civilization,
+        seed: payload.seed,
+        initialState: payload.township
+      });
+    }, 1000);
   }
 
   private setPlaytestStatus(message: string) {
@@ -990,7 +1038,7 @@ const config: Phaser.Types.Core.GameConfig = {
   parent: 'app',
   width: window.innerWidth,
   height: window.innerHeight,
-  scene: [IsoScene],
+  scene: [IsoScene, TownshipScene],
   render: { pixelArt: true, antialias: false },
   scale: { mode: Phaser.Scale.RESIZE }
 };

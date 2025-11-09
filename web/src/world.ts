@@ -8,6 +8,7 @@ import {
 import { processConstruction } from './systems/construction';
 import { processEconomyTick } from './systems/economy';
 import { tickCropLifecycle } from './systems/cropLifecycle';
+import { createCivilizationManager } from './systems/civilizationManager';
 import { advanceWeather } from './systems/weather';
 import { tickLivestock } from './sim/livestock/lifecycle';
 import { updateWeatherEvents } from './sim/weather/events';
@@ -168,7 +169,8 @@ export function tick(
   buildingDefs: Partial<Record<BuildingId, BuildingDefinition>> = {},
   recipes: Record<RecipeId, RecipeDefinition> = {},
   crops: CropsTable = {},
-  livestock: LivestockTable = {}
+  livestock: LivestockTable = {},
+  civilizations: Record<string, any> = {}
 ): GameEvent[] {
   const events: GameEvent[] = [];
 
@@ -473,7 +475,14 @@ function processHomestead(
   }
 
   if (dt > 0 && Object.keys(crops).length > 0) {
-    const lifecycle = tickCropLifecycle(state.homestead, dt, crops);
+    // Apply civilization water efficiency bonus (Moche: 1.20 = 20% less water consumption)
+    let waterEfficiency = 1.0;
+    if (state.civilization && civilizations[state.civilization]) {
+      const civManager = createCivilizationManager(state.civilization, civilizations);
+      waterEfficiency = civManager.getBonusMultiplier('waterEfficiency');
+    }
+
+    const lifecycle = tickCropLifecycle(state.homestead, dt, crops, waterEfficiency);
     for (const entry of lifecycle.matured) {
       const detail: HomesteadCropDetail = { ...entry, state: 'matured' };
       gameEvents.dispatchEvent(new CustomEvent(EVENT_HOMESTEAD_CROP, { detail }));
