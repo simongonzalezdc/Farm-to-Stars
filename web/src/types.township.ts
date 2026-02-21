@@ -12,7 +12,14 @@ import type { CivilizationId, ResourceId } from './types';
 // ============================================================================
 
 export type ZoneType = 'residential' | 'commercial' | 'industrial' | 'mixed';
-export type ServiceType = 'power' | 'water' | 'safety' | 'education' | 'health' | 'recreation' | 'shopping';
+export type ServiceType =
+  | 'power'
+  | 'water'
+  | 'safety'
+  | 'education'
+  | 'health'
+  | 'recreation'
+  | 'shopping';
 export type BuildingDefinitionId = string;
 
 /**

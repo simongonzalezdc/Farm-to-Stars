@@ -12,7 +12,7 @@ import { ZonePlacementUI } from '../ui/township/ZonePlacementUI';
 import { BuildingMenuUI } from '../ui/township/BuildingMenuUI';
 import { MetricsDashboardUI } from '../ui/township/MetricsDashboardUI';
 import { AdvisorDialogueUI, AdvisorMessages } from '../ui/township/AdvisorDialogueUI';
-import { HeatmapUI } from '../ui/township/HeatmapUI';
+import type { HeatmapUI } from '../ui/township/HeatmapUI';
 import { gridToScreen, TILE_H, TILE_W } from '../iso';
 import { saveTownship } from '../storage.township';
 import type { HeatmapType } from '../sim/township/systems/heatmapVisualization';
@@ -163,14 +163,18 @@ export class TownshipScene extends Phaser.Scene {
         // Create grid tile
         const graphics = this.add.graphics();
         graphics.lineStyle(1, 0x333333, 0.3);
-        graphics.strokePoints([
-          { x: TILE_W / 2, y: 0 },
-          { x: TILE_W, y: TILE_H / 2 },
-          { x: TILE_W / 2, y: TILE_H },
-          { x: 0, y: TILE_H / 2 }
-        ], true);
+        graphics.strokePoints(
+          [
+            { x: TILE_W / 2, y: 0 },
+            { x: TILE_W, y: TILE_H / 2 },
+            { x: TILE_W / 2, y: TILE_H },
+            { x: 0, y: TILE_H / 2 }
+          ],
+          true
+        );
 
-        const tile = this.add.image(sx, sy, graphics.generateTexture('grid_tile', TILE_W, TILE_H))
+        const tile = this.add
+          .image(sx, sy, graphics.generateTexture('grid_tile', TILE_W, TILE_H))
           .setOrigin(0.5, 0.5);
 
         this.ground.add(tile);
@@ -208,22 +212,29 @@ export class TownshipScene extends Phaser.Scene {
 
           const zoneTile = this.add.graphics();
           zoneTile.fillStyle(color, 0.2);
-          zoneTile.fillPoints([
-            { x: TILE_W / 2, y: 2 },
-            { x: TILE_W - 2, y: TILE_H / 2 },
-            { x: TILE_W / 2, y: TILE_H - 2 },
-            { x: 2, y: TILE_H / 2 }
-          ], true);
+          zoneTile.fillPoints(
+            [
+              { x: TILE_W / 2, y: 2 },
+              { x: TILE_W - 2, y: TILE_H / 2 },
+              { x: TILE_W / 2, y: TILE_H - 2 },
+              { x: 2, y: TILE_H / 2 }
+            ],
+            true
+          );
 
           zoneTile.lineStyle(2, color, 0.6);
-          zoneTile.strokePoints([
-            { x: TILE_W / 2, y: 2 },
-            { x: TILE_W - 2, y: TILE_H / 2 },
-            { x: TILE_W / 2, y: TILE_H - 2 },
-            { x: 2, y: TILE_H / 2 }
-          ], true);
+          zoneTile.strokePoints(
+            [
+              { x: TILE_W / 2, y: 2 },
+              { x: TILE_W - 2, y: TILE_H / 2 },
+              { x: TILE_W / 2, y: TILE_H - 2 },
+              { x: 2, y: TILE_H / 2 }
+            ],
+            true
+          );
 
-          const img = this.add.image(tx, ty, zoneTile.generateTexture(`zone_${zone.id}_${dx}_${dy}`, TILE_W, TILE_H))
+          const img = this.add
+            .image(tx, ty, zoneTile.generateTexture(`zone_${zone.id}_${dx}_${dy}`, TILE_W, TILE_H))
             .setOrigin(0.5, 0.5);
 
           this.zones.add(img);
@@ -250,14 +261,18 @@ export class TownshipScene extends Phaser.Scene {
 
           const previewTile = this.add.graphics();
           previewTile.fillStyle(color, 0.4);
-          previewTile.fillPoints([
-            { x: TILE_W / 2, y: 2 },
-            { x: TILE_W - 2, y: TILE_H / 2 },
-            { x: TILE_W / 2, y: TILE_H - 2 },
-            { x: 2, y: TILE_H / 2 }
-          ], true);
+          previewTile.fillPoints(
+            [
+              { x: TILE_W / 2, y: 2 },
+              { x: TILE_W - 2, y: TILE_H / 2 },
+              { x: TILE_W / 2, y: TILE_H - 2 },
+              { x: 2, y: TILE_H / 2 }
+            ],
+            true
+          );
 
-          const img = this.add.image(tx, ty, previewTile.generateTexture(`preview_${dx}_${dy}`, TILE_W, TILE_H))
+          const img = this.add
+            .image(tx, ty, previewTile.generateTexture(`preview_${dx}_${dy}`, TILE_W, TILE_H))
             .setOrigin(0.5, 0.5)
             .setAlpha(0.6);
 
@@ -282,8 +297,7 @@ export class TownshipScene extends Phaser.Scene {
       const { x: sx, y: sy } = gridToScreen(building.position.x, building.position.y, 0);
 
       // Simple building representation
-      const buildingSprite = this.add.rectangle(sx, sy - 10, 30, 30, 0xcccccc)
-        .setOrigin(0.5, 0.5);
+      const buildingSprite = this.add.rectangle(sx, sy - 10, 30, 30, 0xcccccc).setOrigin(0.5, 0.5);
 
       this.buildings.add(buildingSprite);
     }

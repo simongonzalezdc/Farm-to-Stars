@@ -41,16 +41,23 @@ export async function loadDataTables(): Promise<DataTables> {
     return cachedTables;
   }
 
-  const [resourcesRaw, buildingsRaw, recipesRaw, cropsRaw, toolsRaw, livestockRaw, civilizationsRaw] =
-    await Promise.all([
-      fetchJson(RESOURCE_URL),
-      fetchJson(BUILDING_URL),
-      fetchJson(RECIPE_URL),
-      fetchJson(CROPS_URL),
-      fetchJson(TOOLS_URL),
-      fetchJson(LIVESTOCK_URL),
-      fetchJson(CIVILIZATIONS_URL)
-    ]);
+  const [
+    resourcesRaw,
+    buildingsRaw,
+    recipesRaw,
+    cropsRaw,
+    toolsRaw,
+    livestockRaw,
+    civilizationsRaw
+  ] = await Promise.all([
+    fetchJson(RESOURCE_URL),
+    fetchJson(BUILDING_URL),
+    fetchJson(RECIPE_URL),
+    fetchJson(CROPS_URL),
+    fetchJson(TOOLS_URL),
+    fetchJson(LIVESTOCK_URL),
+    fetchJson(CIVILIZATIONS_URL)
+  ]);
 
   const resources = validateResourcesTable(resourcesRaw);
   const buildings = validateBuildingsTable(buildingsRaw);
@@ -398,11 +405,15 @@ function normalizeRecipeIO(
 ): RecipeDefinition['inputs'] {
   return entries.reduce<RecipeDefinition['inputs']>((acc, entry, index) => {
     if (!Array.isArray(entry) || entry.length !== 2) {
-      throw new Error(`Recipe "${recipeId}" ${field} entry #${index} must be a tuple [resource, amount].`);
+      throw new Error(
+        `Recipe "${recipeId}" ${field} entry #${index} must be a tuple [resource, amount].`
+      );
     }
     const [resource, amount] = entry;
     if (!isString(resource) || !isNumber(amount)) {
-      throw new Error(`Recipe "${recipeId}" ${field} entry #${index} has invalid resource or amount.`);
+      throw new Error(
+        `Recipe "${recipeId}" ${field} entry #${index} has invalid resource or amount.`
+      );
     }
     acc[resource] = amount;
     return acc;

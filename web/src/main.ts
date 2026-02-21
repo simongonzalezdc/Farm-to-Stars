@@ -17,17 +17,19 @@ const originalLog = console.log;
 const suppressAssetErrors = (original: typeof console.error) => {
   return (...args: unknown[]) => {
     // Check all arguments for the error message
-    const errorMsg = args.map(arg => String(arg || '')).join(' ');
-    
+    const errorMsg = args.map((arg) => String(arg || '')).join(' ');
+
     // Check if this is a Phaser asset loading error for an expected missing asset
     // Simply check if the error message contains "Failed to process file" and any of our expected assets
-    if (errorMsg.includes('Failed to process file') && 
-        expectedMissingAssets.some(key => errorMsg.includes(key))) {
+    if (
+      errorMsg.includes('Failed to process file') &&
+      expectedMissingAssets.some((key) => errorMsg.includes(key))
+    ) {
       // Suppress this error - will use programmatic generation
       // Don't log anything to keep console clean
       return;
     }
-    
+
     // Log all other errors/warnings normally
     original.apply(console, args);
   };
@@ -162,7 +164,15 @@ const RESOURCE_ORDER: ResourceId[] = [
   'berries'
 ];
 
-const HOMESTEAD_BUILDING_ORDER: BuildingId[] = ['plot', 'tent', 'well', 'crate', 'road', 'cottage', 'market'];
+const HOMESTEAD_BUILDING_ORDER: BuildingId[] = [
+  'plot',
+  'tent',
+  'well',
+  'crate',
+  'road',
+  'cottage',
+  'market'
+];
 const HOMESTEAD_TOOL_ORDER: ToolId[] = ['hoe', 'wateringCan', 'sickle'];
 const HOMESTEAD_CROP_ORDER: CropId[] = ['wheat', 'potato', 'berry'];
 
@@ -236,7 +246,9 @@ function populateBuildButtons(tables: DataTables) {
   const definitions = getUiBuildingDefinitions();
   const ordered = (() => {
     const known = HOMESTEAD_BUILDING_ORDER.filter((id) => definitions[id] !== undefined);
-    const extras = Object.keys(tables.buildings).filter((key) => !known.includes(key as BuildingId));
+    const extras = Object.keys(tables.buildings).filter(
+      (key) => !known.includes(key as BuildingId)
+    );
     return [...known, ...(extras as BuildingId[])];
   })();
 
@@ -347,7 +359,7 @@ class IsoScene extends Phaser.Scene {
     // Missing files will trigger 'fileerror' events and fall back to programmatic generation
     // Console errors for expected missing assets are suppressed at module level
     loadGameAssets(this);
-    
+
     // Set up load error handler to track failed assets (for reference)
     this.load.on('fileerror', (file: Phaser.Loader.File) => {
       if (expectedMissingAssets.includes(file.key)) {
@@ -358,14 +370,14 @@ class IsoScene extends Phaser.Scene {
         return;
       }
     });
-    
+
     // Generate programmatic fallbacks AFTER load completes
     // This prevents conflicts with external assets that are still loading
     this.load.once('complete', () => {
       // Generate programmatic fallbacks for missing assets
       this.generateProgrammaticAssets();
     });
-    
+
     // Generate outline tiles immediately (these are UI elements, not game assets)
     const g = this.add.graphics({ x: 0, y: 0 });
     g.lineStyle(3, 0x46ff82, 0.9);
@@ -406,7 +418,7 @@ class IsoScene extends Phaser.Scene {
       const baseColor = 0x9b7f57;
       const darkColor = 0x6b5537;
       const lightColor = 0xb38b6d;
-      
+
       g.fillStyle(baseColor, 1);
       g.fillPoints(
         [
@@ -417,7 +429,7 @@ class IsoScene extends Phaser.Scene {
         ],
         true
       );
-      
+
       const texturePositions = [
         { x: 20, y: 15, size: 6 },
         { x: 60, y: 25, size: 5 },
@@ -430,9 +442,9 @@ class IsoScene extends Phaser.Scene {
       ];
       g.fillStyle(0x8b6f47, 0.3);
       for (const pos of texturePositions) {
-        g.fillRect(pos.x - pos.size/2, pos.y - pos.size/2, pos.size, pos.size);
+        g.fillRect(pos.x - pos.size / 2, pos.y - pos.size / 2, pos.size, pos.size);
       }
-      
+
       g.lineStyle(6, darkColor, 0.9);
       g.strokePoints(
         [
@@ -443,19 +455,19 @@ class IsoScene extends Phaser.Scene {
         ],
         true
       );
-      
+
       g.lineStyle(4, lightColor, 0.7);
       g.beginPath();
       g.moveTo(TILE_W / 2, 0);
       g.lineTo(0, TILE_H / 2);
       g.strokePath();
-      
+
       g.lineStyle(4, 0x5a4a3a, 0.6);
       g.beginPath();
       g.moveTo(TILE_W, TILE_H / 2);
       g.lineTo(TILE_W / 2, TILE_H);
       g.strokePath();
-      
+
       g.generateTexture('tile:ground', TILE_W, TILE_H);
       g.clear();
     }
@@ -465,7 +477,7 @@ class IsoScene extends Phaser.Scene {
     const baseColor = 0x7a7a7a;
     const lightColor = 0x9a9a9a;
     const darkColor = 0x5a5a5a;
-    
+
     // Horizontal road texture
     if (!this.textures.exists('tile:road:horizontal')) {
       g.fillStyle(baseColor, 1);
@@ -478,27 +490,27 @@ class IsoScene extends Phaser.Scene {
         ],
         true
       );
-      
+
       g.fillStyle(0x6a6a6a, 0.2);
       for (let i = 0; i < 6; i++) {
         const x = Math.random() * TILE_W;
         const y = Math.random() * TILE_H;
         const size = 3 + Math.random() * 5;
-        g.fillRect(x - size/2, y - size/2, size, size);
+        g.fillRect(x - size / 2, y - size / 2, size, size);
       }
-      
+
       g.lineStyle(7, lightColor, 0.95);
       g.beginPath();
       g.moveTo(TILE_W / 2, 0);
       g.lineTo(TILE_W, TILE_H / 2);
       g.strokePath();
-      
+
       g.lineStyle(6, darkColor, 0.8);
       g.beginPath();
       g.moveTo(0, TILE_H / 2);
       g.lineTo(TILE_W / 2, TILE_H);
       g.strokePath();
-      
+
       // Horizontal road line (0 degrees) - through center
       g.lineStyle(4, 0xffffff, 0.8);
       const dashLength = 20;
@@ -514,11 +526,11 @@ class IsoScene extends Phaser.Scene {
         g.strokePath();
         currentX += dashLength + gapLength;
       }
-      
+
       g.generateTexture('tile:road:horizontal', TILE_W, TILE_H);
       g.clear();
     }
-    
+
     // Vertical road texture
     if (!this.textures.exists('tile:road:vertical')) {
       g.fillStyle(baseColor, 1);
@@ -531,27 +543,27 @@ class IsoScene extends Phaser.Scene {
         ],
         true
       );
-      
+
       g.fillStyle(0x6a6a6a, 0.2);
       for (let i = 0; i < 6; i++) {
         const x = Math.random() * TILE_W;
         const y = Math.random() * TILE_H;
         const size = 3 + Math.random() * 5;
-        g.fillRect(x - size/2, y - size/2, size, size);
+        g.fillRect(x - size / 2, y - size / 2, size, size);
       }
-      
+
       g.lineStyle(7, lightColor, 0.95);
       g.beginPath();
       g.moveTo(TILE_W / 2, 0);
       g.lineTo(TILE_W, TILE_H / 2);
       g.strokePath();
-      
+
       g.lineStyle(6, darkColor, 0.8);
       g.beginPath();
       g.moveTo(0, TILE_H / 2);
       g.lineTo(TILE_W / 2, TILE_H);
       g.strokePath();
-      
+
       // Vertical road line (90 degrees) - through center
       g.lineStyle(4, 0xffffff, 0.8);
       const dashLength = 20;
@@ -567,11 +579,11 @@ class IsoScene extends Phaser.Scene {
         g.strokePath();
         currentY += dashLength + gapLength;
       }
-      
+
       g.generateTexture('tile:road:vertical', TILE_W, TILE_H);
       g.clear();
     }
-    
+
     // Intersection road texture
     if (!this.textures.exists('tile:road:intersection')) {
       g.fillStyle(baseColor, 1);
@@ -584,34 +596,34 @@ class IsoScene extends Phaser.Scene {
         ],
         true
       );
-      
+
       g.fillStyle(0x6a6a6a, 0.2);
       for (let i = 0; i < 6; i++) {
         const x = Math.random() * TILE_W;
         const y = Math.random() * TILE_H;
         const size = 3 + Math.random() * 5;
-        g.fillRect(x - size/2, y - size/2, size, size);
+        g.fillRect(x - size / 2, y - size / 2, size, size);
       }
-      
+
       g.lineStyle(7, lightColor, 0.95);
       g.beginPath();
       g.moveTo(TILE_W / 2, 0);
       g.lineTo(TILE_W, TILE_H / 2);
       g.strokePath();
-      
+
       g.lineStyle(6, darkColor, 0.8);
       g.beginPath();
       g.moveTo(0, TILE_H / 2);
       g.lineTo(TILE_W / 2, TILE_H);
       g.strokePath();
-      
+
       // Both horizontal and vertical lines crossing at 90 degrees
       g.lineStyle(4, 0xffffff, 0.8);
       const dashLength = 20;
       const gapLength = 10;
       const centerY = TILE_H / 2;
       const centerX = TILE_W / 2;
-      
+
       // Horizontal line (0 degrees)
       let currentX = 0;
       while (currentX < TILE_W) {
@@ -623,7 +635,7 @@ class IsoScene extends Phaser.Scene {
         g.strokePath();
         currentX += dashLength + gapLength;
       }
-      
+
       // Vertical line (90 degrees, perpendicular to horizontal)
       let currentY = 0;
       while (currentY < TILE_H) {
@@ -635,7 +647,7 @@ class IsoScene extends Phaser.Scene {
         g.strokePath();
         currentY += dashLength + gapLength;
       }
-      
+
       g.generateTexture('tile:road:intersection', TILE_W, TILE_H);
       g.clear();
     }
@@ -809,7 +821,7 @@ class IsoScene extends Phaser.Scene {
     cam.setZoom(0.7); // Zoom out to see more of the map
     cam.roundPixels = false; // Allow sub-pixel rendering for smoother visuals
     cam.setAngle(this.cameraRotation); // Apply initial rotation
-    
+
     // Set camera bounds to prevent panning too far
     const mapWidthPx = MAP_WIDTH * TILE_W;
     const mapHeightPx = MAP_HEIGHT * TILE_H;
@@ -825,7 +837,7 @@ class IsoScene extends Phaser.Scene {
     const INITIAL_VISIBLE_SIZE = 12; // Start with 12×12 instead of 20×20
     const visibleWidth = Math.min(MAP_WIDTH, INITIAL_VISIBLE_SIZE);
     const visibleHeight = Math.min(MAP_HEIGHT, INITIAL_VISIBLE_SIZE);
-    
+
     // First pass: render visible ground tiles only
     for (let iy = 0; iy < visibleHeight; iy++) {
       for (let ix = 0; ix < visibleWidth; ix++) {
@@ -844,7 +856,7 @@ class IsoScene extends Phaser.Scene {
         }
       }
     }
-    
+
     // Second pass: render visible roads on top of ground
     // Roads must be horizontal (same iy) or vertical (same ix) - NOT diagonal
     for (let iy = 0; iy < visibleHeight; iy++) {
@@ -854,10 +866,10 @@ class IsoScene extends Phaser.Scene {
         const isHorizontalRoad = iy % 5 === 0;
         const isVerticalRoad = ix % 5 === 0;
         const isRoad = isHorizontalRoad || isVerticalRoad;
-        
+
         if (isRoad) {
           const { x, y } = gridToScreen(ix, iy, 0);
-          
+
           // Determine road texture based on direction
           let roadTextureKey: string;
           if (isHorizontalRoad && isVerticalRoad) {
@@ -870,7 +882,7 @@ class IsoScene extends Phaser.Scene {
             // Vertical road
             roadTextureKey = 'tile:road:vertical';
           }
-          
+
           // Road tile - render slightly elevated
           const roadTile = this.add.image(x, y - 2, roadTextureKey).setOrigin(0.5, 0.5);
           this.fitIsoTile(roadTile, roadTextureKey);
@@ -960,41 +972,41 @@ class IsoScene extends Phaser.Scene {
     tutorialContainer.id = 'tutorialContainer';
     document.body.appendChild(tutorialContainer);
     this.tutorialOverlay = new TutorialOverlay(tutorialContainer);
-    
+
     // Show tutorial for new players automatically
     if (TutorialOverlay.shouldShowTutorial()) {
       setTimeout(() => {
         this.tutorialOverlay?.start();
       }, 2000);
     }
-    
+
     // Add button to show tutorial anytime
     if (showTutorialButton) {
       showTutorialButton.addEventListener('click', () => {
         this.tutorialOverlay?.start();
       });
     }
-    
+
     // Initialize map legend
     const legendContainer = document.createElement('div');
     legendContainer.id = 'legendContainer';
     document.body.appendChild(legendContainer);
     this.mapLegend = new MapLegend(legendContainer);
-    
+
     // Add button to show legend
     if (showLegendButton) {
       showLegendButton.addEventListener('click', () => {
         this.mapLegend?.toggle();
       });
     }
-    
+
     // Add button to reset game
     if (resetGameButton) {
       resetGameButton.addEventListener('click', async () => {
         if (confirm('Are you sure you want to reset the game? This will clear all save data.')) {
           await clear();
           // Small delay to ensure IndexedDB deletion is committed
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
           location.reload();
         }
       });
@@ -1011,7 +1023,7 @@ class IsoScene extends Phaser.Scene {
     // Camera rotation state
     let isRotating = false;
     let lastRotationX = 0;
-    
+
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       // Check for Shift+drag rotation first
       if (p.shiftKey && !this.buildMode.isActive() && !this.homestead.isActive()) {
@@ -1019,13 +1031,13 @@ class IsoScene extends Phaser.Scene {
         lastRotationX = p.x;
         return;
       }
-      
+
       if (this.homestead.handlePointerDown(p)) {
         return;
       }
       this.buildMode.handlePointerDown(p);
     });
-    
+
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       // Handle camera rotation (Shift+Drag) - rotate around Z axis
       if (isRotating && p.shiftKey) {
@@ -1036,7 +1048,7 @@ class IsoScene extends Phaser.Scene {
         lastRotationX = p.x;
         return;
       }
-      
+
       // Normal pointer move handling
       const homesteadActive = this.homestead.handlePointerMove(p);
       if (p.isDown && !this.buildMode.isActive() && !homesteadActive && !isRotating) {
@@ -1045,7 +1057,7 @@ class IsoScene extends Phaser.Scene {
       }
       this.buildMode.handlePointerMove(p.worldX, p.worldY);
     });
-    
+
     this.input.on('pointerup', () => {
       isRotating = false;
     });
@@ -1056,14 +1068,14 @@ class IsoScene extends Phaser.Scene {
       const next = Phaser.Math.Clamp(cam.zoom - dy * 0.001, 0.4, 1.2);
       cam.setZoom(next);
     });
-    
+
     // Camera rotation controls: Q/E keys (rotate left/right)
     // Q rotates camera counter-clockwise, E rotates clockwise
     this.input.keyboard?.on('keydown-Q', () => {
       this.cameraRotation = (this.cameraRotation + 15) % 360;
       cam.setAngle(this.cameraRotation);
     });
-    
+
     this.input.keyboard?.on('keydown-E', () => {
       this.cameraRotation = (this.cameraRotation - 15) % 360;
       cam.setAngle(this.cameraRotation);
@@ -1092,7 +1104,8 @@ class IsoScene extends Phaser.Scene {
       updateResourcesHud(detail.resources);
     };
     gameEvents.addEventListener(EVENT_RESOURCES_UPDATED, listener);
-    this.detachHudListener = () => gameEvents.removeEventListener(EVENT_RESOURCES_UPDATED, listener);
+    this.detachHudListener = () =>
+      gameEvents.removeEventListener(EVENT_RESOURCES_UPDATED, listener);
     updateResourcesHud(this.state.resources);
 
     if (telemetryOptInCheckbox) {
@@ -1202,7 +1215,7 @@ class IsoScene extends Phaser.Scene {
       .image(x, y - (def.anchorOffset ?? 0), def.texture)
       .setOrigin(0.5, def.anchorOffset !== undefined ? 1.0 : 0.5);
     this.fitIsoTile(sprite, def.texture);
-    
+
     sprite.setRotation((Math.PI / 2) * (structure.orientation ?? 0));
     if (this.props) {
       this.props.add(sprite);
@@ -1229,10 +1242,7 @@ class IsoScene extends Phaser.Scene {
 
   private addJobMarker(job: BuildJob) {
     const { x: sx, y: sy } = gridToScreen(job.x, job.y, 0);
-    const marker = this.add
-      .image(sx, sy, 'tile:outline:valid')
-      .setOrigin(0.5, 0.5)
-      .setAlpha(0.5);
+    const marker = this.add.image(sx, sy, 'tile:outline:valid').setOrigin(0.5, 0.5).setAlpha(0.5);
     this.overlays.add(marker);
     marker.setDepth(500);
     this.jobMarkers.set(job.id, {
@@ -1408,12 +1418,19 @@ class IsoScene extends Phaser.Scene {
       }));
 
       const requiredObjectives = objectives.filter((objective) => !objective.optional);
-      const aggregatedTarget = requiredObjectives.reduce((sum, objective) => sum + objective.target, 0);
+      const aggregatedTarget = requiredObjectives.reduce(
+        (sum, objective) => sum + objective.target,
+        0
+      );
       const aggregatedCurrent = requiredObjectives.reduce(
         (sum, objective) => sum + Math.min(objective.current, objective.target),
         0
       );
-      const status = determineQuestStatus(definition.unlockDay <= day, aggregatedCurrent, aggregatedTarget);
+      const status = determineQuestStatus(
+        definition.unlockDay <= day,
+        aggregatedCurrent,
+        aggregatedTarget
+      );
 
       return {
         id: definition.id,
@@ -1455,7 +1472,8 @@ class IsoScene extends Phaser.Scene {
         exportTownshipButton?.setAttribute('disabled', 'true');
         playtestStatusEl.textContent = 'Telemetry opt-in required before exporting.';
       } else {
-        playtestStatusEl.textContent = 'Township export disabled in this build. Opt into telemetry to capture perf logs.';
+        playtestStatusEl.textContent =
+          'Township export disabled in this build. Opt into telemetry to capture perf logs.';
       }
       return;
     }
@@ -1529,7 +1547,9 @@ class IsoScene extends Phaser.Scene {
     const encoder = new TextEncoder();
     const bytes = encoder.encode(json).length;
     recordExportGenerated(bytes, payload.township.shipments.length);
-    this.setPlaytestStatus(`Exported snapshot with ${payload.township.shipments.length} shipments. Launching Township...`);
+    this.setPlaytestStatus(
+      `Exported snapshot with ${payload.township.shipments.length} shipments. Launching Township...`
+    );
     this.updatePlaytestStatus();
 
     // Launch Township scene
@@ -1555,7 +1575,7 @@ const config: Phaser.Types.Core.GameConfig = {
   width: window.innerWidth,
   height: window.innerHeight,
   scene: [IsoScene, TownshipScene],
-  render: { 
+  render: {
     pixelArt: false, // Disable pixel art mode for smoother rendering
     antialias: true, // Enable antialiasing for better visual quality
     roundPixels: false // Allow sub-pixel rendering

@@ -24,7 +24,14 @@ describe('world simulation', () => {
   it('emits resource collection events when resources increase externally', () => {
     const state = defaultState();
     initWorld(state);
-    tick(state, 1.0, buildingDefs, {} as Record<RecipeId, RecipeDefinition>, {} as CropsTable, {} as LivestockTable);
+    tick(
+      state,
+      1.0,
+      buildingDefs,
+      {} as Record<RecipeId, RecipeDefinition>,
+      {} as CropsTable,
+      {} as LivestockTable
+    );
     const springDef = getSeasonDefinition(state.season.active);
     expect(state.resources.wood).toBeGreaterThan(0);
     const baseGain = 0.1 * springDef.multipliers.resourceRate;
@@ -40,9 +47,7 @@ describe('world simulation', () => {
       {} as LivestockTable
     );
 
-    expect(events).toEqual([
-      { type: 'resource.collected', resource: 'wood', amount: 1 }
-    ]);
+    expect(events).toEqual([{ type: 'resource.collected', resource: 'wood', amount: 1 }]);
   });
 
   it('formats resource counts for display', () => {
@@ -71,7 +76,14 @@ describe('world simulation', () => {
     const winterState = defaultState();
     winterState.season.active = SeasonId.Winter;
     initWorld(winterState);
-    tick(winterState, 1.0, buildingDefs, {} as Record<RecipeId, RecipeDefinition>, {} as CropsTable, {} as LivestockTable);
+    tick(
+      winterState,
+      1.0,
+      buildingDefs,
+      {} as Record<RecipeId, RecipeDefinition>,
+      {} as CropsTable,
+      {} as LivestockTable
+    );
 
     const winterDef = getSeasonDefinition(SeasonId.Winter);
     const winterGain = 0.1 * winterDef.multipliers.resourceRate;

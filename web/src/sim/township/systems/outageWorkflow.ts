@@ -114,7 +114,7 @@ export class OutageWorkflowSystem {
     buildings: BuildingsTable,
     buildingId: string
   ): { success: boolean; cost?: Record<string, number>; time?: number; reason?: string } {
-    const building = state.buildings.find(b => b.id === buildingId);
+    const building = state.buildings.find((b) => b.id === buildingId);
     if (!building) {
       return { success: false, reason: 'Building not found' };
     }
@@ -133,7 +133,8 @@ export class OutageWorkflowSystem {
 
     // Check if player can afford
     const canAfford = Object.entries(repairCost).every(
-      ([resourceId, cost]) => (state.resources[resourceId as keyof typeof state.resources] ?? 0) >= cost
+      ([resourceId, cost]) =>
+        (state.resources[resourceId as keyof typeof state.resources] ?? 0) >= cost
     );
 
     if (!canAfford) {
@@ -194,7 +195,9 @@ export class OutageWorkflowSystem {
     const damagePercent = 1 - healthPercent;
 
     for (const [resourceId, buildCost] of Object.entries(def.cost)) {
-      cost[resourceId] = Math.ceil((buildCost as number) * this.config.repairCostMultiplier * damagePercent);
+      cost[resourceId] = Math.ceil(
+        (buildCost as number) * this.config.repairCostMultiplier * damagePercent
+      );
     }
 
     return cost;
@@ -230,6 +233,6 @@ export class OutageWorkflowSystem {
    * Get all buildings currently in outage
    */
   public getBuildingsInOutage(state: TownshipState): Building[] {
-    return state.buildings.filter(b => !b.operational && b.constructionProgress >= 100);
+    return state.buildings.filter((b) => !b.operational && b.constructionProgress >= 100);
   }
 }

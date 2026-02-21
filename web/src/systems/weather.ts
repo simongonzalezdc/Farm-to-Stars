@@ -60,8 +60,12 @@ export function ensureWeatherState(state: Partial<WeatherState> | undefined): We
   }
   const fallback = createDefaultWeatherState();
   const current = isWeatherType(state.current) ? state.current : fallback.current;
-  const duration = Number.isFinite(state.duration) && state.duration! > EPSILON ? state.duration! : fallback.duration;
-  const elapsed = Number.isFinite(state.elapsed) && state.elapsed! >= 0 ? state.elapsed! : fallback.elapsed;
+  const duration =
+    Number.isFinite(state.duration) && state.duration! > EPSILON
+      ? state.duration!
+      : fallback.duration;
+  const elapsed =
+    Number.isFinite(state.elapsed) && state.elapsed! >= 0 ? state.elapsed! : fallback.elapsed;
   const moistureDelta = Number.isFinite(state.moistureDeltaPerSecond)
     ? state.moistureDeltaPerSecond!
     : fallback.moistureDeltaPerSecond;
@@ -86,7 +90,11 @@ function rollWeatherType(profile: SeasonWeatherProfile, rng: RandomSource): Weat
   return 'clear';
 }
 
-function resolveDurationFor(type: WeatherType, profile: SeasonWeatherProfile, rng: RandomSource): number {
+function resolveDurationFor(
+  type: WeatherType,
+  profile: SeasonWeatherProfile,
+  rng: RandomSource
+): number {
   const min = Math.max(EPSILON, profile.minDurationSeconds);
   const max = Math.max(min, profile.maxDurationSeconds);
   const span = max - min;

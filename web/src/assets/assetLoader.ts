@@ -63,18 +63,18 @@ const DEFAULT_ASSETS: Record<string, string> = {
   'tile:water_kenney': `${TINY_TOWN_DIR}/tile_0001.png`,
   'tile:road_kenney': `${TINY_TOWN_DIR}/tile_0002.png`,
   'tile:dirt': `${TINY_TOWN_DIR}/tile_0003.png`,
-  
+
   // Buildings - mapped to sketch homestead props
   'prop:cottage': `${SKETCH_TOWN_DIR}/building_center_E.png`,
   'prop:well': `${SKETCH_TOWN_EXPANSION_DIR}/well_E.png`,
   'prop:tent': `${SKETCH_DESERT_DIR}/structure_tent_E.png`,
   'prop:crate': `${SKETCH_TOWN_EXPANSION_DIR}/grass_block_E.png`,
   'prop:market': `${SKETCH_TOWN_DIR}/structure_arch_E.png`,
-  
+
   // UI elements - placeholder paths (overridden once Pixel Adventure UI is wired up)
   'ui:button': '/assets/ui/ui-button.png',
   'ui:panel': '/assets/ui/ui-panel.png',
-  'ui:icon': '/assets/ui/ui-icon.png',
+  'ui:icon': '/assets/ui/ui-icon.png'
 };
 
 /**
@@ -95,13 +95,13 @@ export async function loadAssetManifest(): Promise<AssetManifest | null> {
 /**
  * Load a single asset with fallback
  * Returns true if asset was queued for loading, false if it should be generated programmatically
- * 
+ *
  * Note: Missing files will trigger 'fileerror' events, which are handled in main.ts
  * to suppress console errors and generate programmatic fallbacks.
  */
 export function loadAsset(scene: Scene, key: string, fallbackPath?: string): boolean {
   const path = DEFAULT_ASSETS[key] || fallbackPath;
-  
+
   if (path) {
     try {
       // Try to load external asset
@@ -114,7 +114,7 @@ export function loadAsset(scene: Scene, key: string, fallbackPath?: string): boo
       return false;
     }
   }
-  
+
   // Asset will be generated programmatically in preload()
   return false;
 }
@@ -122,9 +122,9 @@ export function loadAsset(scene: Scene, key: string, fallbackPath?: string): boo
 /**
  * Load all game assets
  * Returns a set of asset keys that were successfully loaded
- * 
+ *
  * Priority: Sketch Town assets > legacy premium > 16×16 fallback > programmatic
- * 
+ *
  * Note: This function queues assets for loading. The actual check of which
  * assets loaded successfully happens after Phaser's load completes.
  * We return an empty set here - the caller should check textures.exists()
@@ -132,7 +132,7 @@ export function loadAsset(scene: Scene, key: string, fallbackPath?: string): boo
  */
 export function loadGameAssets(scene: Scene): Set<string> {
   const loadedAssets = new Set<string>();
-  
+
   // Try 128×64 assets first (best quality) - may not exist yet
   loadAsset(scene, 'tile:ground');
   loadAsset(scene, 'tile:road');
@@ -142,27 +142,27 @@ export function loadGameAssets(scene: Scene): Set<string> {
   loadAsset(scene, 'tile:water');
   loadAsset(scene, 'tile:ground:dry');
   loadAsset(scene, 'tile:plot');
-  
+
   // Also try 16×16 Kenney fallbacks (these should exist)
   loadAsset(scene, 'tile:ground_kenney');
   loadAsset(scene, 'tile:road_kenney');
   loadAsset(scene, 'tile:water_kenney');
-  
+
   // Load other tiles (16×16 fallback)
   loadAsset(scene, 'tile:dirt');
-  
+
   // Load buildings (these should exist from Kenney downloads)
   loadAsset(scene, 'prop:cottage');
   loadAsset(scene, 'prop:well');
   loadAsset(scene, 'prop:tent');
   loadAsset(scene, 'prop:crate');
   loadAsset(scene, 'prop:market');
-  
+
   // Load UI elements (now available from Kenney UI Pack)
   loadAsset(scene, 'ui:button');
   loadAsset(scene, 'ui:panel');
   loadAsset(scene, 'ui:icon');
-  
+
   // Return empty set - actual availability will be checked after load completes
   // The caller should use scene.textures.exists() to verify which assets loaded
   return loadedAssets;
@@ -181,4 +181,3 @@ export function hasAsset(key: string): boolean {
 export function getAssetPath(key: string): string | undefined {
   return DEFAULT_ASSETS[key];
 }
-

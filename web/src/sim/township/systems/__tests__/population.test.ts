@@ -158,7 +158,7 @@ describe('Population System', () => {
       state.metrics.happiness.overall = 80;
 
       // Tick until we cross 100 milestone
-      let events: any[] = [];
+      const events: any[] = [];
       for (let i = 0; i < 10; i++) {
         const newEvents = tickPopulation(state, createMockCivilization(), 0.5);
         events.push(...newEvents);
@@ -166,7 +166,7 @@ describe('Population System', () => {
       }
 
       // Should have crossed 100 milestone
-      const milestoneEvent = events.find(e => e.type === 'population_milestone');
+      const milestoneEvent = events.find((e) => e.type === 'population_milestone');
       expect(milestoneEvent).toBeDefined();
       if (milestoneEvent && milestoneEvent.type === 'population_milestone') {
         expect(milestoneEvent.milestone).toBe(100);
@@ -187,7 +187,7 @@ describe('Population System', () => {
 
       // First tick - cross 100
       const events1 = tickPopulation(state, createMockCivilization(), 0.5);
-      const hasMilestone1 = events1.some(e => e.type === 'population_milestone');
+      const hasMilestone1 = events1.some((e) => e.type === 'population_milestone');
 
       // Keep ticking until past milestone
       while (state.population.total < 100) {
@@ -196,7 +196,7 @@ describe('Population System', () => {
 
       // Second tick - already past 100
       const events2 = tickPopulation(state, createMockCivilization(), 0.5);
-      const hasMilestone2 = events2.some(e => e.type === 'population_milestone');
+      const hasMilestone2 = events2.some((e) => e.type === 'population_milestone');
 
       // At least one should have emitted milestone, but not both
       expect(hasMilestone1 || hasMilestone2).toBe(true);
@@ -278,7 +278,7 @@ describe('Population System', () => {
         ...createMockCivilization(),
         townshipBonuses: {
           ...createMockCivilization().townshipBonuses,
-          populationGrowth: 1.10
+          populationGrowth: 1.1
         }
       };
 

@@ -1,0 +1,98 @@
+.hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hud-left,
+.hud-center,
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.menu-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.menu-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.scenario-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.civ-badge {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.scenario-name {
+  font-weight: 600;
+  color: #fff;
+}
+
+.phase-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.phase-icon {
+  font-size: 1.25rem;
+}
+
+.phase-name {
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+.week-indicator {
+  background: rgba(244, 208, 63, 0.2);
+  color: #f4d03f;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.resource-bar {
+  display: flex;
+  gap: 1rem;
+}
+
+.resource {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+}
+
+.resource-icon {
+  font-size: 1rem;
+}
+
+.resource-value {
+  font-weight: 600;
+  min-width: 2ch;
+  text-align: right;
+}

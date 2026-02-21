@@ -136,7 +136,11 @@ function hasOutputCapacity(
   return true;
 }
 
-function resolveOutputCap(state: GameState, recipe: RecipeDefinition, resource: ResourceId): number {
+function resolveOutputCap(
+  state: GameState,
+  recipe: RecipeDefinition,
+  resource: ResourceId
+): number {
   const recipeCap = recipe.outputCaps[resource];
   const storageSlot = ensureStorageSlot(state, resource);
   const storageCap = storageSlot.capacity;

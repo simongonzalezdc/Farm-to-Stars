@@ -62,7 +62,7 @@ describe('processConstruction', () => {
     });
 
     const result = processConstruction(state, 0, buildingDefs);
-    
+
     expect(result.completed).toEqual([
       { job: expect.objectContaining({ id: 3 }), reason: 'unknown-building' }
     ]);

@@ -122,7 +122,12 @@ export function tickCropLifecycle(
   return result;
 }
 
-export function tillSoil(field: FieldState, x: number, y: number, moisture = 0.2): CropTileState | null {
+export function tillSoil(
+  field: FieldState,
+  x: number,
+  y: number,
+  moisture = 0.2
+): CropTileState | null {
   const key = tileKey(x, y);
   const tile = field.tiles[key] ?? { tilled: false, moisture: clamp01(moisture), crop: null };
   tile.tilled = true;
@@ -146,7 +151,12 @@ export function plantCrop(field: FieldState, x: number, y: number, cropId: strin
   return tile.crop;
 }
 
-export function harvestCrop(field: FieldState, x: number, y: number, crops: CropsTable): CropTileState | null {
+export function harvestCrop(
+  field: FieldState,
+  x: number,
+  y: number,
+  crops: CropsTable
+): CropTileState | null {
   const key = tileKey(x, y);
   const tile = field.tiles[key];
   if (!tile?.crop) {

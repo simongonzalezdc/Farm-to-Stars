@@ -141,40 +141,56 @@ function normalizeStructures(
   candidate: SaveV3['structures'] | unknown,
   fallback: SaveV3['structures']
 ): SaveV3['structures'] {
-  const baseFallback = fallback.length > 0
-    ? cloneStructure(fallback[0])
-    : { id: 0, type: 'cottage', x: 0, y: 0, footprint: { w: 1, h: 1 }, orientation: 0 };
+  const baseFallback =
+    fallback.length > 0
+      ? cloneStructure(fallback[0])
+      : { id: 0, type: 'cottage', x: 0, y: 0, footprint: { w: 1, h: 1 }, orientation: 0 };
 
   if (!Array.isArray(candidate)) {
     return fallback.map(cloneStructure);
   }
 
   return candidate.map((structure, index) => {
-    const source = fallback[index] ? cloneStructure(fallback[index]) : { ...baseFallback, id: index };
+    const source = fallback[index]
+      ? cloneStructure(fallback[index])
+      : { ...baseFallback, id: index };
 
     const id =
-      typeof structure?.id === 'number' && Number.isFinite(structure.id) ? structure.id : source.id ?? index;
-    const type = typeof structure?.type === 'string' ? structure.type : source.type ?? 'cottage';
-    const x = typeof structure?.x === 'number' && Number.isFinite(structure.x) ? structure.x : source.x ?? 0;
-    const y = typeof structure?.y === 'number' && Number.isFinite(structure.y) ? structure.y : source.y ?? 0;
+      typeof structure?.id === 'number' && Number.isFinite(structure.id)
+        ? structure.id
+        : (source.id ?? index);
+    const type = typeof structure?.type === 'string' ? structure.type : (source.type ?? 'cottage');
+    const x =
+      typeof structure?.x === 'number' && Number.isFinite(structure.x)
+        ? structure.x
+        : (source.x ?? 0);
+    const y =
+      typeof structure?.y === 'number' && Number.isFinite(structure.y)
+        ? structure.y
+        : (source.y ?? 0);
 
     const footprint =
       structure && typeof structure === 'object' && 'footprint' in structure && structure.footprint
         ? {
             w:
-              typeof structure.footprint.w === 'number' && Number.isFinite(structure.footprint.w) &&
+              typeof structure.footprint.w === 'number' &&
+              Number.isFinite(structure.footprint.w) &&
               structure.footprint.w > 0
                 ? structure.footprint.w
                 : source.footprint.w,
             h:
-              typeof structure.footprint.h === 'number' && Number.isFinite(structure.footprint.h) &&
+              typeof structure.footprint.h === 'number' &&
+              Number.isFinite(structure.footprint.h) &&
               structure.footprint.h > 0
                 ? structure.footprint.h
                 : source.footprint.h
           }
         : { ...source.footprint };
 
-    const orientation = coerceOrientation((structure as { orientation?: unknown })?.orientation, source.orientation);
+    const orientation = coerceOrientation(
+      (structure as { orientation?: unknown })?.orientation,
+      source.orientation
+    );
 
     return { id, type, x, y, footprint, orientation };
   });
@@ -229,33 +245,36 @@ function normalizeConstructionQueue(
   }
 
   return candidate.map((job, index) => ({
-    id: typeof job?.id === 'number' ? job.id : buildQueueFallback[index]?.id ?? index,
+    id: typeof job?.id === 'number' ? job.id : (buildQueueFallback[index]?.id ?? index),
     buildingId:
       typeof job?.buildingId === 'string'
         ? job.buildingId
-        : buildQueueFallback[index]?.type ?? 'cottage',
+        : (buildQueueFallback[index]?.type ?? 'cottage'),
     duration:
       typeof job?.duration === 'number' && Number.isFinite(job.duration)
         ? job.duration
-        : buildQueueFallback[index]?.duration ?? 0,
+        : (buildQueueFallback[index]?.duration ?? 0),
     remaining:
       typeof job?.remaining === 'number' && Number.isFinite(job.remaining)
         ? job.remaining
-        : buildQueueFallback[index]?.remaining ?? 0,
-    orientation: coerceOrientation((job as { orientation?: unknown })?.orientation, buildQueueFallback[index]?.orientation ?? 0),
+        : (buildQueueFallback[index]?.remaining ?? 0),
+    orientation: coerceOrientation(
+      (job as { orientation?: unknown })?.orientation,
+      buildQueueFallback[index]?.orientation ?? 0
+    ),
     footprint:
       job && typeof job === 'object' && job.footprint
         ? {
             w:
               typeof job.footprint.w === 'number' && Number.isFinite(job.footprint.w)
                 ? job.footprint.w
-                : buildQueueFallback[index]?.footprint.w ?? 1,
+                : (buildQueueFallback[index]?.footprint.w ?? 1),
             h:
               typeof job.footprint.h === 'number' && Number.isFinite(job.footprint.h)
                 ? job.footprint.h
-                : buildQueueFallback[index]?.footprint.h ?? 1
+                : (buildQueueFallback[index]?.footprint.h ?? 1)
           }
-        : buildQueueFallback[index]?.footprint ?? { w: 1, h: 1 }
+        : (buildQueueFallback[index]?.footprint ?? { w: 1, h: 1 })
   }));
 }
 
@@ -267,8 +286,7 @@ function normalizeBuildingInstances(
   }
   return candidate.map((instance, index) => ({
     id: typeof instance?.id === 'number' ? instance.id : index,
-    buildingId:
-      typeof instance?.buildingId === 'string' ? instance.buildingId : 'cottage',
+    buildingId: typeof instance?.buildingId === 'string' ? instance.buildingId : 'cottage',
     recipeId: typeof instance?.recipeId === 'string' ? instance.recipeId : undefined,
     productionNodeId:
       typeof instance?.productionNodeId === 'number' ? instance.productionNodeId : undefined
@@ -310,20 +328,24 @@ function normalizeProductionNodes(candidate: unknown): ProductionNode[] {
   }
   return candidate.reduce<ProductionNode[]>((acc, node, index) => {
     if (!node || typeof node !== 'object') return acc;
-    const id = typeof (node as ProductionNode).id === 'number' ? (node as ProductionNode).id : index;
-    const recipeId = typeof (node as ProductionNode).recipeId === 'string'
-      ? (node as ProductionNode).recipeId
-      : undefined;
+    const id =
+      typeof (node as ProductionNode).id === 'number' ? (node as ProductionNode).id : index;
+    const recipeId =
+      typeof (node as ProductionNode).recipeId === 'string'
+        ? (node as ProductionNode).recipeId
+        : undefined;
     if (!recipeId) {
       return acc;
     }
     const progress =
-      typeof (node as ProductionNode).progress === 'number' && Number.isFinite((node as ProductionNode).progress)
+      typeof (node as ProductionNode).progress === 'number' &&
+      Number.isFinite((node as ProductionNode).progress)
         ? (node as ProductionNode).progress
         : 0;
-    const active = typeof (node as ProductionNode).active === 'boolean'
-      ? (node as ProductionNode).active
-      : false;
+    const active =
+      typeof (node as ProductionNode).active === 'boolean'
+        ? (node as ProductionNode).active
+        : false;
     acc.push({ id, recipeId, progress, active });
     return acc;
   }, []);
@@ -335,12 +357,14 @@ function normalizeProductionQueue(candidate: unknown): ProductionQueueItem[] {
   }
   return candidate.reduce<ProductionQueueItem[]>((acc, item) => {
     if (!item || typeof item !== 'object') return acc;
-    const nodeId = typeof (item as ProductionQueueItem).nodeId === 'number'
-      ? (item as ProductionQueueItem).nodeId
-      : undefined;
-    const recipeId = typeof (item as ProductionQueueItem).recipeId === 'string'
-      ? (item as ProductionQueueItem).recipeId
-      : undefined;
+    const nodeId =
+      typeof (item as ProductionQueueItem).nodeId === 'number'
+        ? (item as ProductionQueueItem).nodeId
+        : undefined;
+    const recipeId =
+      typeof (item as ProductionQueueItem).recipeId === 'string'
+        ? (item as ProductionQueueItem).recipeId
+        : undefined;
     if (nodeId == null || !recipeId) {
       return acc;
     }
@@ -358,7 +382,8 @@ function normalizeProductionModifiers(candidate: unknown): ProductionModifiers {
   const output = (candidate as ProductionModifiers).outputMultiplier;
   return {
     speedMultiplier: typeof speed === 'number' && Number.isFinite(speed) && speed > 0 ? speed : 1,
-    outputMultiplier: typeof output === 'number' && Number.isFinite(output) && output > 0 ? output : 1
+    outputMultiplier:
+      typeof output === 'number' && Number.isFinite(output) && output > 0 ? output : 1
   };
 }
 
@@ -382,7 +407,10 @@ function normalizeResourceStorage(
       typeof slot?.capacity === 'number' && Number.isFinite(slot.capacity) && slot.capacity > 0
         ? slot.capacity
         : storage[key].capacity;
-    const currentRaw = typeof slot?.current === 'number' && Number.isFinite(slot.current) ? slot.current : resources[key] ?? 0;
+    const currentRaw =
+      typeof slot?.current === 'number' && Number.isFinite(slot.current)
+        ? slot.current
+        : (resources[key] ?? 0);
     storage[key] = {
       capacity,
       current: Math.min(Math.max(0, currentRaw), capacity)
@@ -443,11 +471,13 @@ function normalizeFieldState(candidate: unknown, fallback: FieldState): FieldSta
   }
 
   const width =
-    typeof (candidate as FieldState).width === 'number' && Number.isFinite((candidate as FieldState).width)
+    typeof (candidate as FieldState).width === 'number' &&
+    Number.isFinite((candidate as FieldState).width)
       ? Math.max(1, Math.floor((candidate as FieldState).width))
       : fallback.width;
   const height =
-    typeof (candidate as FieldState).height === 'number' && Number.isFinite((candidate as FieldState).height)
+    typeof (candidate as FieldState).height === 'number' &&
+    Number.isFinite((candidate as FieldState).height)
       ? Math.max(1, Math.floor((candidate as FieldState).height))
       : fallback.height;
 
@@ -458,9 +488,13 @@ function normalizeFieldState(candidate: unknown, fallback: FieldState): FieldSta
       if (!isRecord(value) || parseTileKey(key) == null) {
         continue;
       }
-      const tilled = typeof (value as { tilled?: unknown }).tilled === 'boolean' ? (value as { tilled: boolean }).tilled : false;
+      const tilled =
+        typeof (value as { tilled?: unknown }).tilled === 'boolean'
+          ? (value as { tilled: boolean }).tilled
+          : false;
       const moistureRaw = (value as { moisture?: unknown }).moisture;
-      const moisture = typeof moistureRaw === 'number' && Number.isFinite(moistureRaw) ? clamp01(moistureRaw) : 0;
+      const moisture =
+        typeof moistureRaw === 'number' && Number.isFinite(moistureRaw) ? clamp01(moistureRaw) : 0;
       const crop = normalizeCropTileState((value as { crop?: unknown }).crop);
       if (tilled || crop) {
         tiles[key] = { tilled, moisture, crop };
@@ -481,14 +515,23 @@ function normalizeLivestockState(candidate: unknown): LivestockHerdState {
   if (Array.isArray((candidate as LivestockHerdState).animals)) {
     for (const entry of (candidate as LivestockHerdState).animals ?? []) {
       if (!isRecord(entry)) continue;
-      const id = typeof entry.id === 'number' && Number.isFinite(entry.id) ? Math.max(0, Math.floor(entry.id)) : animals.length;
+      const id =
+        typeof entry.id === 'number' && Number.isFinite(entry.id)
+          ? Math.max(0, Math.floor(entry.id))
+          : animals.length;
       const speciesId = typeof entry.speciesId === 'string' ? entry.speciesId : 'chicken';
       const ageDays =
-        typeof entry.ageDays === 'number' && Number.isFinite(entry.ageDays) ? Math.max(0, entry.ageDays) : 0;
+        typeof entry.ageDays === 'number' && Number.isFinite(entry.ageDays)
+          ? Math.max(0, entry.ageDays)
+          : 0;
       const growth =
-        typeof entry.growth === 'number' && Number.isFinite(entry.growth) ? clamp01(entry.growth) : 0;
+        typeof entry.growth === 'number' && Number.isFinite(entry.growth)
+          ? clamp01(entry.growth)
+          : 0;
       const hunger =
-        typeof entry.hunger === 'number' && Number.isFinite(entry.hunger) ? clamp01(entry.hunger) : 0;
+        typeof entry.hunger === 'number' && Number.isFinite(entry.hunger)
+          ? clamp01(entry.hunger)
+          : 0;
       const produceProgress =
         typeof entry.produceProgress === 'number' && Number.isFinite(entry.produceProgress)
           ? Math.max(0, entry.produceProgress)
@@ -525,7 +568,10 @@ function normalizeMailState(candidate: unknown): MailState {
   if (Array.isArray((candidate as MailState).inbox)) {
     for (const entry of (candidate as MailState).inbox ?? []) {
       if (!isRecord(entry)) continue;
-      const id = typeof entry.id === 'number' && Number.isFinite(entry.id) ? Math.max(0, Math.floor(entry.id)) : inbox.length;
+      const id =
+        typeof entry.id === 'number' && Number.isFinite(entry.id)
+          ? Math.max(0, Math.floor(entry.id))
+          : inbox.length;
       const sender = typeof entry.sender === 'string' ? entry.sender : 'unknown';
       const subject = typeof entry.subject === 'string' ? entry.subject : 'Untitled';
       const body = typeof entry.body === 'string' ? entry.body : '';
@@ -543,7 +589,10 @@ function normalizeMailState(candidate: unknown): MailState {
   if (Array.isArray((candidate as MailState).scheduled)) {
     for (const entry of (candidate as MailState).scheduled ?? []) {
       if (!isRecord(entry)) continue;
-      const id = typeof entry.id === 'number' && Number.isFinite(entry.id) ? Math.max(0, Math.floor(entry.id)) : scheduled.length;
+      const id =
+        typeof entry.id === 'number' && Number.isFinite(entry.id)
+          ? Math.max(0, Math.floor(entry.id))
+          : scheduled.length;
       const templateId = typeof entry.templateId === 'string' ? entry.templateId : 'unknown';
       const npcId = typeof entry.npcId === 'string' ? entry.npcId : 'unknown';
       const subject = typeof entry.subject === 'string' ? entry.subject : 'Untitled';
@@ -558,11 +607,13 @@ function normalizeMailState(candidate: unknown): MailState {
   }
 
   const nextId =
-    typeof (candidate as MailState).nextId === 'number' && Number.isFinite((candidate as MailState).nextId)
+    typeof (candidate as MailState).nextId === 'number' &&
+    Number.isFinite((candidate as MailState).nextId)
       ? Math.max(inbox.length + scheduled.length, Math.floor((candidate as MailState).nextId))
       : Math.max(inbox.length + scheduled.length, fallback.nextId);
   const lastGeneratedDay =
-    typeof (candidate as MailState).lastGeneratedDay === 'number' && Number.isFinite((candidate as MailState).lastGeneratedDay)
+    typeof (candidate as MailState).lastGeneratedDay === 'number' &&
+    Number.isFinite((candidate as MailState).lastGeneratedDay)
       ? Math.max(0, Math.floor((candidate as MailState).lastGeneratedDay))
       : fallback.lastGeneratedDay;
 
@@ -579,7 +630,10 @@ function normalizeJobQueueState(candidate: unknown): BackgroundJobQueueState {
   if (Array.isArray((candidate as BackgroundJobQueueState).jobs)) {
     for (const entry of (candidate as BackgroundJobQueueState).jobs ?? []) {
       if (!isRecord(entry)) continue;
-      const id = typeof entry.id === 'number' && Number.isFinite(entry.id) ? Math.max(0, Math.floor(entry.id)) : jobs.length;
+      const id =
+        typeof entry.id === 'number' && Number.isFinite(entry.id)
+          ? Math.max(0, Math.floor(entry.id))
+          : jobs.length;
       const type = typeof entry.type === 'string' ? entry.type : 'generic';
       const scheduledAt =
         typeof entry.scheduledAt === 'number' && Number.isFinite(entry.scheduledAt)
@@ -616,16 +670,21 @@ function normalizeCropTileState(candidate: unknown): CropTileState | null {
   if (!isRecord(candidate)) {
     return null;
   }
-  const cropId = typeof (candidate as CropTileState).cropId === 'string' ? (candidate as CropTileState).cropId : null;
+  const cropId =
+    typeof (candidate as CropTileState).cropId === 'string'
+      ? (candidate as CropTileState).cropId
+      : null;
   if (!cropId) {
     return null;
   }
   const stageIndex =
-    typeof (candidate as CropTileState).stageIndex === 'number' && Number.isFinite((candidate as CropTileState).stageIndex)
+    typeof (candidate as CropTileState).stageIndex === 'number' &&
+    Number.isFinite((candidate as CropTileState).stageIndex)
       ? Math.max(0, Math.floor((candidate as CropTileState).stageIndex))
       : 0;
   const stageElapsed =
-    typeof (candidate as CropTileState).stageElapsed === 'number' && Number.isFinite((candidate as CropTileState).stageElapsed)
+    typeof (candidate as CropTileState).stageElapsed === 'number' &&
+    Number.isFinite((candidate as CropTileState).stageElapsed)
       ? Math.max(0, (candidate as CropTileState).stageElapsed)
       : 0;
   const ready = (candidate as CropTileState).ready === true;
@@ -646,12 +705,14 @@ function normalizeTimeState(candidate: unknown) {
       ? (candidate as { secondsPerDay: number }).secondsPerDay
       : fallback.secondsPerDay;
   const elapsedRaw =
-    typeof (candidate as { elapsed?: number }).elapsed === 'number' && Number.isFinite((candidate as { elapsed?: number }).elapsed)
+    typeof (candidate as { elapsed?: number }).elapsed === 'number' &&
+    Number.isFinite((candidate as { elapsed?: number }).elapsed)
       ? Math.max(0, (candidate as { elapsed?: number }).elapsed!)
       : fallback.elapsed;
   const elapsed = Math.min(elapsedRaw, secondsPerDay);
   const day =
-    typeof (candidate as { day?: number }).day === 'number' && Number.isFinite((candidate as { day?: number }).day)
+    typeof (candidate as { day?: number }).day === 'number' &&
+    Number.isFinite((candidate as { day?: number }).day)
       ? Math.max(1, Math.floor((candidate as { day?: number }).day!))
       : fallback.day;
 
@@ -665,7 +726,8 @@ function normalizeStaminaState(candidate: unknown) {
   }
 
   const max =
-    typeof (candidate as { max?: number }).max === 'number' && Number.isFinite((candidate as { max?: number }).max)
+    typeof (candidate as { max?: number }).max === 'number' &&
+    Number.isFinite((candidate as { max?: number }).max)
       ? Math.max(1, Math.floor((candidate as { max?: number }).max!))
       : fallback.max;
   const currentRaw =
@@ -691,7 +753,9 @@ function normalizeWeatherState(candidate: unknown): WeatherState {
     return fallback;
   }
 
-  const current = isWeatherType((candidate as WeatherState).current) ? (candidate as WeatherState).current : fallback.current;
+  const current = isWeatherType((candidate as WeatherState).current)
+    ? (candidate as WeatherState).current
+    : fallback.current;
   const duration =
     typeof (candidate as WeatherState).duration === 'number' &&
     Number.isFinite((candidate as WeatherState).duration) &&
@@ -711,7 +775,8 @@ function normalizeWeatherState(candidate: unknown): WeatherState {
       : fallback.moistureDeltaPerSecond;
   const events = normalizeWeatherEvents((candidate as WeatherState).events);
   const rngState =
-    typeof (candidate as WeatherState).rngState === 'number' && Number.isFinite((candidate as WeatherState).rngState)
+    typeof (candidate as WeatherState).rngState === 'number' &&
+    Number.isFinite((candidate as WeatherState).rngState)
       ? (candidate as WeatherState).rngState >>> 0
       : fallback.rngState;
 
@@ -730,7 +795,8 @@ function normalizeWeatherEvents(candidate: unknown): WeatherEventsState {
       ? Math.max(0, (candidate as WeatherEventsState).nextRollIn)
       : fallback.nextRollIn;
   const serial =
-    typeof (candidate as WeatherEventsState).serial === 'number' && Number.isFinite((candidate as WeatherEventsState).serial)
+    typeof (candidate as WeatherEventsState).serial === 'number' &&
+    Number.isFinite((candidate as WeatherEventsState).serial)
       ? Math.max(0, Math.floor((candidate as WeatherEventsState).serial))
       : fallback.serial;
 
@@ -745,19 +811,32 @@ function normalizeWeatherEvents(candidate: unknown): WeatherEventsState {
           ? entry.duration
           : 60;
       const remaining =
-        typeof entry.remaining === 'number' && Number.isFinite(entry.remaining) && entry.remaining >= 0
+        typeof entry.remaining === 'number' &&
+        Number.isFinite(entry.remaining) &&
+        entry.remaining >= 0
           ? Math.min(entry.remaining, duration)
           : duration;
       const intensity =
-        typeof entry.intensity === 'number' && Number.isFinite(entry.intensity) ? entry.intensity : 1;
-      active.push({ id, type: type as WeatherEventsState['active'][number]['type'], duration, remaining, intensity });
+        typeof entry.intensity === 'number' && Number.isFinite(entry.intensity)
+          ? entry.intensity
+          : 1;
+      active.push({
+        id,
+        type: type as WeatherEventsState['active'][number]['type'],
+        duration,
+        remaining,
+        intensity
+      });
     }
   }
 
   return { active, nextRollIn, serial };
 }
 
-function assembleLatestState(save: Partial<SaveV8> & SaveV3, resourceTable: ResourcesTable): SaveV8 {
+function assembleLatestState(
+  save: Partial<SaveV8> & SaveV3,
+  resourceTable: ResourcesTable
+): SaveV8 {
   const baseState = defaultState(resourceTable);
   const resources = sanitizeResources(save.resources ?? {}, resourceTable);
   const structures = normalizeStructures(save.structures, baseState.structures);
@@ -766,7 +845,9 @@ function assembleLatestState(save: Partial<SaveV8> & SaveV3, resourceTable: Reso
   const buildings = normalizeBuildingInstances(save.buildings);
   const productionNodes = normalizeProductionNodes((save as Partial<SaveV7>).productionNodes);
   const productionQueue = normalizeProductionQueue((save as Partial<SaveV7>).productionQueue);
-  const productionModifiers = normalizeProductionModifiers((save as Partial<SaveV7>).productionModifiers);
+  const productionModifiers = normalizeProductionModifiers(
+    (save as Partial<SaveV7>).productionModifiers
+  );
   const resourceStorage = normalizeResourceStorage(
     (save as Partial<SaveV7>).resourceStorage,
     resourceTable,
@@ -833,7 +914,9 @@ function assembleLatestState(save: Partial<SaveV8> & SaveV3, resourceTable: Reso
     schemaVersion: CURRENT_SCHEMA_VERSION,
     seed: typeof save.seed === 'number' && Number.isFinite(save.seed) ? save.seed : 0,
     civilization:
-      typeof save.civilization === 'string' && save.civilization ? save.civilization : 'teotihuacan',
+      typeof save.civilization === 'string' && save.civilization
+        ? save.civilization
+        : 'teotihuacan',
     resources,
     resourceStorage,
     structures,
@@ -929,11 +1012,17 @@ export function migrateSave(raw: unknown, resourceTable: ResourcesTable): GameSt
   }
 
   if (isSaveV1(raw)) {
-    return assembleLatestState(migrateV1ToV3(raw, resourceTable) as unknown as Partial<SaveV8> & SaveV3, resourceTable);
+    return assembleLatestState(
+      migrateV1ToV3(raw, resourceTable) as unknown as Partial<SaveV8> & SaveV3,
+      resourceTable
+    );
   }
 
   if (isSaveV0(raw)) {
-    return assembleLatestState(migrateV0ToV3(raw, resourceTable) as unknown as Partial<SaveV8> & SaveV3, resourceTable);
+    return assembleLatestState(
+      migrateV0ToV3(raw, resourceTable) as unknown as Partial<SaveV8> & SaveV3,
+      resourceTable
+    );
   }
 
   return null;

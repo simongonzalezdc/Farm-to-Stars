@@ -50,7 +50,11 @@ function formatObjectiveProgress(objective: QuestObjective): string {
   return `${clamped}/${objective.target}`;
 }
 
-function createBadge(doc: Document, text: string, tone: 'muted' | 'accent' | 'success'): HTMLSpanElement {
+function createBadge(
+  doc: Document,
+  text: string,
+  tone: 'muted' | 'accent' | 'success'
+): HTMLSpanElement {
   const badge = doc.createElement('span');
   badge.className = `hud-quest-card__badge hud-quest-card__badge--${tone}`;
   badge.textContent = text;
@@ -87,7 +91,8 @@ export class QuestLog {
 
     this.emptyState = doc.createElement('div');
     this.emptyState.className = 'hud-quest-log__empty';
-    this.emptyState.textContent = options.emptyState ?? 'No active quests yet. Check back after exploring!';
+    this.emptyState.textContent =
+      options.emptyState ?? 'No active quests yet. Check back after exploring!';
     root.appendChild(this.emptyState);
 
     this.element = root;
@@ -197,7 +202,10 @@ export class QuestLog {
       for (const objective of quest.objectives) {
         const li = doc.createElement('li');
         li.className = 'hud-quest-card__objective';
-        const progress = Math.min(Math.max(objective.current / Math.max(objective.target, 1), 0), 1);
+        const progress = Math.min(
+          Math.max(objective.current / Math.max(objective.target, 1), 0),
+          1
+        );
         li.dataset.progress = progress.toFixed(2);
         li.textContent = objective.description;
 
@@ -210,7 +218,8 @@ export class QuestLog {
 
         const meta = doc.createElement('span');
         meta.className = 'hud-quest-card__objective-progress';
-        meta.textContent = formatObjectiveProgress(objective) + (objective.optional ? ' · Optional' : '');
+        meta.textContent =
+          formatObjectiveProgress(objective) + (objective.optional ? ' · Optional' : '');
 
         li.append(progressBar, meta);
         objectivesList.appendChild(li);
@@ -255,7 +264,10 @@ export class QuestLog {
     this.render();
   }
 
-  private emit<TType extends QuestLogEventType>(type: TType, detail: QuestLogEventMap[TType]['detail']) {
+  private emit<TType extends QuestLogEventType>(
+    type: TType,
+    detail: QuestLogEventMap[TType]['detail']
+  ) {
     const event = new CustomEvent(type, { detail }) as QuestLogEventMap[TType];
     this.eventTarget.dispatchEvent(event);
   }

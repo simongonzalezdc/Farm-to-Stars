@@ -122,7 +122,10 @@ export class StaminaTipsOverlay {
     }
 
     if (tips.length === 0) {
-      tips.push({ text: 'All clear. Keep an eye on the calendar for seasonal opportunities.', tone: 'info' });
+      tips.push({
+        text: 'All clear. Keep an eye on the calendar for seasonal opportunities.',
+        tone: 'info'
+      });
     }
 
     return dedupeTips(tips);

@@ -96,4 +96,3 @@ export class MapLegend {
     this.isVisible = false;
   }
 }
-

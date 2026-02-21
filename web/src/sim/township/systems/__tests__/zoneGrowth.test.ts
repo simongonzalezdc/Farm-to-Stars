@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  tickZoneGrowth,
-  createZone,
-  upgradeZone,
-  canUpgradeZone
-} from '../zoneGrowth';
+import { tickZoneGrowth, createZone, upgradeZone, canUpgradeZone } from '../zoneGrowth';
 import type { TownshipState, TownshipCivilizationDefinition } from '../../../../types.township';
 import { TOWNSHIP_CONFIG } from '../../../../types.township';
 
@@ -303,7 +298,7 @@ describe('Zone Growth System', () => {
         ...createMockCivilization(),
         townshipBonuses: {
           ...createMockCivilization().townshipBonuses,
-          zoneCapacity: 1.10
+          zoneCapacity: 1.1
         }
       };
 

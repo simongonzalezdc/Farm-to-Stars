@@ -1,9 +1,5 @@
 import perkContent from '../../../content/perks.json';
-import {
-  gameEvents,
-  EVENT_TOOL_PERK_UNLOCKED,
-  type ToolPerkUnlockedDetail
-} from '../../world';
+import { gameEvents, EVENT_TOOL_PERK_UNLOCKED, type ToolPerkUnlockedDetail } from '../../world';
 import {
   type GameEvent,
   type GameState,
@@ -49,11 +45,12 @@ const DEFAULT_MODIFIER: ToolPerkModifier = {
 
 const rawContent = perkContent as ToolPerkContentFile;
 
-export const TOOL_PERK_DEFINITIONS: readonly ToolPerkDefinition[] =
-  rawContent.perks.map((perk) => ({
+export const TOOL_PERK_DEFINITIONS: readonly ToolPerkDefinition[] = rawContent.perks.map(
+  (perk) => ({
     ...perk,
     modifiers: { ...perk.modifiers }
-  }));
+  })
+);
 
 const PERKS_BY_ID = new Map<ToolPerkId, ToolPerkDefinition>();
 const PERKS_BY_TOOL = new Map<ToolId, ToolPerkDefinition[]>();
@@ -149,7 +146,10 @@ export function getToolPerkModifiers(mastery: ToolMasteryState, toolId: ToolId):
     }
     const modifiers = perk.modifiers ?? {};
     if (modifiers.staminaCostMultiplier != null) {
-      base.staminaCostMultiplier = Math.min(base.staminaCostMultiplier, modifiers.staminaCostMultiplier);
+      base.staminaCostMultiplier = Math.min(
+        base.staminaCostMultiplier,
+        modifiers.staminaCostMultiplier
+      );
     }
     if (modifiers.staminaCostDelta != null) {
       base.staminaCostDelta += modifiers.staminaCostDelta;

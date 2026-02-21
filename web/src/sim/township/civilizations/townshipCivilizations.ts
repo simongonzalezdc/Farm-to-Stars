@@ -26,11 +26,11 @@ const TOWNSHIP_CIVILIZATION_BONUSES: Record<CivilizationId, TownshipCivilization
   // Teotihuacan Empire - Solar Technology Specialists
   // ============================================================================
   teotihuacan: {
-    populationGrowth: 1.00, // Normal growth
+    populationGrowth: 1.0, // Normal growth
     constructionSpeed: 1.15, // +15% faster building (solar-powered tools)
     happinessBonus: 0, // No base happiness bonus
-    zoneCapacity: 1.00, // Normal capacity
-    serviceCoverage: 1.10, // +10% service radius (solar power distribution)
+    zoneCapacity: 1.0, // Normal capacity
+    serviceCoverage: 1.1, // +10% service radius (solar power distribution)
     maintenanceCost: 0.95, // -5% maintenance (efficient solar energy)
 
     unique: {
@@ -47,11 +47,11 @@ const TOWNSHIP_CIVILIZATION_BONUSES: Record<CivilizationId, TownshipCivilization
   // ============================================================================
   maya: {
     populationGrowth: 1.05, // +5% growth (educated population attracts migrants)
-    constructionSpeed: 1.00, // Normal construction
+    constructionSpeed: 1.0, // Normal construction
     happinessBonus: 10, // +10 base happiness (cultural sophistication)
-    zoneCapacity: 1.10, // +10% capacity (efficient urban planning)
-    serviceCoverage: 1.20, // +20% service radius (advanced infrastructure)
-    maintenanceCost: 1.00, // Normal maintenance
+    zoneCapacity: 1.1, // +10% capacity (efficient urban planning)
+    serviceCoverage: 1.2, // +20% service radius (advanced infrastructure)
+    maintenanceCost: 1.0, // Normal maintenance
 
     unique: {
       name: 'Observatory Network',
@@ -66,18 +66,18 @@ const TOWNSHIP_CIVILIZATION_BONUSES: Record<CivilizationId, TownshipCivilization
   // Moche Kingdoms - Water Efficiency Experts
   // ============================================================================
   moche: {
-    populationGrowth: 1.00, // Normal growth
-    constructionSpeed: 1.00, // Normal construction
+    populationGrowth: 1.0, // Normal growth
+    constructionSpeed: 1.0, // Normal construction
     happinessBonus: 5, // +5 happiness (good water management)
-    zoneCapacity: 1.00, // Normal capacity
+    zoneCapacity: 1.0, // Normal capacity
     serviceCoverage: 1.15, // +15% service radius (water distribution networks)
-    maintenanceCost: 0.90, // -10% maintenance (sustainable water systems)
+    maintenanceCost: 0.9, // -10% maintenance (sustainable water systems)
 
     unique: {
       name: 'Aqueduct Mastery',
       description: 'Water service buildings cost less and serve larger areas',
       effect: {
-        waterRadius: 1.40, // +40% water coverage radius
+        waterRadius: 1.4, // +40% water coverage radius
         waterCost: 0.75 // -25% cost for water infrastructure
       }
     }
@@ -87,11 +87,11 @@ const TOWNSHIP_CIVILIZATION_BONUSES: Record<CivilizationId, TownshipCivilization
   // Hopewell Commonwealth - Trade & Economy Focus
   // ============================================================================
   hopewell: {
-    populationGrowth: 1.10, // +10% growth (trade routes attract people)
-    constructionSpeed: 1.00, // Normal construction
+    populationGrowth: 1.1, // +10% growth (trade routes attract people)
+    constructionSpeed: 1.0, // Normal construction
     happinessBonus: 5, // +5 happiness (prosperous economy)
     zoneCapacity: 1.05, // +5% capacity
-    serviceCoverage: 1.00, // Normal service radius
+    serviceCoverage: 1.0, // Normal service radius
     maintenanceCost: 0.85, // -15% maintenance (efficient trade economy)
 
     unique: {
@@ -108,19 +108,19 @@ const TOWNSHIP_CIVILIZATION_BONUSES: Record<CivilizationId, TownshipCivilization
   // Puebloan Federation - Sustainability Leaders
   // ============================================================================
   puebloan: {
-    populationGrowth: 1.00, // Normal growth (quality over quantity)
+    populationGrowth: 1.0, // Normal growth (quality over quantity)
     constructionSpeed: 0.95, // -5% construction (careful, sustainable building)
     happinessBonus: 15, // +15 happiness (sustainable, harmonious living)
     zoneCapacity: 1.15, // +15% capacity (efficient use of space)
-    serviceCoverage: 1.10, // +10% service radius
-    maintenanceCost: 0.80, // -20% maintenance (durable, sustainable buildings)
+    serviceCoverage: 1.1, // +10% service radius
+    maintenanceCost: 0.8, // -20% maintenance (durable, sustainable buildings)
 
     unique: {
       name: 'Sustainable Architecture',
       description: 'Buildings have reduced environmental impact and higher durability',
       effect: {
         environmentBonus: 20, // +20 environment quality
-        durability: 1.50 // +50% building durability
+        durability: 1.5 // +50% building durability
       }
     }
   }
@@ -137,7 +137,7 @@ const TOWNSHIP_ADVISOR_DIALOGUE: Record<
 > = {
   teotihuacan: {
     welcome:
-      "Our ancestors built cities powered by the Sun. Now we bring that wisdom to this district. Let us construct a township worthy of the solar gods.",
+      'Our ancestors built cities powered by the Sun. Now we bring that wisdom to this district. Let us construct a township worthy of the solar gods.',
     milestones: {
       '500_population':
         'The Sun shines favorably on our growth! Five hundred souls now call this district home.',
@@ -147,7 +147,8 @@ const TOWNSHIP_ADVISOR_DIALOGUE: Record<
         'Five thousand strong! The pyramids of old would be proud of this achievement.'
     },
     warnings: {
-      low_happiness: 'The people grow restless. Perhaps more solar-powered amenities would please them?',
+      low_happiness:
+        'The people grow restless. Perhaps more solar-powered amenities would please them?',
       no_power: 'Without power, our technological advantage is lost. Build solar generators!',
       unemployment: 'Idle hands trouble the spirit. We must create more opportunities for work.'
     }
@@ -155,7 +156,7 @@ const TOWNSHIP_ADVISOR_DIALOGUE: Record<
 
   maya: {
     welcome:
-      "Through centuries of astronomical study, we learned to plan cities with cosmic precision. Now we apply that knowledge here.",
+      'Through centuries of astronomical study, we learned to plan cities with cosmic precision. Now we apply that knowledge here.',
     milestones: {
       '500_population': 'The stars align! Our district reaches five hundred citizens.',
       '1000_population':
@@ -189,7 +190,7 @@ const TOWNSHIP_ADVISOR_DIALOGUE: Record<
 
   hopewell: {
     welcome:
-      "Trade routes that began at our homestead now expand into a township. Commerce brings prosperity to all.",
+      'Trade routes that began at our homestead now expand into a township. Commerce brings prosperity to all.',
     milestones: {
       '500_population': 'Five hundred traders and artisans! The marketplace buzzes with activity.',
       '1000_population':
@@ -206,7 +207,7 @@ const TOWNSHIP_ADVISOR_DIALOGUE: Record<
 
   puebloan: {
     welcome:
-      "Our ancestors built cliff dwellings that stood for centuries. Now we bring that sustainable wisdom to township planning.",
+      'Our ancestors built cliff dwellings that stood for centuries. Now we bring that sustainable wisdom to township planning.',
     milestones: {
       '500_population':
         'Five hundred citizens living in harmony with their environment. Our ancestors smile.',
@@ -216,8 +217,7 @@ const TOWNSHIP_ADVISOR_DIALOGUE: Record<
         'Five thousand souls in balance! This township will endure for generations.'
     },
     warnings: {
-      low_happiness:
-        'Harmony is disrupted. Perhaps too much industry pollutes our environment?',
+      low_happiness: 'Harmony is disrupted. Perhaps too much industry pollutes our environment?',
       environmental: 'Balance industry with nature. Our people value clean air and green spaces.',
       unemployment: 'All must contribute to the community. Expand work opportunities sustainably.'
     }
@@ -237,10 +237,10 @@ export function getTownshipCivilization(
   civilizationId: CivilizationId,
   homesteadBonuses: Record<string, number> = {}
 ): TownshipCivilizationDefinition {
-  const townshipBonuses = TOWNSHIP_CIVILIZATION_BONUSES[civilizationId] ||
-    TOWNSHIP_CIVILIZATION_BONUSES.teotihuacan;
-  const dialogue = TOWNSHIP_ADVISOR_DIALOGUE[civilizationId] ||
-    TOWNSHIP_ADVISOR_DIALOGUE.teotihuacan;
+  const townshipBonuses =
+    TOWNSHIP_CIVILIZATION_BONUSES[civilizationId] || TOWNSHIP_CIVILIZATION_BONUSES.teotihuacan;
+  const dialogue =
+    TOWNSHIP_ADVISOR_DIALOGUE[civilizationId] || TOWNSHIP_ADVISOR_DIALOGUE.teotihuacan;
 
   // Civilization names
   const names: Record<CivilizationId, string> = {
@@ -265,13 +265,19 @@ export function getTownshipCivilization(
  *
  * @returns Map of civilization ID to definition
  */
-export function getAllTownshipCivilizations(): Record<CivilizationId, TownshipCivilizationDefinition> {
+export function getAllTownshipCivilizations(): Record<
+  CivilizationId,
+  TownshipCivilizationDefinition
+> {
   const civIds: CivilizationId[] = ['teotihuacan', 'maya', 'moche', 'hopewell', 'puebloan'];
 
-  return civIds.reduce((acc, id) => {
-    acc[id] = getTownshipCivilization(id);
-    return acc;
-  }, {} as Record<CivilizationId, TownshipCivilizationDefinition>);
+  return civIds.reduce(
+    (acc, id) => {
+      acc[id] = getTownshipCivilization(id);
+      return acc;
+    },
+    {} as Record<CivilizationId, TownshipCivilizationDefinition>
+  );
 }
 
 /**

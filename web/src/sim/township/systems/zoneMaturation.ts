@@ -84,17 +84,13 @@ export class ZoneMaturationSystem {
   /**
    * Try to spawn a building in a zone
    */
-  private trySpawnBuilding(
-    state: TownshipState,
-    zone: Zone,
-    buildings: BuildingsTable
-  ): boolean {
+  private trySpawnBuilding(state: TownshipState, zone: Zone, buildings: BuildingsTable): boolean {
     // Get appropriate building type for zone
     const buildingType = this.zoneToBuildingType(zone.type);
 
     // Get available buildings of this type
     const availableBuildings = getBuildingsByType(buildingType)
-      .filter(b => isBuildingUnlocked(b, state.population.total, state.civilization))
+      .filter((b) => isBuildingUnlocked(b, state.population.total, state.civilization))
       .sort((a, b) => a.tier - b.tier); // Prefer lower tiers first
 
     if (availableBuildings.length === 0) return false;
@@ -103,7 +99,8 @@ export class ZoneMaturationSystem {
     for (const buildingDef of availableBuildings) {
       // Check if we can afford it
       const canAfford = Object.entries(buildingDef.cost).every(
-        ([resourceId, cost]) => (state.resources[resourceId as keyof typeof state.resources] ?? 0) >= cost
+        ([resourceId, cost]) =>
+          (state.resources[resourceId as keyof typeof state.resources] ?? 0) >= cost
       );
 
       if (!canAfford) continue;
@@ -200,12 +197,7 @@ export class ZoneMaturationSystem {
     const { width, height } = size;
 
     // Check grid bounds
-    if (
-      x < 0 ||
-      y < 0 ||
-      x + width > state.gridSize.width ||
-      y + height > state.gridSize.height
-    ) {
+    if (x < 0 || y < 0 || x + width > state.gridSize.width || y + height > state.gridSize.height) {
       return false;
     }
 

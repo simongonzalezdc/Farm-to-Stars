@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { getFeatureConfig, isFeatureEnabled, overrideFeatureConfig, resetFeatureConfig } from '../features';
+import {
+  getFeatureConfig,
+  isFeatureEnabled,
+  overrideFeatureConfig,
+  resetFeatureConfig
+} from '../features';
 
 describe('feature config', () => {
   afterEach(() => {
@@ -52,4 +57,3 @@ describe('feature config', () => {
     expect(isFeatureEnabled('exportTownship')).toBe(false);
   });
 });
-

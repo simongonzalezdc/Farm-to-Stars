@@ -24,9 +24,7 @@ export function setSeason(next: SeasonId) {
   const previousSeason = currentSeason;
   currentSeason = next;
   const detail: SeasonChangeDetail = { season: currentSeason, previousSeason };
-  seasonEvents.dispatchEvent(
-    new CustomEvent<SeasonChangeDetail>(EVENT_SEASON_CHANGED, { detail })
-  );
+  seasonEvents.dispatchEvent(new CustomEvent<SeasonChangeDetail>(EVENT_SEASON_CHANGED, { detail }));
 }
 
 export function resetSeason(season: SeasonId = DEFAULT_SEASON) {

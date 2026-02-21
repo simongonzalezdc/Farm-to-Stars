@@ -57,7 +57,10 @@ function scheduleRelease(gain: Tone.Gain, duration: number) {
   gain.gain.linearRampToValueAtTime(0, now + Math.max(duration, 0.08));
 }
 
-export function createLivestockAudio(destination: Tone.Gain, options: LivestockAudioOptions): LivestockAudioController {
+export function createLivestockAudio(
+  destination: Tone.Gain,
+  options: LivestockAudioOptions
+): LivestockAudioController {
   const { shouldPlay, debug = false, sustainSeconds = 0.35 } = options;
 
   const produceGain = new Tone.Gain(0).connect(destination);
@@ -77,7 +80,14 @@ export function createLivestockAudio(destination: Tone.Gain, options: LivestockA
     oscillator: { type: 'square' },
     filter: { type: 'lowpass', frequency: 420 },
     envelope: { attack: 0.01, decay: 0.4, sustain: 0, release: 1.6 },
-    filterEnvelope: { attack: 0.02, decay: 0.35, sustain: 0, release: 1.2, baseFrequency: 220, octaves: 1.1 }
+    filterEnvelope: {
+      attack: 0.02,
+      decay: 0.35,
+      sustain: 0,
+      release: 1.2,
+      baseFrequency: 220,
+      octaves: 1.1
+    }
   }).connect(warningGain);
   const warningNoise = new Tone.NoiseSynth({
     noise: { type: 'brown' },

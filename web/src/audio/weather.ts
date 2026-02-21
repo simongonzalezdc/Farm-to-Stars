@@ -92,8 +92,15 @@ export function createWeatherAmbience(
   rainNoise.connect(rainFilter).connect(rainAutoFilter).connect(rainGain);
 
   const thunderGain = new Tone.Gain(0).connect(destination);
-  const thunderFilter = new Tone.Filter({ type: 'lowpass', frequency: 500, Q: 0.8 }).connect(thunderGain);
-  const thunderEnvelope = new Tone.AmplitudeEnvelope({ attack: 0.08, decay: 0.7, sustain: 0, release: 1.8 });
+  const thunderFilter = new Tone.Filter({ type: 'lowpass', frequency: 500, Q: 0.8 }).connect(
+    thunderGain
+  );
+  const thunderEnvelope = new Tone.AmplitudeEnvelope({
+    attack: 0.08,
+    decay: 0.7,
+    sustain: 0,
+    release: 1.8
+  });
   const thunderNoise = new Tone.Noise('brown');
   safeStart(thunderNoise);
   thunderNoise.connect(thunderEnvelope).connect(thunderFilter);

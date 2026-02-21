@@ -305,7 +305,7 @@ export class TownshipController {
    */
   public deleteZone(zoneId: string): boolean {
     const state = this.manager.getState();
-    const index = state.zones.findIndex(z => z.id === zoneId);
+    const index = state.zones.findIndex((z) => z.id === zoneId);
 
     if (index === -1) return false;
 
@@ -318,7 +318,7 @@ export class TownshipController {
    */
   public deleteBuilding(buildingId: string): boolean {
     const state = this.manager.getState();
-    const index = state.buildings.findIndex(b => b.id === buildingId);
+    const index = state.buildings.findIndex((b) => b.id === buildingId);
 
     if (index === -1) return false;
 
@@ -408,7 +408,9 @@ export class TownshipController {
   /**
    * Generate heatmap for visualization
    */
-  public generateHeatmap(type: import('../../../sim/township/systems/heatmapVisualization').HeatmapType) {
+  public generateHeatmap(
+    type: import('../../../sim/township/systems/heatmapVisualization').HeatmapType
+  ) {
     return this.manager.generateHeatmap(type);
   }
 

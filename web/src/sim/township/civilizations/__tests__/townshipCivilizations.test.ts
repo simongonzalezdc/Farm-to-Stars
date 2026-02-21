@@ -71,7 +71,7 @@ describe('Township Civilizations', () => {
 
     it('merges homestead bonuses when provided', () => {
       const homesteadBonuses = {
-        waterEfficiency: 1.20,
+        waterEfficiency: 1.2,
         researchSpeed: 1.15
       };
 
@@ -123,7 +123,7 @@ describe('Township Civilizations', () => {
 
       it('has +10% service coverage', () => {
         const civ = getTownshipCivilization('teotihuacan');
-        expect(civ.townshipBonuses.serviceCoverage).toBe(1.10);
+        expect(civ.townshipBonuses.serviceCoverage).toBe(1.1);
       });
 
       it('has -5% maintenance cost', () => {
@@ -151,12 +151,12 @@ describe('Township Civilizations', () => {
 
       it('has +10% zone capacity', () => {
         const civ = getTownshipCivilization('maya');
-        expect(civ.townshipBonuses.zoneCapacity).toBe(1.10);
+        expect(civ.townshipBonuses.zoneCapacity).toBe(1.1);
       });
 
       it('has +20% service coverage', () => {
         const civ = getTownshipCivilization('maya');
-        expect(civ.townshipBonuses.serviceCoverage).toBe(1.20);
+        expect(civ.townshipBonuses.serviceCoverage).toBe(1.2);
       });
 
       it('has Observatory Network unique bonus', () => {
@@ -179,13 +179,13 @@ describe('Township Civilizations', () => {
 
       it('has -10% maintenance cost', () => {
         const civ = getTownshipCivilization('moche');
-        expect(civ.townshipBonuses.maintenanceCost).toBe(0.90);
+        expect(civ.townshipBonuses.maintenanceCost).toBe(0.9);
       });
 
       it('has Aqueduct Mastery unique bonus', () => {
         const civ = getTownshipCivilization('moche');
         expect(civ.townshipBonuses.unique?.name).toBe('Aqueduct Mastery');
-        expect(civ.townshipBonuses.unique?.effect.waterRadius).toBe(1.40);
+        expect(civ.townshipBonuses.unique?.effect.waterRadius).toBe(1.4);
         expect(civ.townshipBonuses.unique?.effect.waterCost).toBe(0.75);
       });
     });
@@ -193,7 +193,7 @@ describe('Township Civilizations', () => {
     describe('Hopewell (Trade & Economy)', () => {
       it('has +10% population growth', () => {
         const civ = getTownshipCivilization('hopewell');
-        expect(civ.townshipBonuses.populationGrowth).toBe(1.10);
+        expect(civ.townshipBonuses.populationGrowth).toBe(1.1);
       });
 
       it('has +5 base happiness', () => {
@@ -232,14 +232,14 @@ describe('Township Civilizations', () => {
 
       it('has -20% maintenance cost', () => {
         const civ = getTownshipCivilization('puebloan');
-        expect(civ.townshipBonuses.maintenanceCost).toBe(0.80);
+        expect(civ.townshipBonuses.maintenanceCost).toBe(0.8);
       });
 
       it('has Sustainable Architecture unique bonus', () => {
         const civ = getTownshipCivilization('puebloan');
         expect(civ.townshipBonuses.unique?.name).toBe('Sustainable Architecture');
         expect(civ.townshipBonuses.unique?.effect.environmentBonus).toBe(20);
-        expect(civ.townshipBonuses.unique?.effect.durability).toBe(1.50);
+        expect(civ.townshipBonuses.unique?.effect.durability).toBe(1.5);
       });
     });
   });
@@ -287,9 +287,9 @@ describe('Township Civilizations', () => {
     it('returns correct unique bonus values', () => {
       expect(getCivilizationUniqueBonus('teotihuacan', 'powerRadius')).toBe(1.25);
       expect(getCivilizationUniqueBonus('maya', 'educationHappiness')).toBe(15);
-      expect(getCivilizationUniqueBonus('moche', 'waterRadius')).toBe(1.40);
+      expect(getCivilizationUniqueBonus('moche', 'waterRadius')).toBe(1.4);
       expect(getCivilizationUniqueBonus('hopewell', 'commercialIncome')).toBe(1.25);
-      expect(getCivilizationUniqueBonus('puebloan', 'durability')).toBe(1.50);
+      expect(getCivilizationUniqueBonus('puebloan', 'durability')).toBe(1.5);
     });
 
     it('returns 1.0 for non-existent bonus keys', () => {

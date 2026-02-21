@@ -98,7 +98,7 @@ export class BuildModeController {
     // Try to create the particle emitter, but make it optional if it fails
     // Phaser 3.80+ removed createEmitter and uses addParticleEmitter instead
     this.placementEmitter = null;
-    
+
     // Check for new API first (Phaser 3.80+)
     if (typeof (this.particleManager as any).addParticleEmitter === 'function') {
       try {
@@ -222,7 +222,11 @@ export class BuildModeController {
     this.setFeedback('Camera pan + zoom enabled.', 'info');
   }
 
-  private enterBuildMode(type: BuildingType, button: HTMLButtonElement, def?: UiBuildingDefinition) {
+  private enterBuildMode(
+    type: BuildingType,
+    button: HTMLButtonElement,
+    def?: UiBuildingDefinition
+  ) {
     this.mode = 'build';
     this.selected = type;
     this.rotation = 0;
@@ -277,7 +281,10 @@ export class BuildModeController {
 
   private ensureFootprintTiles(count: number) {
     for (let i = this.footprintTiles.length; i < count; i++) {
-      const tile = this.scene.add.image(0, 0, 'tile:outline:valid').setOrigin(0.5, 0.5).setVisible(false);
+      const tile = this.scene.add
+        .image(0, 0, 'tile:outline:valid')
+        .setOrigin(0.5, 0.5)
+        .setVisible(false);
       tile.setAlpha(0.65);
       this.footprintOverlay.add(tile);
       this.footprintTiles.push(tile);
@@ -349,7 +356,7 @@ export class BuildModeController {
     if (this.mode !== 'build' || !this.selected) {
       return;
     }
-    const normalized = ((this.rotation + delta) % 4 + 4) % 4 as Orientation;
+    const normalized = ((((this.rotation + delta) % 4) + 4) % 4) as Orientation;
     if (normalized === this.rotation) {
       return;
     }
@@ -468,7 +475,12 @@ export class BuildModeController {
     return 'Cannot place there.';
   }
 
-  private emitPlacementCelebration(x: number, y: number, def: UiBuildingDefinition, footprint: Footprint) {
+  private emitPlacementCelebration(
+    x: number,
+    y: number,
+    def: UiBuildingDefinition,
+    footprint: Footprint
+  ) {
     const cx = x + (footprint.w - 1) / 2;
     const cy = y + (footprint.h - 1) / 2;
     const { x: sx, y: sy } = gridToScreen(cx, cy, def.elevation ?? 0);

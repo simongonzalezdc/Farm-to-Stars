@@ -52,7 +52,12 @@ export class HeatmapUI {
     this.createHeatmapButton(grid, 'power', '⚡ Power', 'Toggle power coverage heatmap');
     this.createHeatmapButton(grid, 'water', '💧 Water', 'Toggle water coverage heatmap');
     this.createHeatmapButton(grid, 'safety', '🚨 Safety', 'Toggle safety coverage heatmap');
-    this.createHeatmapButton(grid, 'education', '📚 Education', 'Toggle education coverage heatmap');
+    this.createHeatmapButton(
+      grid,
+      'education',
+      '📚 Education',
+      'Toggle education coverage heatmap'
+    );
 
     // Separator
     const separator = document.createElement('div');
@@ -87,7 +92,12 @@ export class HeatmapUI {
   /**
    * Create a heatmap toggle button
    */
-  private createHeatmapButton(parent: HTMLElement, type: HeatmapType, label: string, title: string): void {
+  private createHeatmapButton(
+    parent: HTMLElement,
+    type: HeatmapType,
+    label: string,
+    title: string
+  ): void {
     const button = document.createElement('button');
     button.className = 'heatmap-button';
     button.dataset.heatmap = type;
@@ -119,7 +129,7 @@ export class HeatmapUI {
     if (!this.rootElement) return;
 
     const buttons = this.rootElement.querySelectorAll('.heatmap-button');
-    buttons.forEach(button => {
+    buttons.forEach((button) => {
       const type = (button as HTMLElement).dataset.heatmap;
       if (type === this.activeHeatmap) {
         button.classList.add('active');

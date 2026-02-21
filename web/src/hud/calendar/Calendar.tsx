@@ -159,9 +159,10 @@ export class CalendarHud {
 
     const moisture = snapshot.homestead.moistureDeltaPerSecond;
     const moistureTrend = moisture > 0 ? 'rising' : moisture < 0 ? 'falling' : 'stable';
-    const moistureRate = Math.abs(moisture) < 0.001 ? 'steady soil moisture' : `${
-      Math.abs(moisture).toFixed(3)
-    }/s ${moisture > 0 ? 'gain' : 'loss'}`;
+    const moistureRate =
+      Math.abs(moisture) < 0.001
+        ? 'steady soil moisture'
+        : `${Math.abs(moisture).toFixed(3)}/s ${moisture > 0 ? 'gain' : 'loss'}`;
     this.moistureText.textContent = `Soil ${moistureTrend}: ${moistureRate}`;
 
     this.updateSeasonGrid(snapshot.season.id as SeasonId, progress);

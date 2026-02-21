@@ -31,7 +31,11 @@ describe('HomesteadMetrics', () => {
       { type: 'homestead.crop.matured', cropId: 'wheat', x: 0, y: 0 } as GameEvent,
       { type: 'homestead.crop.withered', cropId: 'potato', x: 1, y: 1 } as GameEvent,
       { type: 'production.cycle', nodeId: 1, recipeId: 'wheat', outputs: { food: 3 } } as GameEvent,
-      { type: 'homestead.time.advanced', day: state.homestead.time.day + 1, normalizedTime: 0 } as GameEvent
+      {
+        type: 'homestead.time.advanced',
+        day: state.homestead.time.day + 1,
+        normalizedTime: 0
+      } as GameEvent
     ];
 
     metrics.recordTick(state, events, 3);

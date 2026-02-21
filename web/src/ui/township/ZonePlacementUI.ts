@@ -100,7 +100,9 @@ export class ZonePlacementUI {
     this.container.appendChild(cancelButton);
 
     // Select residential by default
-    const firstButton = buttonsContainer.querySelector('[data-zone-type="residential"]') as HTMLButtonElement;
+    const firstButton = buttonsContainer.querySelector(
+      '[data-zone-type="residential"]'
+    ) as HTMLButtonElement;
     if (firstButton) {
       this.selectZoneType('residential', firstButton);
     }
@@ -158,7 +160,7 @@ export class ZonePlacementUI {
 
     // Update button states
     const buttons = this.container.querySelectorAll('.zone-button');
-    buttons.forEach(button => {
+    buttons.forEach((button) => {
       const btn = button as HTMLButtonElement;
       const type = btn.dataset.zoneType;
 

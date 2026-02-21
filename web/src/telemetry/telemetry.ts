@@ -1,13 +1,7 @@
 import { getSeasonDefinition } from '../config/seasons';
 import { getNormalizedTime } from '../state/time';
 import { recordPerformanceSample } from './playtest';
-import type {
-  GameEvent,
-  GameState,
-  RecipeIO,
-  ResourceId,
-  WeatherType
-} from '../types';
+import type { GameEvent, GameState, RecipeIO, ResourceId, WeatherType } from '../types';
 
 export interface TelemetrySnapshot {
   season: {

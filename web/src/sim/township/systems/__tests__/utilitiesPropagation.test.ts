@@ -143,7 +143,7 @@ describe('UtilitiesPropagationSystem', () => {
     // No power should be provided
     let hasPower = false;
     for (const row of network.power) {
-      if (row.some(cell => cell)) {
+      if (row.some((cell) => cell)) {
         hasPower = true;
         break;
       }

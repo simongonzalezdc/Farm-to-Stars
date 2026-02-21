@@ -76,10 +76,9 @@ describe('civilizations data', () => {
           multiplier,
           `${id}.${bonusType} bonus too low (${multiplier})`
         ).toBeGreaterThanOrEqual(1.0);
-        expect(
-          multiplier,
-          `${id}.${bonusType} bonus too high (${multiplier})`
-        ).toBeLessThanOrEqual(1.3);
+        expect(multiplier, `${id}.${bonusType} bonus too high (${multiplier})`).toBeLessThanOrEqual(
+          1.3
+        );
       });
     });
   });
@@ -119,7 +118,10 @@ describe('civilizations data', () => {
           (otherCiv as CivilizationDefinition).aesthetics.primaryColor === primaryColor
       );
 
-      expect(duplicates, `${id} shares primary color ${primaryColor} with ${duplicates.map(([id]) => id).join(', ')}`).toHaveLength(0);
+      expect(
+        duplicates,
+        `${id} shares primary color ${primaryColor} with ${duplicates.map(([id]) => id).join(', ')}`
+      ).toHaveLength(0);
     });
   });
 
@@ -156,14 +158,12 @@ describe('civilizations data', () => {
       const def = civ as CivilizationDefinition;
       if (def.startingResources) {
         Object.entries(def.startingResources).forEach(([resourceId, amount]) => {
-          expect(
-            typeof amount,
-            `${id} starting resource ${resourceId} is not a number`
-          ).toBe('number');
-          expect(
-            amount,
-            `${id} starting resource ${resourceId} is not positive`
-          ).toBeGreaterThan(0);
+          expect(typeof amount, `${id} starting resource ${resourceId} is not a number`).toBe(
+            'number'
+          );
+          expect(amount, `${id} starting resource ${resourceId} is not positive`).toBeGreaterThan(
+            0
+          );
           expect(
             Number.isInteger(amount),
             `${id} starting resource ${resourceId} is not an integer`
@@ -196,14 +196,15 @@ describe('civilizations data', () => {
       });
 
       const uniqueProfiles = new Set(bonusProfiles.map((p) => p.bonuses));
-      expect(
-        uniqueProfiles.size,
-        'Some civilizations have identical bonus profiles'
-      ).toBe(civEntries.length);
+      expect(uniqueProfiles.size, 'Some civilizations have identical bonus profiles').toBe(
+        civEntries.length
+      );
     });
 
     it('each civilization has unique lore snippet', () => {
-      const loreSnippets = civEntries.map(([_, civ]) => (civ as CivilizationDefinition).loreSnippet);
+      const loreSnippets = civEntries.map(
+        ([_, civ]) => (civ as CivilizationDefinition).loreSnippet
+      );
       const uniqueLore = new Set(loreSnippets);
       expect(uniqueLore.size, 'Some civilizations share lore snippets').toBe(civEntries.length);
     });

@@ -103,7 +103,8 @@ const festivalMusic = createFestivalMusicController(musicBus, {
     if (active && snapshot && !festivalSeasonVolume) {
       const season = snapshot.season;
       const seasonSnapshot = seasonMusic.getSnapshot();
-      const layer = seasonSnapshot.layers.find((entry) => entry.id === seasonSnapshot.activeSeason) ??
+      const layer =
+        seasonSnapshot.layers.find((entry) => entry.id === seasonSnapshot.activeSeason) ??
         seasonSnapshot.layers.find((entry) => entry.id === season);
       if (layer) {
         festivalSeasonVolume = { season, volume: layer.targetVolume };
@@ -202,14 +203,14 @@ export async function enableAudio() {
   if (started) return;
   await Tone.start();
   started = true;
-  
+
   // After Tone.start(), start all pending nodes that were deferred
   // Import and call the function to start nodes that were created before AudioContext was running
   const { startPendingNodes: startWeatherNodes } = await import('./audio/weather');
   const { startPendingNodes: startFestivalNodes } = await import('./audio/festivals');
   startWeatherNodes();
   startFestivalNodes();
-  
+
   updateMusicDuck();
   weatherAmbience.refresh();
   festivalMusic.refresh();

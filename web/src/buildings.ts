@@ -28,7 +28,10 @@ export function getUiBuildingDefinitions(): Record<BuildingType, UiBuildingDefin
   }
 
   const tables = getDataTables();
-  const resolved: Record<BuildingType, UiBuildingDefinition> = {} as Record<BuildingType, UiBuildingDefinition>;
+  const resolved: Record<BuildingType, UiBuildingDefinition> = {} as Record<
+    BuildingType,
+    UiBuildingDefinition
+  >;
 
   for (const def of Object.values(tables.buildings)) {
     const id = def.id as BuildingType;

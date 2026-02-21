@@ -1,7 +1,11 @@
 import { promises as fs } from 'fs';
 import { dirname, join } from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { collectManifestEntries, formatManifestSummary, writeManifest } from '../../scripts/release/lib/manifest.js';
+import {
+  collectManifestEntries,
+  formatManifestSummary,
+  writeManifest
+} from '../../scripts/release/lib/manifest.js';
 
 const TMP = join(process.cwd(), 'tmp-manifest');
 

@@ -32,7 +32,10 @@ export class DemandCalculationSystem {
   /**
    * Calculate RCI demand for the current city state
    */
-  public calculateDemand(state: TownshipState, buildings: BuildingsTable): TownshipState['metrics']['demand'] {
+  public calculateDemand(
+    state: TownshipState,
+    buildings: BuildingsTable
+  ): TownshipState['metrics']['demand'] {
     const factors = this.calculateFactors(state, buildings);
 
     // Residential demand
@@ -84,12 +87,9 @@ export class DemandCalculationSystem {
       zoneDistribution.industrial +
       zoneDistribution.mixed;
 
-    const residentialRatio =
-      totalZones > 0 ? zoneDistribution.residential / totalZones : 0;
-    const commercialRatio =
-      totalZones > 0 ? zoneDistribution.commercial / totalZones : 0;
-    const industrialRatio =
-      totalZones > 0 ? zoneDistribution.industrial / totalZones : 0;
+    const residentialRatio = totalZones > 0 ? zoneDistribution.residential / totalZones : 0;
+    const commercialRatio = totalZones > 0 ? zoneDistribution.commercial / totalZones : 0;
+    const industrialRatio = totalZones > 0 ? zoneDistribution.industrial / totalZones : 0;
 
     // Employment factor
     const employmentRate = population.total > 0 ? population.employed / population.total : 0;
@@ -152,8 +152,8 @@ export class DemandCalculationSystem {
       residentialRatio * 0.5; // Need residential base
 
     // Penalty if too much commercial already
-    const commercialCount = state.zones.filter(z => z.type === 'commercial').length;
-    const residentialCount = state.zones.filter(z => z.type === 'residential').length;
+    const commercialCount = state.zones.filter((z) => z.type === 'commercial').length;
+    const residentialCount = state.zones.filter((z) => z.type === 'residential').length;
 
     if (commercialCount > residentialCount * 0.4) {
       return demand - 0.3;
@@ -178,7 +178,7 @@ export class DemandCalculationSystem {
       commercialRatio * 0.4; // Commerce needs industrial goods
 
     // Penalty if too much industrial (pollution concern)
-    const industrialCount = state.zones.filter(z => z.type === 'industrial').length;
+    const industrialCount = state.zones.filter((z) => z.type === 'industrial').length;
     const totalZones = state.zones.length;
 
     if (totalZones > 0 && industrialCount / totalZones > 0.3) {

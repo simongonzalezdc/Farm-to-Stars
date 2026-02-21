@@ -271,7 +271,10 @@ export class HomesteadController {
         this.selectedCrop = cropId;
         this.selectedTool = null;
         this.syncSelection(button);
-        this.setFeedback(`Planting ${this.crops[cropId].label}. Click a tilled tile to sow.`, 'info');
+        this.setFeedback(
+          `Planting ${this.crops[cropId].label}. Click a tilled tile to sow.`,
+          'info'
+        );
       });
     }
 
@@ -358,7 +361,8 @@ export class HomesteadController {
         for (const [resource, amount] of Object.entries(def?.yields ?? {})) {
           const baseAmount = amount ?? 0;
           const multiplier = Math.max(1, modifiers.yieldMultiplier);
-          const scaled = multiplier > 1 ? Math.max(baseAmount, Math.round(baseAmount * multiplier)) : baseAmount;
+          const scaled =
+            multiplier > 1 ? Math.max(baseAmount, Math.round(baseAmount * multiplier)) : baseAmount;
           const current = this.state.resources[resource] ?? 0;
           this.state.resources[resource] = current + scaled;
         }
@@ -388,9 +392,7 @@ export class HomesteadController {
       return;
     }
 
-    const highlights = result.unlocked
-      .map((perk) => `${perk.title}: ${perk.headline}`)
-      .join(' • ');
+    const highlights = result.unlocked.map((perk) => `${perk.title}: ${perk.headline}`).join(' • ');
     this.setFeedback(`${baseMessage} ✨ ${highlights}`, 'success');
   }
 
@@ -433,4 +435,3 @@ export class HomesteadController {
     this.onRest?.({ previousDay, nextDay: this.state.homestead.time.day });
   }
 }
-

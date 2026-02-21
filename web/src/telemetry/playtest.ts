@@ -92,7 +92,9 @@ function loadState(storage: StorageLike): PlaytestState {
       cachedState = { telemetryOptIn: false, events: [] };
       return cachedState;
     }
-    const events = parsed.events.filter((event: PlaytestEvent) => event && typeof event === 'object');
+    const events = parsed.events.filter(
+      (event: PlaytestEvent) => event && typeof event === 'object'
+    );
     cachedState = { telemetryOptIn: parsed.telemetryOptIn, events };
     return cachedState;
   } catch (err) {
@@ -125,7 +127,10 @@ export function setPlaytestTelemetryOptIn(optIn: boolean, storage?: StorageLike)
   persistState(resolved, state);
 }
 
-export function recordPlaytestEvent(event: Omit<PlaytestEvent, 'timestamp'>, storage?: StorageLike): boolean {
+export function recordPlaytestEvent(
+  event: Omit<PlaytestEvent, 'timestamp'>,
+  storage?: StorageLike
+): boolean {
   const resolved = resolveStorage(storage);
   const state = loadState(resolved);
   if (!state.telemetryOptIn) {
@@ -155,7 +160,10 @@ export function recordExportGenerated(
   recordPlaytestEvent({ type: 'export.generated', payloadBytes, shipments }, storage);
 }
 
-export function recordHomesteadDaySummary(summary: HomesteadDaySummaryEvent, storage?: StorageLike) {
+export function recordHomesteadDaySummary(
+  summary: HomesteadDaySummaryEvent,
+  storage?: StorageLike
+) {
   recordPlaytestEvent({ type: 'homestead.daySummary', summary }, storage);
 }
 

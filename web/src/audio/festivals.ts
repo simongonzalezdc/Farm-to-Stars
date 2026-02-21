@@ -162,7 +162,10 @@ export function startPendingNodes(): void {
   }
 }
 
-function createFestivalLayer(destination: Tone.Gain, resolveDefinition: () => FestivalDefinition | null): FestivalLayer {
+function createFestivalLayer(
+  destination: Tone.Gain,
+  resolveDefinition: () => FestivalDefinition | null
+): FestivalLayer {
   const autoPan = new Tone.AutoPanner({ frequency: 0.03, depth: 0.35 });
   safeStart(autoPan);
   const gain = new Tone.Gain(0).connect(autoPan);
@@ -183,7 +186,14 @@ function createFestivalLayer(destination: Tone.Gain, resolveDefinition: () => Fe
     oscillator: { type: 'triangle' },
     filter: { type: 'lowpass', frequency: 520, Q: 0.9 },
     envelope: { attack: 0.03, decay: 0.3, sustain: 0.5, release: 1.6 },
-    filterEnvelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 1.4, baseFrequency: 180, octaves: 1 }
+    filterEnvelope: {
+      attack: 0.02,
+      decay: 0.2,
+      sustain: 0.4,
+      release: 1.4,
+      baseFrequency: 180,
+      octaves: 1
+    }
   }).connect(gain);
   const percussion = new Tone.MembraneSynth({
     volume: -12,
@@ -282,8 +292,17 @@ function clamp01(value: number): number {
   return value;
 }
 
-export function createFestivalMusicController(destination: Tone.Gain, options: FestivalMusicOptions): FestivalMusicController {
-  const { shouldPlay, getSeason, onFestivalActiveChange, debug = false, rampSeconds = 1.2 } = options;
+export function createFestivalMusicController(
+  destination: Tone.Gain,
+  options: FestivalMusicOptions
+): FestivalMusicController {
+  const {
+    shouldPlay,
+    getSeason,
+    onFestivalActiveChange,
+    debug = false,
+    rampSeconds = 1.2
+  } = options;
 
   let currentSeason: SeasonId = getSeason();
   let currentDay = 1;
@@ -295,7 +314,9 @@ export function createFestivalMusicController(destination: Tone.Gain, options: F
   const layer = createFestivalLayer(destination, () => activeDefinition);
 
   function resolveDefinition(): FestivalDefinition | null {
-    const def = FESTIVALS.find((festival) => festival.season === currentSeason && festival.day === currentDay);
+    const def = FESTIVALS.find(
+      (festival) => festival.season === currentSeason && festival.day === currentDay
+    );
     return def ?? null;
   }
 

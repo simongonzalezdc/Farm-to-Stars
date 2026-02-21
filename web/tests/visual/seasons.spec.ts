@@ -16,28 +16,31 @@ async function waitForScene(page: Page) {
 }
 
 async function setSeason(page: Page, season: string, cycleIndex: number) {
-  await page.evaluate(([id, index]) => {
-    const phaser = (window as any).Phaser;
-    if (!phaser || !Array.isArray(phaser.GAMES) || phaser.GAMES.length === 0) {
-      throw new Error('Phaser game is not ready');
-    }
-    const game = phaser.GAMES[0];
-    const scenes = game?.scene?.keys;
-    const scene: any = scenes?.default ?? Object.values(scenes ?? {})[0];
-    if (!scene) {
-      throw new Error('IsoScene not initialized');
-    }
-    scene.state.season.active = id;
-    scene.state.season.elapsed = 0;
-    scene.state.season.cycle = index;
-    scene.state.season.year = 2;
-    if (typeof scene.syncSeasonState === 'function') {
-      scene.syncSeasonState(true);
-    } else if (scene.syncSeasonState) {
-      scene.syncSeasonState = scene.syncSeasonState.bind(scene);
-      scene.syncSeasonState(true);
-    }
-  }, [season, cycleIndex]);
+  await page.evaluate(
+    ([id, index]) => {
+      const phaser = (window as any).Phaser;
+      if (!phaser || !Array.isArray(phaser.GAMES) || phaser.GAMES.length === 0) {
+        throw new Error('Phaser game is not ready');
+      }
+      const game = phaser.GAMES[0];
+      const scenes = game?.scene?.keys;
+      const scene: any = scenes?.default ?? Object.values(scenes ?? {})[0];
+      if (!scene) {
+        throw new Error('IsoScene not initialized');
+      }
+      scene.state.season.active = id;
+      scene.state.season.elapsed = 0;
+      scene.state.season.cycle = index;
+      scene.state.season.year = 2;
+      if (typeof scene.syncSeasonState === 'function') {
+        scene.syncSeasonState(true);
+      } else if (scene.syncSeasonState) {
+        scene.syncSeasonState = scene.syncSeasonState.bind(scene);
+        scene.syncSeasonState(true);
+      }
+    },
+    [season, cycleIndex]
+  );
 }
 
 test.describe('season visual baselines', () => {

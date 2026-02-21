@@ -17,7 +17,8 @@ export function advanceTime(state: TimeOfDayState, dt: number): AdvanceTimeResul
     return { daysElapsed: 0, dayChanged: false, normalizedTime: normalized };
   }
 
-  const secondsPerDay = state.secondsPerDay > EPSILON ? state.secondsPerDay : createDefaultTimeState().secondsPerDay;
+  const secondsPerDay =
+    state.secondsPerDay > EPSILON ? state.secondsPerDay : createDefaultTimeState().secondsPerDay;
   let elapsed = state.elapsed + dt;
   let daysElapsed = 0;
 
@@ -39,7 +40,8 @@ export function advanceTime(state: TimeOfDayState, dt: number): AdvanceTimeResul
 }
 
 export function getNormalizedTime(state: TimeOfDayState): number {
-  const secondsPerDay = state.secondsPerDay > EPSILON ? state.secondsPerDay : createDefaultTimeState().secondsPerDay;
+  const secondsPerDay =
+    state.secondsPerDay > EPSILON ? state.secondsPerDay : createDefaultTimeState().secondsPerDay;
   if (secondsPerDay <= EPSILON) {
     return 0;
   }

@@ -101,7 +101,8 @@ export function exportHomesteadToTownship(
   const shipments = buildShipments(resources, state, options.includeMailAttachments ?? true);
 
   const stamina = state.homestead.stamina;
-  const staminaPercent = stamina.max > EPSILON ? Math.round((stamina.current / stamina.max) * 100) : 0;
+  const staminaPercent =
+    stamina.max > EPSILON ? Math.round((stamina.current / stamina.max) * 100) : 0;
 
   return {
     version: EXPORT_VERSION,
@@ -152,7 +153,10 @@ function summariseLivestock(state: GameState): TownshipLivestockSummary[] {
 
 function normaliseResources(resources: Record<ResourceId, number>): Record<ResourceId, number> {
   return Object.fromEntries(
-    Object.entries(resources).map(([resourceId, amount]) => [resourceId, Math.max(0, Math.floor(amount ?? 0))])
+    Object.entries(resources).map(([resourceId, amount]) => [
+      resourceId,
+      Math.max(0, Math.floor(amount ?? 0))
+    ])
   ) as Record<ResourceId, number>;
 }
 
@@ -163,16 +167,25 @@ function buildAgricultureDistricts(
   buildings: BuildingsTable | null
 ): TownshipAgricultureDistrict[] {
   const farmStructures = structures.filter((structure) => isFarmStructure(structure, buildings));
-  const plots = farmStructures.reduce((total, structure) => total + structure.width * structure.height, 0);
+  const plots = farmStructures.reduce(
+    (total, structure) => total + structure.width * structure.height,
+    0
+  );
   if (plots <= 0) {
     return [];
   }
 
   const exports = Object.entries(resources)
     .filter(([, amount]) => amount > 0)
-    .map(([resourceId, amount]) => ({ resourceId: resourceId as ResourceId, amount: Math.floor(amount / 3) }));
+    .map(([resourceId, amount]) => ({
+      resourceId: resourceId as ResourceId,
+      amount: Math.floor(amount / 3)
+    }));
 
-  const fertility = Math.min(1, exports.reduce((sum, item) => sum + item.amount, 0) / Math.max(1, plots * 10));
+  const fertility = Math.min(
+    1,
+    exports.reduce((sum, item) => sum + item.amount, 0) / Math.max(1, plots * 10)
+  );
   const logisticsScore = Math.min(1, plots / 400);
 
   return [
@@ -207,7 +220,10 @@ function buildShipments(
   if (includeMailAttachments) {
     for (const mail of state.mail.inbox) {
       if (!mail.attachments) continue;
-      for (const [resourceId, amount] of Object.entries(mail.attachments) as [ResourceId, number][]) {
+      for (const [resourceId, amount] of Object.entries(mail.attachments) as [
+        ResourceId,
+        number
+      ][]) {
         if (!amount || amount <= 0) continue;
         shipments.push({ resourceId, amount: Math.floor(amount) });
         if (shipments.length >= MAX_EXPORT_SHIPMENTS) {
@@ -249,7 +265,10 @@ function resolveBuildingsTable(override?: BuildingsTable): BuildingsTable | null
   return cachedBuildings;
 }
 
-function isFarmStructure(structure: TownshipStructureFootprint, buildings: BuildingsTable | null): boolean {
+function isFarmStructure(
+  structure: TownshipStructureFootprint,
+  buildings: BuildingsTable | null
+): boolean {
   if (buildings) {
     const definition = buildings[structure.type];
     if (definition?.category) {

@@ -11,7 +11,9 @@ export type DebugOverlayTabId = (typeof TABS)[number]['id'];
 
 export type DocumentLike = Pick<Document, 'body' | 'createElement'> | null | undefined;
 
-export function isOverlaySupported(doc: DocumentLike = typeof document !== 'undefined' ? document : null): boolean {
+export function isOverlaySupported(
+  doc: DocumentLike = typeof document !== 'undefined' ? document : null
+): boolean {
   if (!doc) {
     return false;
   }
@@ -46,7 +48,10 @@ export class DebugOverlay {
   private lastSample = typeof performance !== 'undefined' ? performance.now() : 0;
   private fps = 0;
 
-  constructor(private readonly telemetry: TelemetryTracker, options: DebugOverlayOptions = {}) {
+  constructor(
+    private readonly telemetry: TelemetryTracker,
+    options: DebugOverlayOptions = {}
+  ) {
     this.activeTab = options.defaultTab ?? 'summary';
     if (!isOverlaySupported()) {
       this.container = null;
@@ -56,7 +61,7 @@ export class DebugOverlay {
     const doc = document;
     const container = doc.createElement('div');
     container.id = options.containerId ?? 'debug-overlay';
-    
+
     // If parent container is provided, use it; otherwise use fixed positioning
     if (options.parentContainer) {
       container.style.position = 'relative';
@@ -69,7 +74,7 @@ export class DebugOverlay {
       container.style.width = 'min(28rem, 90vw)';
       container.style.maxHeight = '45vh';
     }
-    
+
     container.style.display = 'flex';
     container.style.flexDirection = 'column';
     container.style.padding = '0.5rem 0.75rem 0.75rem';
@@ -145,7 +150,11 @@ export class DebugOverlay {
     }
   }
 
-  update(deltaMs: number, state: Parameters<TelemetryTracker['snapshot']>[0], snapshot?: TelemetrySnapshot) {
+  update(
+    deltaMs: number,
+    state: Parameters<TelemetryTracker['snapshot']>[0],
+    snapshot?: TelemetrySnapshot
+  ) {
     if (!this.container) {
       return;
     }
@@ -182,7 +191,9 @@ export class DebugOverlay {
     lines.push(this.formatWeatherLine(snapshot));
 
     const queues = snapshot.queues;
-    lines.push(`Queues build:${queues.build} construction:${queues.construction} active:${queues.productionActive}`);
+    lines.push(
+      `Queues build:${queues.build} construction:${queues.construction} active:${queues.productionActive}`
+    );
 
     const daily = this.formatDailyLine(snapshot);
     if (daily) {
@@ -203,7 +214,9 @@ export class DebugOverlay {
     for (const [resource, total] of entries.slice(0, 8)) {
       const rate = snapshot.resources.ratesPerMinute[resource] ?? 0;
       const rateText = this.formatRate(rate);
-      lines.push(`${resource.padEnd(12, ' ')} ${total.toFixed(1).padStart(8, ' ')}  (${rateText}/m)`);
+      lines.push(
+        `${resource.padEnd(12, ' ')} ${total.toFixed(1).padStart(8, ' ')}  (${rateText}/m)`
+      );
     }
 
     if (entries.length === 0) {

@@ -30,7 +30,7 @@ export function applyCivilizationTheme(aesthetics: CivilizationAesthetics): void
   console.log(`Applied ${aesthetics.pattern} theme with colors:`, {
     primary: aesthetics.primaryColor,
     secondary: aesthetics.secondaryColor,
-    accent: aesthetics.accentColor,
+    accent: aesthetics.accentColor
   });
 }
 

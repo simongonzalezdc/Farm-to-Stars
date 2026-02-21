@@ -47,11 +47,7 @@ export function tickPopulation(
 
   // Final growth rate
   const growthRate =
-    baseGrowth *
-    housingModifier *
-    jobModifier *
-    (1 + happinessModifier) *
-    civModifier;
+    baseGrowth * housingModifier * jobModifier * (1 + happinessModifier) * civModifier;
 
   // Update population
   const previousTotal = state.population.total;
@@ -79,7 +75,9 @@ export function tickPopulation(
  * @returns Number of citizens that can be housed
  */
 function calculateHousingCapacity(state: TownshipState): number {
-  const residentialZones = state.zones.filter(z => z.type === 'residential' || z.type === 'mixed');
+  const residentialZones = state.zones.filter(
+    (z) => z.type === 'residential' || z.type === 'mixed'
+  );
   return residentialZones.reduce((sum, zone) => sum + zone.capacity, 0);
 }
 
@@ -90,7 +88,9 @@ function calculateHousingCapacity(state: TownshipState): number {
  * @returns Number of jobs available
  */
 function calculateJobCapacity(state: TownshipState): number {
-  const jobZones = state.zones.filter(z => z.type === 'commercial' || z.type === 'industrial' || z.type === 'mixed');
+  const jobZones = state.zones.filter(
+    (z) => z.type === 'commercial' || z.type === 'industrial' || z.type === 'mixed'
+  );
   return jobZones.reduce((sum, zone) => sum + zone.capacity, 0);
 }
 
@@ -216,7 +216,9 @@ function distributeToZones(
   jobCapacity: number
 ): void {
   // Distribute to residential zones
-  const residentialZones = state.zones.filter(z => z.type === 'residential' || z.type === 'mixed');
+  const residentialZones = state.zones.filter(
+    (z) => z.type === 'residential' || z.type === 'mixed'
+  );
   let remainingPopulation = state.population.total - state.population.homeless;
 
   for (const zone of residentialZones) {
@@ -231,7 +233,9 @@ function distributeToZones(
   }
 
   // Distribute to job zones
-  const jobZones = state.zones.filter(z => z.type === 'commercial' || z.type === 'industrial' || z.type === 'mixed');
+  const jobZones = state.zones.filter(
+    (z) => z.type === 'commercial' || z.type === 'industrial' || z.type === 'mixed'
+  );
   let remainingJobs = state.population.employed;
 
   for (const zone of jobZones) {

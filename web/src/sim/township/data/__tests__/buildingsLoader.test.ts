@@ -41,7 +41,7 @@ describe('Buildings Loader', () => {
 
     it('all residential buildings have capacity > 0', () => {
       const buildings = loadBuildings();
-      const residential = Object.values(buildings).filter(b => b.type === 'residential');
+      const residential = Object.values(buildings).filter((b) => b.type === 'residential');
 
       expect(residential.length).toBeGreaterThan(0);
 
@@ -52,7 +52,7 @@ describe('Buildings Loader', () => {
 
     it('all service buildings have provides array', () => {
       const buildings = loadBuildings();
-      const services = Object.values(buildings).filter(b => b.type === 'service');
+      const services = Object.values(buildings).filter((b) => b.type === 'service');
 
       expect(services.length).toBeGreaterThan(0);
 
@@ -65,7 +65,7 @@ describe('Buildings Loader', () => {
 
     it('all service buildings have service radius', () => {
       const buildings = loadBuildings();
-      const services = Object.values(buildings).filter(b => b.type === 'service');
+      const services = Object.values(buildings).filter((b) => b.type === 'service');
 
       for (const building of services) {
         expect(building.serviceRadius).toBeDefined();
@@ -95,33 +95,33 @@ describe('Buildings Loader', () => {
       const residential = getBuildingsByType('residential');
 
       expect(residential.length).toBeGreaterThan(0);
-      expect(residential.every(b => b.type === 'residential')).toBe(true);
+      expect(residential.every((b) => b.type === 'residential')).toBe(true);
     });
 
     it('returns all commercial buildings', () => {
       const commercial = getBuildingsByType('commercial');
 
       expect(commercial.length).toBeGreaterThan(0);
-      expect(commercial.every(b => b.type === 'commercial')).toBe(true);
+      expect(commercial.every((b) => b.type === 'commercial')).toBe(true);
     });
 
     it('returns all industrial buildings', () => {
       const industrial = getBuildingsByType('industrial');
 
       expect(industrial.length).toBeGreaterThan(0);
-      expect(industrial.every(b => b.type === 'industrial')).toBe(true);
+      expect(industrial.every((b) => b.type === 'industrial')).toBe(true);
     });
 
     it('returns all service buildings', () => {
       const services = getBuildingsByType('service');
 
       expect(services.length).toBeGreaterThan(0);
-      expect(services.every(b => b.type === 'service')).toBe(true);
+      expect(services.every((b) => b.type === 'service')).toBe(true);
     });
 
     it('residential buildings are ordered by tier', () => {
       const residential = getBuildingsByType('residential');
-      const tiers = residential.map(b => b.tier);
+      const tiers = residential.map((b) => b.tier);
 
       // Check we have buildings of multiple tiers
       expect(new Set(tiers).size).toBeGreaterThan(1);
@@ -137,39 +137,39 @@ describe('Buildings Loader', () => {
       const universalBuildings = ['residential_house', 'commercial_shop', 'industrial_workshop'];
 
       for (const buildingId of universalBuildings) {
-        expect(teotihuacan.some(b => b.id === buildingId)).toBe(true);
-        expect(maya.some(b => b.id === buildingId)).toBe(true);
+        expect(teotihuacan.some((b) => b.id === buildingId)).toBe(true);
+        expect(maya.some((b) => b.id === buildingId)).toBe(true);
       }
     });
 
     it('Teotihuacan has solar array', () => {
       const buildings = getBuildingsForCivilization('teotihuacan');
 
-      expect(buildings.some(b => b.id === 'service_solar_array')).toBe(true);
+      expect(buildings.some((b) => b.id === 'service_solar_array')).toBe(true);
     });
 
     it('Maya has observatory', () => {
       const buildings = getBuildingsForCivilization('maya');
 
-      expect(buildings.some(b => b.id === 'service_observatory')).toBe(true);
+      expect(buildings.some((b) => b.id === 'service_observatory')).toBe(true);
     });
 
     it('Moche has aqueduct', () => {
       const buildings = getBuildingsForCivilization('moche');
 
-      expect(buildings.some(b => b.id === 'service_aqueduct')).toBe(true);
+      expect(buildings.some((b) => b.id === 'service_aqueduct')).toBe(true);
     });
 
     it('Hopewell has trading post', () => {
       const buildings = getBuildingsForCivilization('hopewell');
 
-      expect(buildings.some(b => b.id === 'service_trading_post')).toBe(true);
+      expect(buildings.some((b) => b.id === 'service_trading_post')).toBe(true);
     });
 
     it('Puebloan has central plaza', () => {
       const buildings = getBuildingsForCivilization('puebloan');
 
-      expect(buildings.some(b => b.id === 'service_plaza')).toBe(true);
+      expect(buildings.some((b) => b.id === 'service_plaza')).toBe(true);
     });
 
     it('civilization-specific buildings are not available to others', () => {
@@ -177,9 +177,9 @@ describe('Buildings Loader', () => {
       const moche = getBuildingsForCivilization('moche');
 
       // Maya shouldn't have Moche's aqueduct
-      expect(maya.some(b => b.id === 'service_aqueduct')).toBe(false);
+      expect(maya.some((b) => b.id === 'service_aqueduct')).toBe(false);
       // Moche shouldn't have Maya's observatory
-      expect(moche.some(b => b.id === 'service_observatory')).toBe(false);
+      expect(moche.some((b) => b.id === 'service_observatory')).toBe(false);
     });
   });
 

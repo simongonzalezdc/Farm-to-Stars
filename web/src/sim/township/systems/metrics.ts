@@ -79,7 +79,7 @@ export function calculateHappiness(
   });
 
   // Environment factor: Pollution/beauty (future: industrial zones create pollution)
-  const industrialZones = state.zones.filter(z => z.type === 'industrial').length;
+  const industrialZones = state.zones.filter((z) => z.type === 'industrial').length;
   const totalZones = state.zones.length || 1;
   const industrialRatio = industrialZones / totalZones;
 
@@ -139,9 +139,9 @@ export function calculateDemand(state: TownshipState): TownshipMetrics['demand']
   const { zones, population } = state;
 
   // Count zones by type
-  const residential = zones.filter(z => z.type === 'residential').length;
-  const commercial = zones.filter(z => z.type === 'commercial').length;
-  const industrial = zones.filter(z => z.type === 'industrial').length;
+  const residential = zones.filter((z) => z.type === 'residential').length;
+  const commercial = zones.filter((z) => z.type === 'commercial').length;
+  const industrial = zones.filter((z) => z.type === 'industrial').length;
   const total = residential + commercial + industrial || 1;
 
   // Ideal distribution (can be customized per civilization)
@@ -156,7 +156,7 @@ export function calculateDemand(state: TownshipState): TownshipMetrics['demand']
 
   // Adjust residential demand based on housing needs
   const housingCapacity = zones
-    .filter(z => z.type === 'residential')
+    .filter((z) => z.type === 'residential')
     .reduce((sum, z) => sum + z.capacity, 0);
 
   if (population.total > housingCapacity * 0.8) {
@@ -166,7 +166,7 @@ export function calculateDemand(state: TownshipState): TownshipMetrics['demand']
 
   // Adjust commercial/industrial demand based on employment needs
   const jobCapacity = zones
-    .filter(z => z.type === 'commercial' || z.type === 'industrial')
+    .filter((z) => z.type === 'commercial' || z.type === 'industrial')
     .reduce((sum, z) => sum + z.capacity, 0);
 
   const laborForce = population.employed + population.unemployed;
@@ -233,10 +233,10 @@ export function calculateCoverage(
   updateZoneServiceFlags(state, buildings, civilization);
 
   // Calculate coverage percentages
-  const powerCoverage = zones.filter(z => z.services.power).length / zones.length;
-  const waterCoverage = zones.filter(z => z.services.water).length / zones.length;
-  const safetyCoverage = zones.filter(z => z.services.safety).length / zones.length;
-  const educationCoverage = zones.filter(z => z.services.education).length / zones.length;
+  const powerCoverage = zones.filter((z) => z.services.power).length / zones.length;
+  const waterCoverage = zones.filter((z) => z.services.water).length / zones.length;
+  const safetyCoverage = zones.filter((z) => z.services.safety).length / zones.length;
+  const educationCoverage = zones.filter((z) => z.services.education).length / zones.length;
 
   return {
     power: powerCoverage,
@@ -278,11 +278,7 @@ function updateZoneServiceFlags(
     const effectiveRadius = baseRadius * civilization.townshipBonuses.serviceCoverage;
 
     // Find zones within range
-    const zonesInRange = findZonesInRadius(
-      state.zones,
-      building.position,
-      effectiveRadius
-    );
+    const zonesInRange = findZonesInRadius(state.zones, building.position, effectiveRadius);
 
     // Apply services to zones
     for (const zone of zonesInRange) {
@@ -309,7 +305,7 @@ function findZonesInRadius(
   center: { x: number; y: number },
   radius: number
 ): Zone[] {
-  return zones.filter(zone => {
+  return zones.filter((zone) => {
     // Calculate distance from center to zone center
     const zoneCenterX = zone.position.x + zone.size.width / 2;
     const zoneCenterY = zone.position.y + zone.size.height / 2;

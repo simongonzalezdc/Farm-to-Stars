@@ -379,9 +379,20 @@ export type GameEvent =
   | { type: 'homestead.crop.matured'; cropId: CropId; x: number; y: number }
   | { type: 'homestead.crop.withered'; cropId: CropId; x: number; y: number }
   | { type: 'production.cycle'; nodeId: number; recipeId: RecipeId; outputs: RecipeIO }
-  | { type: 'livestock.produce'; livestockId: number; speciesId: LivestockId; resource: ResourceId; amount: number }
+  | {
+      type: 'livestock.produce';
+      livestockId: number;
+      speciesId: LivestockId;
+      resource: ResourceId;
+      amount: number;
+    }
   | { type: 'livestock.starved'; livestockId: number; speciesId: LivestockId }
-  | { type: 'weather.event.started'; eventId: string; eventType: WeatherEventType; intensity: number }
+  | {
+      type: 'weather.event.started';
+      eventId: string;
+      eventType: WeatherEventType;
+      intensity: number;
+    }
   | { type: 'weather.event.ended'; eventId: string; eventType: WeatherEventType }
   | { type: 'mail.delivered'; messageId: number; attachments: Partial<Record<ResourceId, number>> }
   | { type: 'tool.perk.unlocked'; perkId: ToolPerkId; toolId: ToolId; uses: number };
@@ -483,7 +494,10 @@ export function clampSeasonElapsed(state: SeasonState): SeasonState {
   const definition = getSeasonDefinition(state.active);
   const clampedElapsed = Math.max(
     0,
-    Math.min(state.elapsed, Number.isFinite(definition.durationSeconds) ? definition.durationSeconds : state.elapsed)
+    Math.min(
+      state.elapsed,
+      Number.isFinite(definition.durationSeconds) ? definition.durationSeconds : state.elapsed
+    )
   );
   return { ...state, elapsed: clampedElapsed };
 }

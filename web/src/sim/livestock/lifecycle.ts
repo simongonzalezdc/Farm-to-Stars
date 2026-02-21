@@ -14,7 +14,11 @@ interface LivestockTickResult {
 
 const EPSILON = 1e-6;
 
-export function tickLivestock(state: GameState, dt: number, definitions: LivestockTable): LivestockTickResult {
+export function tickLivestock(
+  state: GameState,
+  dt: number,
+  definitions: LivestockTable
+): LivestockTickResult {
   if (dt <= 0) {
     return { events: [], feedConsumed: {} };
   }
@@ -41,7 +45,11 @@ export function tickLivestock(state: GameState, dt: number, definitions: Livesto
 
     if (animal.hunger >= 1 - EPSILON) {
       animal.alive = false;
-      events.push({ type: 'livestock.starved', livestockId: animal.id, speciesId: animal.speciesId });
+      events.push({
+        type: 'livestock.starved',
+        livestockId: animal.id,
+        speciesId: animal.speciesId
+      });
     }
   }
 

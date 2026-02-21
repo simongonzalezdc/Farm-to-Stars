@@ -60,7 +60,7 @@ export class AdvisorDialogueUI {
   public queueMessage(message: AdvisorMessage): void {
     // Check if message with same ID is already queued or currently shown
     if (this.currentMessage?.id === message.id) return;
-    if (this.messageQueue.some(m => m.id === message.id)) return;
+    if (this.messageQueue.some((m) => m.id === message.id)) return;
 
     this.messageQueue.push(message);
 
@@ -245,7 +245,8 @@ export const AdvisorMessages = {
       id: 'welcome_teotihuacan',
       type: 'milestone' as MessageType,
       title: 'Welcome to Teotihuacan',
-      message: 'Great leader, your people look to you to build a thriving city. Harness the power of the sun and create a monument to prosperity!',
+      message:
+        'Great leader, your people look to you to build a thriving city. Harness the power of the sun and create a monument to prosperity!',
       icon: '☀️',
       dismissable: true,
       autoDismiss: 8000
@@ -254,7 +255,8 @@ export const AdvisorMessages = {
       id: 'welcome_maya',
       type: 'milestone' as MessageType,
       title: 'Welcome to the Maya Empire',
-      message: 'Wise ruler, your civilization shall reach the stars! Build observatories and unlock the secrets of the cosmos.',
+      message:
+        'Wise ruler, your civilization shall reach the stars! Build observatories and unlock the secrets of the cosmos.',
       icon: '🌟',
       dismissable: true,
       autoDismiss: 8000
@@ -263,7 +265,8 @@ export const AdvisorMessages = {
       id: 'welcome_moche',
       type: 'milestone' as MessageType,
       title: 'Welcome to Moche',
-      message: 'Noble leader, the waters of life flow through your lands. Build grand aqueducts to sustain your growing population!',
+      message:
+        'Noble leader, the waters of life flow through your lands. Build grand aqueducts to sustain your growing population!',
       icon: '💧',
       dismissable: true,
       autoDismiss: 8000
@@ -272,7 +275,8 @@ export const AdvisorMessages = {
       id: 'welcome_hopewell',
       type: 'milestone' as MessageType,
       title: 'Welcome to Hopewell',
-      message: 'Trading chief, your people are masters of commerce. Establish trading posts and create networks of prosperity!',
+      message:
+        'Trading chief, your people are masters of commerce. Establish trading posts and create networks of prosperity!',
       icon: '🏺',
       dismissable: true,
       autoDismiss: 8000
@@ -281,7 +285,8 @@ export const AdvisorMessages = {
       id: 'welcome_puebloan',
       type: 'milestone' as MessageType,
       title: 'Welcome to Puebloan',
-      message: 'Community builder, your people live in harmony with nature. Create sustainable plazas and green spaces for all!',
+      message:
+        'Community builder, your people live in harmony with nature. Create sustainable plazas and green spaces for all!',
       icon: '🌿',
       dismissable: true,
       autoDismiss: 8000
@@ -294,7 +299,8 @@ export const AdvisorMessages = {
       id: 'milestone_500',
       type: 'milestone' as MessageType,
       title: 'Growing Settlement',
-      message: 'Your settlement has reached 500 people! More buildings are now available to construct.',
+      message:
+        'Your settlement has reached 500 people! More buildings are now available to construct.',
       icon: '🎉',
       dismissable: true,
       autoDismiss: 6000
@@ -312,7 +318,8 @@ export const AdvisorMessages = {
       id: 'milestone_2000',
       type: 'milestone' as MessageType,
       title: 'Metropolis',
-      message: 'Incredible! Your metropolis now houses 2,000 people. The most advanced buildings are now available!',
+      message:
+        'Incredible! Your metropolis now houses 2,000 people. The most advanced buildings are now available!',
       icon: '🌆',
       dismissable: true,
       autoDismiss: 6000
@@ -325,7 +332,8 @@ export const AdvisorMessages = {
       id: 'warning_happiness',
       type: 'warning' as MessageType,
       title: 'Citizens Are Unhappy',
-      message: 'Happiness has fallen below 40%. Build parks, schools, and service buildings to improve citizen well-being!',
+      message:
+        'Happiness has fallen below 40%. Build parks, schools, and service buildings to improve citizen well-being!',
       icon: '😟',
       dismissable: true
     },
@@ -333,7 +341,8 @@ export const AdvisorMessages = {
       id: 'warning_power',
       type: 'warning' as MessageType,
       title: 'Power Coverage Low',
-      message: 'Many zones lack electricity. Build more power plants or solar arrays to expand coverage.',
+      message:
+        'Many zones lack electricity. Build more power plants or solar arrays to expand coverage.',
       icon: '⚡',
       dismissable: true
     },
@@ -341,7 +350,8 @@ export const AdvisorMessages = {
       id: 'warning_water',
       type: 'warning' as MessageType,
       title: 'Water Coverage Low',
-      message: 'Citizens need water! Build water towers or treatment facilities to expand water service.',
+      message:
+        'Citizens need water! Build water towers or treatment facilities to expand water service.',
       icon: '💧',
       dismissable: true
     },
@@ -349,7 +359,8 @@ export const AdvisorMessages = {
       id: 'info_demand',
       type: 'info' as MessageType,
       title: 'High Demand',
-      message: 'Citizens are demanding more zones! Zone areas that match the demand bars to grow your city.',
+      message:
+        'Citizens are demanding more zones! Zone areas that match the demand bars to grow your city.',
       icon: '📊',
       dismissable: true,
       autoDismiss: 5000
@@ -362,7 +373,8 @@ export const AdvisorMessages = {
       id: 'tutorial_zone',
       type: 'info' as MessageType,
       title: 'Zone Your City',
-      message: 'Start by designating zones (Residential, Commercial, Industrial). Then buildings will automatically develop in those zones!',
+      message:
+        'Start by designating zones (Residential, Commercial, Industrial). Then buildings will automatically develop in those zones!',
       icon: '📍',
       dismissable: true
     },
@@ -370,7 +382,8 @@ export const AdvisorMessages = {
       id: 'tutorial_services',
       type: 'info' as MessageType,
       title: 'Provide Services',
-      message: 'Build service buildings like power plants, water towers, and parks to keep your citizens happy and healthy!',
+      message:
+        'Build service buildings like power plants, water towers, and parks to keep your citizens happy and healthy!',
       icon: '⚙️',
       dismissable: true
     },
@@ -378,7 +391,8 @@ export const AdvisorMessages = {
       id: 'tutorial_demand',
       type: 'info' as MessageType,
       title: 'Watch the Demand Bars',
-      message: 'The RCI demand bars show what your city needs. Positive demand (green) means zone more of that type!',
+      message:
+        'The RCI demand bars show what your city needs. Positive demand (green) means zone more of that type!',
       icon: '📈',
       dismissable: true
     }

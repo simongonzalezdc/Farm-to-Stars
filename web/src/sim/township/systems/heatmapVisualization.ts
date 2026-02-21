@@ -7,7 +7,15 @@
 import type { TownshipState } from '../../../types.township';
 import type { UtilityNetwork } from './utilitiesPropagation';
 
-export type HeatmapType = 'power' | 'water' | 'safety' | 'education' | 'happiness' | 'demand_r' | 'demand_c' | 'demand_i';
+export type HeatmapType =
+  | 'power'
+  | 'water'
+  | 'safety'
+  | 'education'
+  | 'happiness'
+  | 'demand_r'
+  | 'demand_c'
+  | 'demand_i';
 
 export interface HeatmapData {
   width: number;
@@ -30,7 +38,7 @@ const HEATMAP_COLOR_SCHEMES: Record<HeatmapType, HeatmapColors> = {
   happiness: { low: 0xff0000, mid: 0xffff00, high: 0x00ff00 },
   demand_r: { low: 0x220022, mid: 0x66ff66, high: 0x00ff00 }, // Residential green
   demand_c: { low: 0x002222, mid: 0x6666ff, high: 0x0000ff }, // Commercial blue
-  demand_i: { low: 0x222200, mid: 0xffaa00, high: 0xff6600 }  // Industrial orange
+  demand_i: { low: 0x222200, mid: 0xffaa00, high: 0xff6600 } // Industrial orange
 };
 
 /**
@@ -123,9 +131,7 @@ export class HeatmapVisualizationSystem {
     const height = grid.length;
     const width = grid[0]?.length || 0;
 
-    const values: number[][] = grid.map(row =>
-      row.map(cell => cell ? 1 : 0)
-    );
+    const values: number[][] = grid.map((row) => row.map((cell) => (cell ? 1 : 0)));
 
     return { width, height, values, type };
   }
@@ -133,7 +139,11 @@ export class HeatmapVisualizationSystem {
   /**
    * Generate demand heatmap (uniform across entire grid)
    */
-  private generateDemandHeatmap(state: TownshipState, demand: number, type: HeatmapType): HeatmapData {
+  private generateDemandHeatmap(
+    state: TownshipState,
+    demand: number,
+    type: HeatmapType
+  ): HeatmapData {
     const { width, height } = state.gridSize;
 
     // Normalize demand from [-1, 1] to [0, 1]

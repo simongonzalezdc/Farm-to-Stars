@@ -1,9 +1,4 @@
-import type {
-  GameEvent,
-  MailMessage,
-  ResourceId,
-  WeatherEventInstance
-} from '../types';
+import type { GameEvent, MailMessage, ResourceId, WeatherEventInstance } from '../types';
 
 export interface SimEventBatch {
   events: GameEvent[];

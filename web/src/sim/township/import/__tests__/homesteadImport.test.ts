@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  importFromHomestead,
-  validateHomesteadExport
-} from '../homesteadImport';
+import { importFromHomestead, validateHomesteadExport } from '../homesteadImport';
 import type { HomesteadTownshipExport } from '../../../../types.township';
 
 describe('Homestead → Township Import', () => {
@@ -113,9 +110,9 @@ describe('Homestead → Township Import', () => {
       const result = importFromHomestead(homesteadExport, {});
 
       expect(result.state.zones.length).toBeGreaterThan(0);
-      expect(result.state.zones.some(z => z.type === 'residential')).toBe(true);
-      expect(result.state.zones.some(z => z.type === 'commercial')).toBe(true);
-      expect(result.state.zones.some(z => z.type === 'industrial')).toBe(true);
+      expect(result.state.zones.some((z) => z.type === 'residential')).toBe(true);
+      expect(result.state.zones.some((z) => z.type === 'commercial')).toBe(true);
+      expect(result.state.zones.some((z) => z.type === 'industrial')).toBe(true);
     });
 
     it('calculates starting population based on Homestead quality', () => {
@@ -141,9 +138,7 @@ describe('Homestead → Township Import', () => {
       richHomestead.homestead.structures = Array(20)
         .fill(null)
         .map((_, i) => ({ type: 'house', x: i * 3, y: 0, width: 2, height: 2 }));
-      richHomestead.homestead.livestock = [
-        { speciesId: 'chicken', mature: 50, juvenile: 30 }
-      ];
+      richHomestead.homestead.livestock = [{ speciesId: 'chicken', mature: 50, juvenile: 30 }];
 
       const poorResult = importFromHomestead(poorHomestead, {});
       const richResult = importFromHomestead(richHomestead, {});
@@ -175,9 +170,7 @@ describe('Homestead → Township Import', () => {
       richHomestead.homestead.structures = Array(20)
         .fill(null)
         .map((_, i) => ({ type: 'house', x: i * 3, y: 0, width: 2, height: 2 }));
-      richHomestead.homestead.livestock = [
-        { speciesId: 'chicken', mature: 50, juvenile: 50 }
-      ];
+      richHomestead.homestead.livestock = [{ speciesId: 'chicken', mature: 50, juvenile: 50 }];
       richHomestead.homestead.staminaPercent = 100;
 
       const poorResult = importFromHomestead(poorHomestead, {});
@@ -265,7 +258,9 @@ describe('Homestead → Township Import', () => {
       const lowResult = importFromHomestead(lowResources, {});
       const highResult = importFromHomestead(highResources, {});
 
-      expect(highResult.metadata.homesteadQuality).toBeGreaterThan(lowResult.metadata.homesteadQuality);
+      expect(highResult.metadata.homesteadQuality).toBeGreaterThan(
+        lowResult.metadata.homesteadQuality
+      );
     });
 
     it('quality score considers structures built', () => {
@@ -280,7 +275,9 @@ describe('Homestead → Township Import', () => {
       const fewResult = importFromHomestead(fewStructures, {});
       const manyResult = importFromHomestead(manyStructures, {});
 
-      expect(manyResult.metadata.homesteadQuality).toBeGreaterThan(fewResult.metadata.homesteadQuality);
+      expect(manyResult.metadata.homesteadQuality).toBeGreaterThan(
+        fewResult.metadata.homesteadQuality
+      );
     });
 
     it('quality score considers livestock raised', () => {
@@ -296,7 +293,9 @@ describe('Homestead → Township Import', () => {
       const noResult = importFromHomestead(noLivestock, {});
       const manyResult = importFromHomestead(manyLivestock, {});
 
-      expect(manyResult.metadata.homesteadQuality).toBeGreaterThan(noResult.metadata.homesteadQuality);
+      expect(manyResult.metadata.homesteadQuality).toBeGreaterThan(
+        noResult.metadata.homesteadQuality
+      );
     });
 
     it('quality score considers stamina management', () => {
@@ -309,7 +308,9 @@ describe('Homestead → Township Import', () => {
       const lowResult = importFromHomestead(lowStamina, {});
       const highResult = importFromHomestead(highStamina, {});
 
-      expect(highResult.metadata.homesteadQuality).toBeGreaterThan(lowResult.metadata.homesteadQuality);
+      expect(highResult.metadata.homesteadQuality).toBeGreaterThan(
+        lowResult.metadata.homesteadQuality
+      );
     });
 
     it('caps quality score at 1.0', () => {

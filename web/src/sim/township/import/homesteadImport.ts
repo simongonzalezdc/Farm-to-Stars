@@ -45,8 +45,7 @@ export function importFromHomestead(
 
   // Determine civilization
   const civilization =
-    (homesteadExport.homestead.metadata.civilization as CivilizationId) ||
-    'teotihuacan';
+    (homesteadExport.homestead.metadata.civilization as CivilizationId) || 'teotihuacan';
 
   // Build Township state
   const state: TownshipState = {
@@ -106,10 +105,10 @@ export function importFromHomestead(
 
   // Update zone distribution
   state.metrics.zoneDistribution = {
-    residential: state.zones.filter(z => z.type === 'residential').length,
-    commercial: state.zones.filter(z => z.type === 'commercial').length,
-    industrial: state.zones.filter(z => z.type === 'industrial').length,
-    mixed: state.zones.filter(z => z.type === 'mixed').length
+    residential: state.zones.filter((z) => z.type === 'residential').length,
+    commercial: state.zones.filter((z) => z.type === 'commercial').length,
+    industrial: state.zones.filter((z) => z.type === 'industrial').length,
+    mixed: state.zones.filter((z) => z.type === 'mixed').length
   };
 
   return {
@@ -189,12 +188,14 @@ function generateStarterZones(
   // Position them based on Homestead structure density
 
   // Calculate center of Homestead structures
-  const centerX = structures.length > 0
-    ? Math.floor(structures.reduce((sum, s) => sum + s.x, 0) / structures.length)
-    : 32;
-  const centerY = structures.length > 0
-    ? Math.floor(structures.reduce((sum, s) => sum + s.y, 0) / structures.length)
-    : 32;
+  const centerX =
+    structures.length > 0
+      ? Math.floor(structures.reduce((sum, s) => sum + s.x, 0) / structures.length)
+      : 32;
+  const centerY =
+    structures.length > 0
+      ? Math.floor(structures.reduce((sum, s) => sum + s.y, 0) / structures.length)
+      : 32;
 
   // Place residential zones near center
   zones.push(
@@ -205,18 +206,14 @@ function generateStarterZones(
   );
 
   // Place commercial zone
-  zones.push(
-    createZone('commercial', { x: centerX - 6, y: centerY + 2 }, { width: 4, height: 4 })
-  );
+  zones.push(createZone('commercial', { x: centerX - 6, y: centerY + 2 }, { width: 4, height: 4 }));
 
   // Place industrial zone (further from center)
-  zones.push(
-    createZone('industrial', { x: centerX + 2, y: centerY + 2 }, { width: 4, height: 4 })
-  );
+  zones.push(createZone('industrial', { x: centerX + 2, y: centerY + 2 }, { width: 4, height: 4 }));
 
   // Give starter zones some initial maturity based on Homestead success
   const initialMaturity = Math.min(0.3, structures.length / 50);
-  zones.forEach(zone => {
+  zones.forEach((zone) => {
     zone.maturity = initialMaturity;
   });
 

@@ -53,7 +53,10 @@ export class UtilitiesPropagationSystem {
   /**
    * Calculate coverage percentages for metrics
    */
-  public calculateMetrics(state: TownshipState, network: UtilityNetwork): TownshipState['metrics']['coverage'] {
+  public calculateMetrics(
+    state: TownshipState,
+    network: UtilityNetwork
+  ): TownshipState['metrics']['coverage'] {
     const { width, height } = state.gridSize;
     const totalTiles = width * height;
 
@@ -141,7 +144,12 @@ export class UtilitiesPropagationSystem {
   /**
    * Check if a specific position is covered by a service
    */
-  public isCovered(network: UtilityNetwork, service: 'power' | 'water' | 'safety' | 'education', x: number, y: number): boolean {
+  public isCovered(
+    network: UtilityNetwork,
+    service: 'power' | 'water' | 'safety' | 'education',
+    x: number,
+    y: number
+  ): boolean {
     const grid = network[service];
     if (!grid[y] || !grid[y][x]) return false;
     return grid[y][x];
@@ -150,7 +158,11 @@ export class UtilitiesPropagationSystem {
   /**
    * Get coverage at a specific position (returns object with all services)
    */
-  public getCoverageAt(network: UtilityNetwork, x: number, y: number): {
+  public getCoverageAt(
+    network: UtilityNetwork,
+    x: number,
+    y: number
+  ): {
     power: boolean;
     water: boolean;
     safety: boolean;

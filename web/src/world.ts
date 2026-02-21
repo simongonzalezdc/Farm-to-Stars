@@ -177,9 +177,10 @@ export function tick(
   const seasonTransitions = advanceSeason(state, dt);
   const finalSeasonDefinition = getSeasonDefinition(state.season.active);
 
-  const segments = seasonTransitions.segments.length > 0
-    ? seasonTransitions.segments
-    : [{ season: state.season.active, duration: dt }];
+  const segments =
+    seasonTransitions.segments.length > 0
+      ? seasonTransitions.segments
+      : [{ season: state.season.active, duration: dt }];
 
   const resourceAccum: Partial<Record<ResourceId, number>> = {};
   let accumulatedConstruction = 0;
@@ -235,7 +236,7 @@ export function tick(
   for (const job of state.buildQueue) {
     if (job.status !== 'building') continue;
     if (existingConstructionIds.has(job.id)) continue;
-    const duration = job.duration > 0 ? job.duration : buildingDefs[job.type]?.buildTime ?? 0;
+    const duration = job.duration > 0 ? job.duration : (buildingDefs[job.type]?.buildTime ?? 0);
     const remaining = Math.min(job.remaining > 0 ? job.remaining : duration, duration);
     const constructionJob: ConstructionJob = {
       id: job.id,
@@ -315,7 +316,14 @@ export function tick(
     }
   }
 
-  const homestead = processHomestead(state, dt, finalSeasonDefinition, crops, livestock, civilizations);
+  const homestead = processHomestead(
+    state,
+    dt,
+    finalSeasonDefinition,
+    crops,
+    livestock,
+    civilizations
+  );
   events.push(...homestead.events);
   for (const resource of Object.keys(homestead.feedConsumed) as ResourceId[]) {
     syncStorageSlot(state, resource);
@@ -492,7 +500,12 @@ function processHomestead(
     for (const entry of lifecycle.withered) {
       const detail: HomesteadCropDetail = { ...entry, state: 'withered' };
       gameEvents.dispatchEvent(new CustomEvent(EVENT_HOMESTEAD_CROP, { detail }));
-      events.push({ type: 'homestead.crop.withered', cropId: entry.cropId, x: entry.x, y: entry.y });
+      events.push({
+        type: 'homestead.crop.withered',
+        cropId: entry.cropId,
+        x: entry.x,
+        y: entry.y
+      });
     }
   }
 

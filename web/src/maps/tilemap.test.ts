@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createOccupancyMap,
-  markJob,
-  markStructure,
-  validatePlacement
-} from './tilemap';
+import { createOccupancyMap, markJob, markStructure, validatePlacement } from './tilemap';
 
 describe('validatePlacement', () => {
   it('accepts placements fully inside free tiles', () => {

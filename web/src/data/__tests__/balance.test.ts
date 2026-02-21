@@ -36,8 +36,10 @@ describe('balance sanity', () => {
     const orderedSeasons = SEASON_ORDER.map((id) => SEASON_DEFINITIONS[id]);
     const totalDuration = orderedSeasons.reduce((acc, def) => acc + def.durationSeconds, 0);
     const weightedResourceMultiplier =
-      orderedSeasons.reduce((acc, def) => acc + def.durationSeconds * def.multipliers.resourceRate, 0) /
-      totalDuration;
+      orderedSeasons.reduce(
+        (acc, def) => acc + def.durationSeconds * def.multipliers.resourceRate,
+        0
+      ) / totalDuration;
 
     const woodPerSecond = BASE_WOOD_PER_SECOND * weightedResourceMultiplier;
     const woodInEightMinutes = woodPerSecond * 8 * 60;
@@ -55,7 +57,8 @@ describe('balance sanity', () => {
     const foodPerSecond = (wheatOutputs.food ?? 0) / wheat.duration;
     const coinsPerCycle = sellOutputs.coins ?? 0;
     const foodPerCycle = sellInputs.food ?? 0;
-    const coinsPerSecondLimitedByInput = foodPerCycle > 0 ? (foodPerSecond / foodPerCycle) * coinsPerCycle : Infinity;
+    const coinsPerSecondLimitedByInput =
+      foodPerCycle > 0 ? (foodPerSecond / foodPerCycle) * coinsPerCycle : Infinity;
     const coinsPerSecondRecipe = sell.duration > 0 ? coinsPerCycle / sell.duration : 0;
     const coinsPerSecond = Math.min(coinsPerSecondLimitedByInput, coinsPerSecondRecipe);
 

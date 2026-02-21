@@ -83,8 +83,8 @@ async function migrateFixtures(versionToken: string) {
     return;
   }
 
-  const files = readdirSync(FIXTURE_DIR).filter((file) =>
-    file.startsWith(`v${normalized}-`) && file.endsWith('.json')
+  const files = readdirSync(FIXTURE_DIR).filter(
+    (file) => file.startsWith(`v${normalized}-`) && file.endsWith('.json')
   );
 
   if (files.length === 0) {
@@ -189,7 +189,9 @@ function parseArgs(tokens: string[]): ParseResult {
 }
 
 function printHelp() {
-  console.log(`Usage:\n  yarn migrate --from <schemaVersion>\n  yarn migrate -- --input <path> [--output <path>]\n`);
+  console.log(
+    `Usage:\n  yarn migrate --from <schemaVersion>\n  yarn migrate -- --input <path> [--output <path>]\n`
+  );
   console.log('Options:');
   console.log('  --from <schemaVersion>  Run migrations against fixtures for the given version.');
   console.log('  --input <path>          Read legacy save data from a file.');

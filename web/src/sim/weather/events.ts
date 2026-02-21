@@ -1,4 +1,9 @@
-import type { WeatherEventInstance, WeatherEventType, WeatherState, WeatherType } from '../../types';
+import type {
+  WeatherEventInstance,
+  WeatherEventType,
+  WeatherState,
+  WeatherType
+} from '../../types';
 import { nextRandom, randomBetween } from '../random';
 
 export interface WeatherEventUpdateResult {
@@ -117,7 +122,10 @@ function attemptSpawnEvent(state: WeatherState, started: WeatherEventInstance[])
     return;
   }
 
-  const duration = Math.max(chosen.minDuration, randomBetween(state, chosen.minDuration, chosen.maxDuration));
+  const duration = Math.max(
+    chosen.minDuration,
+    randomBetween(state, chosen.minDuration, chosen.maxDuration)
+  );
   const intensity = 0.5 + nextRandom(state) * 0.9;
 
   state.events.serial += 1;

@@ -10,8 +10,8 @@ const mockCivilizations: CivilizationsTable = {
     description: 'A civilization for testing purposes',
     bonuses: {
       solarEnergy: 1.15,
-      research: 1.10,
-      waterEfficiency: 1.20
+      research: 1.1,
+      waterEfficiency: 1.2
     },
     aesthetics: {
       primaryColor: '#FF0000',
@@ -59,8 +59,8 @@ describe('CivilizationManager', () => {
     it('returns correct multiplier for existing bonus', () => {
       const manager = new CivilizationManager(mockCivilizations.testCiv);
       expect(manager.getBonusMultiplier('solarEnergy')).toBe(1.15);
-      expect(manager.getBonusMultiplier('research')).toBe(1.10);
-      expect(manager.getBonusMultiplier('waterEfficiency')).toBe(1.20);
+      expect(manager.getBonusMultiplier('research')).toBe(1.1);
+      expect(manager.getBonusMultiplier('waterEfficiency')).toBe(1.2);
     });
 
     it('returns 1.0 for non-existent bonus', () => {
@@ -150,8 +150,8 @@ describe('CivilizationManager', () => {
 
       expect(bonuses).toEqual({
         solarEnergy: 1.15,
-        research: 1.10,
-        waterEfficiency: 1.20
+        research: 1.1,
+        waterEfficiency: 1.2
       });
     });
 

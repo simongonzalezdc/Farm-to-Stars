@@ -101,7 +101,7 @@ export class BuildingMenuUI {
 
     // Update tab states
     const tabs = this.container.querySelectorAll('.category-tab');
-    tabs.forEach(tab => {
+    tabs.forEach((tab) => {
       const btn = tab as HTMLButtonElement;
       if (btn.dataset.category === category) {
         btn.classList.add('active');
@@ -131,7 +131,7 @@ export class BuildingMenuUI {
 
     // Filter by category
     if (this.currentCategory !== 'all') {
-      buildings = buildings.filter(b => b.type === this.currentCategory);
+      buildings = buildings.filter((b) => b.type === this.currentCategory);
     }
 
     // Sort by tier, then by cost
@@ -267,7 +267,7 @@ export class BuildingMenuUI {
 
     // Update card states
     const cards = this.container.querySelectorAll('.building-card');
-    cards.forEach(card => {
+    cards.forEach((card) => {
       card.classList.remove('selected');
     });
 

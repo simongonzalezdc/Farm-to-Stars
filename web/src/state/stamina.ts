@@ -39,7 +39,10 @@ export function regenerateStamina(state: StaminaState, options: StaminaTickOptio
   }
 
   const regenRate = options.regenOverride ?? state.regenPerSecond;
-  const regen = Math.max(0, Number.isFinite(regenRate) ? regenRate : createDefaultStaminaState().regenPerSecond);
+  const regen = Math.max(
+    0,
+    Number.isFinite(regenRate) ? regenRate : createDefaultStaminaState().regenPerSecond
+  );
 
   state.current = Math.min(state.max, state.current + regen * dt);
   if (state.current >= state.max - EPSILON) {
@@ -52,7 +55,10 @@ export function regenerateStamina(state: StaminaState, options: StaminaTickOptio
 }
 
 export function setStaminaCapacity(state: StaminaState, max: number) {
-  const normalizedMax = Math.max(1, Math.floor(Number.isFinite(max) ? max : createDefaultStaminaState().max));
+  const normalizedMax = Math.max(
+    1,
+    Math.floor(Number.isFinite(max) ? max : createDefaultStaminaState().max)
+  );
   state.max = normalizedMax;
   state.current = Math.min(state.current, normalizedMax);
 }

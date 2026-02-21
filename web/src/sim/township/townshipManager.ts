@@ -22,7 +22,11 @@ import { ZoneMaturationSystem } from './systems/zoneMaturation';
 import { UtilitiesPropagationSystem, type UtilityNetwork } from './systems/utilitiesPropagation';
 import { DemandCalculationSystem } from './systems/demandCalculation';
 import { OutageWorkflowSystem, type OutageEvent } from './systems/outageWorkflow';
-import { HeatmapVisualizationSystem, type HeatmapData, type HeatmapType } from './systems/heatmapVisualization';
+import {
+  HeatmapVisualizationSystem,
+  type HeatmapData,
+  type HeatmapType
+} from './systems/heatmapVisualization';
 
 /**
  * Township Manager
@@ -114,7 +118,7 @@ export class TownshipManager {
       this.markDirty('coverage');
 
       // Emit events
-      events.forEach(e => this.emit(e));
+      events.forEach((e) => this.emit(e));
     }
   }
 
@@ -130,7 +134,7 @@ export class TownshipManager {
       this.markDirty('demand');
 
       // Emit events
-      events.forEach(e => this.emit(e));
+      events.forEach((e) => this.emit(e));
     }
   }
 
@@ -160,7 +164,8 @@ export class TownshipManager {
         } else {
           // Update construction progress
           const totalTime = def.buildTime;
-          building.constructionProgress = Math.min(100,
+          building.constructionProgress = Math.min(
+            100,
             ((totalTime - building.constructionTimeRemaining) / totalTime) * 100
           );
         }
@@ -192,7 +197,7 @@ export class TownshipManager {
       this.markDirty('coverage');
 
       // Emit outage events
-      outageEvents.forEach(event => {
+      outageEvents.forEach((event) => {
         if (event.type === 'outage_started') {
           this.emit({ type: 'service_outage', buildingId: event.buildingId });
         } else if (event.type === 'building_damaged') {
@@ -234,7 +239,10 @@ export class TownshipManager {
     // S4: Utilities propagation for coverage
     if (this.dirty.coverage) {
       this.utilityNetwork = this.utilitiesPropagation.calculateCoverage(this.state, this.buildings);
-      metrics.coverage = this.utilitiesPropagation.calculateMetrics(this.state, this.utilityNetwork);
+      metrics.coverage = this.utilitiesPropagation.calculateMetrics(
+        this.state,
+        this.utilityNetwork
+      );
       this.dirty.coverage = false;
 
       this.emit({ type: 'service_coverage_updated', coverage: metrics.coverage });
@@ -242,10 +250,10 @@ export class TownshipManager {
 
     // Update zone distribution
     metrics.zoneDistribution = {
-      residential: this.state.zones.filter(z => z.type === 'residential').length,
-      commercial: this.state.zones.filter(z => z.type === 'commercial').length,
-      industrial: this.state.zones.filter(z => z.type === 'industrial').length,
-      mixed: this.state.zones.filter(z => z.type === 'mixed').length
+      residential: this.state.zones.filter((z) => z.type === 'residential').length,
+      commercial: this.state.zones.filter((z) => z.type === 'commercial').length,
+      industrial: this.state.zones.filter((z) => z.type === 'industrial').length,
+      mixed: this.state.zones.filter((z) => z.type === 'mixed').length
     };
 
     this.state.metrics = metrics;
@@ -290,7 +298,7 @@ export class TownshipManager {
    * Unregister event handler
    */
   off(handler: TownshipEventHandler): void {
-    this.eventHandlers = this.eventHandlers.filter(h => h !== handler);
+    this.eventHandlers = this.eventHandlers.filter((h) => h !== handler);
   }
 
   /**
@@ -327,7 +335,11 @@ export class TownshipManager {
   /**
    * Repair a building (player action)
    */
-  public repairBuilding(buildingId: string): { success: boolean; cost?: Record<string, number>; reason?: string } {
+  public repairBuilding(buildingId: string): {
+    success: boolean;
+    cost?: Record<string, number>;
+    reason?: string;
+  } {
     const result = this.outageWorkflow.repairBuilding(this.state, this.buildings, buildingId);
 
     if (result.success) {
@@ -352,7 +364,7 @@ export class TownshipManager {
    * Emit event to all handlers
    */
   private emit(event: TownshipEvent): void {
-    this.eventHandlers.forEach(handler => {
+    this.eventHandlers.forEach((handler) => {
       try {
         handler(event);
       } catch (error) {

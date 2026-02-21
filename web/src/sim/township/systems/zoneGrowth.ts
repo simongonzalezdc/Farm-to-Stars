@@ -46,10 +46,7 @@ export function tickZoneGrowth(
 
     // Base growth rate affected by modifiers
     const growthRate =
-      TOWNSHIP_CONFIG.BASE_ZONE_GROWTH *
-      (1 + demandModifier) *
-      serviceModifier *
-      civModifier;
+      TOWNSHIP_CONFIG.BASE_ZONE_GROWTH * (1 + demandModifier) * serviceModifier * civModifier;
 
     // Update maturity
     const previousMaturity = zone.maturity;

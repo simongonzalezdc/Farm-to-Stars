@@ -23,7 +23,11 @@ function validateBuilding(building: any): building is BuildingDefinition {
   if (typeof building.capacity !== 'number') return false;
 
   // Size validation
-  if (!building.size || typeof building.size.width !== 'number' || typeof building.size.height !== 'number') {
+  if (
+    !building.size ||
+    typeof building.size.width !== 'number' ||
+    typeof building.size.height !== 'number'
+  ) {
     return false;
   }
 
@@ -31,9 +35,11 @@ function validateBuilding(building: any): building is BuildingDefinition {
   if (!building.cost || typeof building.cost !== 'object') return false;
 
   // Maintenance validation
-  if (!building.maintenance ||
-      typeof building.maintenance.cost !== 'number' ||
-      typeof building.maintenance.interval !== 'number') {
+  if (
+    !building.maintenance ||
+    typeof building.maintenance.cost !== 'number' ||
+    typeof building.maintenance.interval !== 'number'
+  ) {
     return false;
   }
 
@@ -87,7 +93,7 @@ export function getBuildingsByType(
   type: 'residential' | 'commercial' | 'industrial' | 'service'
 ): BuildingDefinition[] {
   const buildings = loadBuildings();
-  return Object.values(buildings).filter(b => b.type === type);
+  return Object.values(buildings).filter((b) => b.type === type);
 }
 
 /**
@@ -98,7 +104,7 @@ export function getBuildingsByType(
  */
 export function getBuildingsForCivilization(civilizationId: string): BuildingDefinition[] {
   const buildings = loadBuildings();
-  return Object.values(buildings).filter(building => {
+  return Object.values(buildings).filter((building) => {
     // No civilization requirement = available to all
     if (!building.requirements?.civilization) return true;
 
@@ -126,8 +132,10 @@ export function isBuildingUnlocked(
   }
 
   // Check civilization requirement
-  if (building.requirements?.civilization &&
-      !building.requirements.civilization.includes(civilizationId as any)) {
+  if (
+    building.requirements?.civilization &&
+    !building.requirements.civilization.includes(civilizationId as any)
+  ) {
     return false;
   }
 

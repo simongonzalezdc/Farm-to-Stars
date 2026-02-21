@@ -107,7 +107,7 @@ describe('Township Metrics System', () => {
       const unhappyResult = calculateHappiness(state, createMockCivilization());
 
       expect(unhappyResult.overall).toBeLessThan(happyResult.overall);
-      expect(unhappyResult.factors.some(f => f.category === 'housing')).toBe(true);
+      expect(unhappyResult.factors.some((f) => f.category === 'housing')).toBe(true);
     });
 
     it('reduces happiness when people are unemployed', () => {
@@ -117,8 +117,8 @@ describe('Township Metrics System', () => {
 
       const result = calculateHappiness(state, createMockCivilization());
 
-      expect(result.factors.some(f => f.category === 'employment')).toBe(true);
-      const empFactor = result.factors.find(f => f.category === 'employment');
+      expect(result.factors.some((f) => f.category === 'employment')).toBe(true);
+      const empFactor = result.factors.find((f) => f.category === 'employment');
       expect(empFactor?.value).toBeLessThan(0);
     });
 
@@ -143,7 +143,7 @@ describe('Township Metrics System', () => {
       const fullServicesResult = calculateHappiness(state, createMockCivilization());
 
       expect(fullServicesResult.overall).toBeGreaterThan(noServicesResult.overall);
-      expect(fullServicesResult.factors.some(f => f.category === 'services')).toBe(true);
+      expect(fullServicesResult.factors.some((f) => f.category === 'services')).toBe(true);
     });
 
     it('reduces happiness with too much industry', () => {
@@ -160,8 +160,8 @@ describe('Township Metrics System', () => {
       const result = calculateHappiness(state, createMockCivilization());
 
       // 50% industrial is > 30% threshold, should reduce happiness
-      expect(result.factors.some(f => f.category === 'environment')).toBe(true);
-      const envFactor = result.factors.find(f => f.category === 'environment');
+      expect(result.factors.some((f) => f.category === 'environment')).toBe(true);
+      const envFactor = result.factors.find((f) => f.category === 'environment');
       if (envFactor) {
         expect(envFactor.value).toBeLessThan(0);
       }
@@ -184,7 +184,7 @@ describe('Township Metrics System', () => {
       const bonusResult = calculateHappiness(state, bonusCiv);
 
       expect(bonusResult.overall).toBeGreaterThan(baseResult.overall);
-      expect(bonusResult.factors.some(f => f.category === 'civilization')).toBe(true);
+      expect(bonusResult.factors.some((f) => f.category === 'civilization')).toBe(true);
     });
 
     it('caps happiness at 100', () => {

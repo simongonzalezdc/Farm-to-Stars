@@ -258,7 +258,7 @@ describe('TownshipManager', () => {
         id: 'puebloan',
         townshipBonuses: {
           ...createMockCivilization().townshipBonuses,
-          maintenanceCost: 0.80
+          maintenanceCost: 0.8
         }
       };
 
@@ -281,11 +281,11 @@ describe('TownshipManager', () => {
       const manager = new TownshipManager(state, {}, createMockCivilization());
 
       const events: TownshipEvent[] = [];
-      manager.on(event => events.push(event));
+      manager.on((event) => events.push(event));
 
       manager.tick(10.0);
 
-      expect(events.some(e => e.type === 'zone_matured')).toBe(true);
+      expect(events.some((e) => e.type === 'zone_matured')).toBe(true);
     });
 
     it('emits population_milestone event', () => {
@@ -303,11 +303,11 @@ describe('TownshipManager', () => {
       const manager = new TownshipManager(state, {}, createMockCivilization());
 
       const events: TownshipEvent[] = [];
-      manager.on(event => events.push(event));
+      manager.on((event) => events.push(event));
 
       manager.tick(10.0);
 
-      expect(events.some(e => e.type === 'population_milestone')).toBe(true);
+      expect(events.some((e) => e.type === 'population_milestone')).toBe(true);
     });
 
     it('emits happiness_changed event on significant changes', () => {
@@ -318,7 +318,7 @@ describe('TownshipManager', () => {
       const manager = new TownshipManager(state, {}, createMockCivilization());
 
       const events: TownshipEvent[] = [];
-      manager.on(event => events.push(event));
+      manager.on((event) => events.push(event));
 
       // Create conditions that will change happiness
       state.population.homeless = 50; // Big change
@@ -326,7 +326,7 @@ describe('TownshipManager', () => {
       manager.tick(0.1);
 
       // Check if happiness_changed event was emitted
-      const happinessEvent = events.find(e => e.type === 'happiness_changed');
+      const happinessEvent = events.find((e) => e.type === 'happiness_changed');
       expect(happinessEvent).toBeDefined();
     });
 
@@ -336,11 +336,11 @@ describe('TownshipManager', () => {
       const manager = new TownshipManager(state, {}, createMockCivilization());
 
       const events: TownshipEvent[] = [];
-      manager.on(event => events.push(event));
+      manager.on((event) => events.push(event));
 
       manager.tick(0.1);
 
-      expect(events.some(e => e.type === 'demand_shift')).toBe(true);
+      expect(events.some((e) => e.type === 'demand_shift')).toBe(true);
     });
 
     it('allows multiple event handlers', () => {
@@ -350,8 +350,8 @@ describe('TownshipManager', () => {
       const events1: TownshipEvent[] = [];
       const events2: TownshipEvent[] = [];
 
-      manager.on(event => events1.push(event));
-      manager.on(event => events2.push(event));
+      manager.on((event) => events1.push(event));
+      manager.on((event) => events2.push(event));
 
       manager.tick(0.1);
 

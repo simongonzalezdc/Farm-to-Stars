@@ -202,7 +202,12 @@ function createSummerLayer(destination: Tone.Gain, volume: number): SeasonLayer 
 
 function createAutumnLayer(destination: Tone.Gain, volume: number): SeasonLayer {
   return createLayer('autumn', destination, volume, (gain) => {
-    const chorus = new Tone.Chorus({ frequency: 0.6, delayTime: 2.5, depth: 0.5, wet: 0.4 }).start();
+    const chorus = new Tone.Chorus({
+      frequency: 0.6,
+      delayTime: 2.5,
+      depth: 0.5,
+      wet: 0.4
+    }).start();
     const padSynth = new Tone.PolySynth(Tone.AMSynth, {
       envelope: { attack: 1.2, decay: 0.4, sustain: 0.7, release: 3.8 },
       harmonicity: 2.5,
@@ -230,7 +235,9 @@ function createAutumnLayer(destination: Tone.Gain, volume: number): SeasonLayer 
     let bellStep = 0;
     const bellLoop = new Tone.Loop((time) => {
       if (bellStep % 4 === 0) {
-        const note = Tone.Frequency('C5').transpose((bellStep / 4) % 2 === 0 ? -2 : 0).toFrequency();
+        const note = Tone.Frequency('C5')
+          .transpose((bellStep / 4) % 2 === 0 ? -2 : 0)
+          .toFrequency();
         bells.triggerAttackRelease(note, '16n', time);
       }
       bellStep += 1;
@@ -269,7 +276,9 @@ function createWinterLayer(destination: Tone.Gain, volume: number): SeasonLayer 
     let shimmerStep = 0;
     const shimmerLoop = new Tone.Loop((time) => {
       if (shimmerStep % 6 === 0) {
-        const note = Tone.Frequency('A5').transpose(shimmerStep % 12 === 0 ? -5 : -12).toNote();
+        const note = Tone.Frequency('A5')
+          .transpose(shimmerStep % 12 === 0 ? -5 : -12)
+          .toNote();
         shimmer.triggerAttackRelease(note, '2n', time);
       }
       shimmerStep += 1;
@@ -287,7 +296,10 @@ export function createSeasonMusicController(
   config: SeasonMusicConfig = {}
 ): SeasonMusicController {
   const crossfade = config.crossfadeSeconds ?? DEFAULT_CROSSFADE;
-  const volumes: Record<SeasonId, number> = { ...DEFAULT_SEASON_VOLUMES, ...(config.volumes ?? {}) };
+  const volumes: Record<SeasonId, number> = {
+    ...DEFAULT_SEASON_VOLUMES,
+    ...(config.volumes ?? {})
+  };
   const layers = new Map<SeasonId, SeasonLayer>();
   let active: SeasonLayer | null = null;
 

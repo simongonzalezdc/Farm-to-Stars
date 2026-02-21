@@ -16,14 +16,15 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'welcome',
     title: 'Welcome to Farm to Stars! 🌱',
-    message: 'You\'re starting a homestead. Let\'s learn the basics!',
+    message: "You're starting a homestead. Let's learn the basics!",
     position: 'center',
     dismissable: true
   },
   {
     id: 'map',
     title: 'The Map',
-    message: 'This is your homestead. The brown tiles are ground. Roads appear every 5 tiles. Buildings appear as colored squares when you build them.',
+    message:
+      'This is your homestead. The brown tiles are ground. Roads appear every 5 tiles. Buildings appear as colored squares when you build them.',
     position: 'center',
     dismissable: true
   },
@@ -31,7 +32,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'resources',
     title: 'Resources',
     target: '#resourceRow',
-    message: 'Your resources are shown here. You need materials like Wood, Stone, and Plant Fiber to build structures.',
+    message:
+      'Your resources are shown here. You need materials like Wood, Stone, and Plant Fiber to build structures.',
     position: 'bottom',
     dismissable: true
   },
@@ -39,7 +41,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'building',
     title: 'Building Structures',
     target: '#buildOptions',
-    message: 'Click a building option to enter build mode. Then click on the map to place it. Right-click to cancel.',
+    message:
+      'Click a building option to enter build mode. Then click on the map to place it. Right-click to cancel.',
     position: 'top',
     dismissable: true
   },
@@ -47,7 +50,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'tools',
     title: 'Tools',
     target: '#toolbelt',
-    message: 'Use tools to tend your field: Stone Hoe to till soil, Watering Can to water crops, Sickle to harvest.',
+    message:
+      'Use tools to tend your field: Stone Hoe to till soil, Watering Can to water crops, Sickle to harvest.',
     position: 'top',
     dismissable: true
   },
@@ -55,21 +59,24 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'seeds',
     title: 'Planting Crops',
     target: '#seedBar',
-    message: 'Select a seed, then click on tilled soil to plant. Crops grow over time and can be harvested.',
+    message:
+      'Select a seed, then click on tilled soil to plant. Crops grow over time and can be harvested.',
     position: 'top',
     dismissable: true
   },
   {
     id: 'seasons',
     title: 'Seasons',
-    message: 'The game has 4 seasons, each with different effects. Watch the season timer and plan accordingly!',
+    message:
+      'The game has 4 seasons, each with different effects. Watch the season timer and plan accordingly!',
     position: 'center',
     dismissable: true
   },
   {
     id: 'complete',
-    title: 'You\'re Ready!',
-    message: 'Start by building a Farm Plot, then till soil, plant seeds, and harvest crops. Good luck!',
+    title: "You're Ready!",
+    message:
+      'Start by building a Farm Plot, then till soil, plant seeds, and harvest crops. Good luck!',
     position: 'center',
     dismissable: true
   }
@@ -91,7 +98,7 @@ export class TutorialOverlay {
    */
   public start(): void {
     if (this.isActive) return;
-    
+
     this.isActive = true;
     this.currentStepIndex = 0;
     this.showStep(0);
@@ -172,14 +179,17 @@ export class TutorialOverlay {
     if (step.dismissable !== false) {
       const skipButton = document.createElement('button');
       skipButton.textContent = 'Skip Tutorial';
-      skipButton.style.cssText = 'padding: 0.5rem 1rem; background: #374151; border: 1px solid #4b5563; border-radius: 4px; color: #e5e7eb; cursor: pointer;';
+      skipButton.style.cssText =
+        'padding: 0.5rem 1rem; background: #374151; border: 1px solid #4b5563; border-radius: 4px; color: #e5e7eb; cursor: pointer;';
       skipButton.addEventListener('click', () => this.complete());
       buttons.appendChild(skipButton);
     }
 
     const nextButton = document.createElement('button');
-    nextButton.textContent = this.currentStepIndex === TUTORIAL_STEPS.length - 1 ? 'Got it!' : 'Next';
-    nextButton.style.cssText = 'padding: 0.5rem 1rem; background: #3b82f6; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: 600;';
+    nextButton.textContent =
+      this.currentStepIndex === TUTORIAL_STEPS.length - 1 ? 'Got it!' : 'Next';
+    nextButton.style.cssText =
+      'padding: 0.5rem 1rem; background: #3b82f6; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: 600;';
     nextButton.addEventListener('click', () => {
       this.currentStepIndex++;
       this.showStep(this.currentStepIndex);
@@ -228,7 +238,7 @@ export class TutorialOverlay {
       this.highlight = null;
     }
     this.isActive = false;
-    
+
     // Save tutorial completion
     localStorage.setItem('farm-to-stars-tutorial-completed', 'true');
   }
@@ -240,4 +250,3 @@ export class TutorialOverlay {
     return localStorage.getItem('farm-to-stars-tutorial-completed') !== 'true';
   }
 }
-

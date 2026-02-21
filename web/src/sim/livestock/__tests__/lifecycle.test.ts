@@ -84,7 +84,11 @@ describe('tickLivestock', () => {
 
     const result = tickLivestock(state, state.homestead.time.secondsPerDay, LIVESTOCK);
 
-    expect(result.events).toContainEqual({ type: 'livestock.starved', livestockId: 5, speciesId: 'cow' });
+    expect(result.events).toContainEqual({
+      type: 'livestock.starved',
+      livestockId: 5,
+      speciesId: 'cow'
+    });
     expect(state.homestead.livestock.animals[0]?.alive).toBe(false);
   });
 });

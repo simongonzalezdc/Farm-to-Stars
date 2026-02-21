@@ -23,7 +23,10 @@ describe('weather events scheduler', () => {
     expect(state.events.active.length).toBeGreaterThanOrEqual(activeBefore);
     expect(Number.isFinite(totalMoisture)).toBe(true);
 
-    const elapsed = state.events.active.reduce((sum, event) => Math.max(sum, event.duration + 1), 0);
+    const elapsed = state.events.active.reduce(
+      (sum, event) => Math.max(sum, event.duration + 1),
+      0
+    );
     state.events.nextRollIn = Number.POSITIVE_INFINITY;
     const resolved = updateWeatherEvents(state, elapsed);
     expect(resolved.ended.length).toBeGreaterThan(0);

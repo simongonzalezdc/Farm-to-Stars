@@ -9,8 +9,20 @@ const MOCK_CROPS: CropsTable = {
     regrow: false,
     yields: { wheat: 3 },
     stages: [
-      { id: 'sprout', duration: 4, minMoisture: 0.2, moistureConsumptionPerSecond: 0.01, wiltThreshold: 0.05 },
-      { id: 'mature', duration: 4, minMoisture: 0.15, moistureConsumptionPerSecond: 0.008, wiltThreshold: 0.05 }
+      {
+        id: 'sprout',
+        duration: 4,
+        minMoisture: 0.2,
+        moistureConsumptionPerSecond: 0.01,
+        wiltThreshold: 0.05
+      },
+      {
+        id: 'mature',
+        duration: 4,
+        minMoisture: 0.15,
+        moistureConsumptionPerSecond: 0.008,
+        wiltThreshold: 0.05
+      }
     ]
   },
   berry: {
@@ -19,8 +31,20 @@ const MOCK_CROPS: CropsTable = {
     regrow: true,
     yields: { berries: 2 },
     stages: [
-      { id: 'sprout', duration: 2, minMoisture: 0.1, moistureConsumptionPerSecond: 0.005, wiltThreshold: 0.02 },
-      { id: 'ripe', duration: 2, minMoisture: 0.1, moistureConsumptionPerSecond: 0.005, wiltThreshold: 0.02 }
+      {
+        id: 'sprout',
+        duration: 2,
+        minMoisture: 0.1,
+        moistureConsumptionPerSecond: 0.005,
+        wiltThreshold: 0.02
+      },
+      {
+        id: 'ripe',
+        duration: 2,
+        minMoisture: 0.1,
+        moistureConsumptionPerSecond: 0.005,
+        wiltThreshold: 0.02
+      }
     ]
   }
 };

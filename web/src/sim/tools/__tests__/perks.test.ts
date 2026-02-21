@@ -27,9 +27,17 @@ describe('tool proficiency perks', () => {
       const result = recordToolUse(state, 'hoe', apprentice.milestone.count);
       expect(result.unlocked.map((perk) => perk.id)).toEqual([apprentice.id]);
       expect(result.events).toEqual([
-        { type: 'tool.perk.unlocked', perkId: apprentice.id, toolId: 'hoe', uses: apprentice.milestone.count }
+        {
+          type: 'tool.perk.unlocked',
+          perkId: apprentice.id,
+          toolId: 'hoe',
+          uses: apprentice.milestone.count
+        }
       ]);
-      expect(state.homestead.toolMastery.hoe).toEqual({ uses: apprentice.milestone.count, unlocked: [apprentice.id] });
+      expect(state.homestead.toolMastery.hoe).toEqual({
+        uses: apprentice.milestone.count,
+        unlocked: [apprentice.id]
+      });
       expect(captured).toHaveLength(1);
       expect(captured[0]).toMatchObject({
         perkId: apprentice.id,
