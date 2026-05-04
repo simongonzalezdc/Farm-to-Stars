@@ -9,6 +9,12 @@ on:
     - cron: '0 6 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: read
+
 jobs:
   test:
     runs-on: [self-hosted, macOS, ARM64]
