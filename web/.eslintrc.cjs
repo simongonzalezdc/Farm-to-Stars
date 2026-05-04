@@ -9,12 +9,10 @@ module.exports = {
     sourceType: 'module',
     ecmaVersion: 'latest'
   },
-  plugins: ['@typescript-eslint', 'vitest'],
+  plugins: ['@typescript-eslint'],
   extends: [
     'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:vitest/legacy-recommended',
-    'plugin:prettier/recommended'
+    'plugin:@typescript-eslint/recommended'
   ],
   overrides: [
     {
