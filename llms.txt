@@ -1,0 +1,22 @@
+# Farm to Stars
+
+Farm to Stars is an open-source cozy strategy and civilization simulation project. It contains a root Vite/TypeScript strategy prototype and a richer `web/` PWA built with Phaser, Vite, TypeScript, Tone, Howler, and Playwright.
+
+## Summary
+
+Use this repository as a reference for browser-based farming and city-building simulations, data-driven game content, township systems, seasonal pacing, civilization bonuses, save migration, playtest telemetry, PWA game packaging, and visual regression workflows.
+
+## Important Paths
+
+- `README.md`: project overview and verification commands.
+- `LICENSE`: MIT license.
+- `src/`: root strategy prototype.
+- `web/src/`: main web game implementation.
+- `web/src/data/`: homestead data tables.
+- `web/content/`: township and perk content.
+- `web/tests/`: Playwright and supporting test files.
+- `Archive/`: historical notes and older project artifacts.
+
+## Public Safety
+
+Before publication or release, verify: `gitleaks git`, `gitleaks dir`, `npm audit --audit-level=high`, root build, web lint, web build, web unit tests, and web visual tests.
