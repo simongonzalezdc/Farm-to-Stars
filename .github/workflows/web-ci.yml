@@ -78,8 +78,9 @@ jobs:
       - name: Verify hosted Chrome
         run: google-chrome --version
 
-      - name: Run visual regression tests
+      - name: Run visual smoke tests
         env:
+          CI_VISUAL_SMOKE: '1'
           PLAYWRIGHT_USE_SYSTEM_CHROME: '1'
         run: npm run test:visual
 

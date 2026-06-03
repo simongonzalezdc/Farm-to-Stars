@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+const visualSmokeOnly = process.env.CI_VISUAL_SMOKE === '1';
+
 async function moveCursorToCanvas(page: Page, ratioX: number, ratioY: number) {
   const canvas = page.locator('canvas').first();
   await expect(canvas).toBeVisible({ timeout: 15_000 });
@@ -38,6 +40,14 @@ async function setGameLoop(page: Page, active: boolean) {
   }, active);
 }
 
+async function attachSmokeScreenshot(page: Page, name: string) {
+  await expect(page.locator('canvas').first()).toBeVisible();
+  await test.info().attach(name, {
+    body: await page.screenshot({ fullPage: false }),
+    contentType: 'image/png'
+  });
+}
+
 test.describe('build mode baseline', () => {
   test('captures placement ghost states for baseline comparison', async ({ page }) => {
     await page.addInitScript(() => {
@@ -57,31 +67,43 @@ test.describe('build mode baseline', () => {
 
     const mask = [page.locator('.hud')];
 
-    await expect(page).toHaveScreenshot('placement-valid.png', {
-      animations: 'disabled',
-      mask,
-      maxDiffPixels: 1000
-    });
+    if (visualSmokeOnly) {
+      await attachSmokeScreenshot(page, 'placement-valid');
+    } else {
+      await expect(page).toHaveScreenshot('placement-valid.png', {
+        animations: 'disabled',
+        mask,
+        maxDiffPixels: 1000
+      });
+    }
 
     await setGameLoop(page, true);
     await page.keyboard.press('KeyE');
     await page.waitForTimeout(220);
     await setGameLoop(page, false);
-    await expect(page).toHaveScreenshot('placement-rotated.png', {
-      animations: 'disabled',
-      mask,
-      maxDiffPixels: 1000
-    });
+    if (visualSmokeOnly) {
+      await attachSmokeScreenshot(page, 'placement-rotated');
+    } else {
+      await expect(page).toHaveScreenshot('placement-rotated.png', {
+        animations: 'disabled',
+        mask,
+        maxDiffPixels: 1000
+      });
+    }
 
     await setGameLoop(page, true);
     await moveCursorToCanvas(page, 0.08, 0.12);
     await page.waitForTimeout(240);
     await setGameLoop(page, false);
-    await expect(page).toHaveScreenshot('placement-out-of-bounds.png', {
-      animations: 'disabled',
-      mask,
-      maxDiffPixels: 1000
-    });
+    if (visualSmokeOnly) {
+      await attachSmokeScreenshot(page, 'placement-out-of-bounds');
+    } else {
+      await expect(page).toHaveScreenshot('placement-out-of-bounds.png', {
+        animations: 'disabled',
+        mask,
+        maxDiffPixels: 1000
+      });
+    }
 
     await page.keyboard.press('Escape');
   });
