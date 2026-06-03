@@ -23,7 +23,7 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.0",
+    "@playwright/test": "^1.60.0",
     "@types/howler": "^2.2.13",
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.16",
