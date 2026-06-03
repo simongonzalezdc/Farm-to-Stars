@@ -15,6 +15,16 @@ import { TOWNSHIP_CONFIG } from '../../../types.township';
 import { createZone } from '../systems/zoneGrowth';
 import type { CivilizationId } from '../../../types';
 
+interface HomesteadExportCandidate {
+  version?: unknown;
+  seed?: unknown;
+  homestead?: {
+    metadata?: unknown;
+    resources?: unknown;
+    structures?: unknown;
+  };
+}
+
 /**
  * Import Homestead save into Township
  *
@@ -252,7 +262,7 @@ export function validateHomesteadExport(homesteadExport: unknown): boolean {
     return false;
   }
 
-  const payload = homesteadExport as any;
+  const payload = homesteadExport as HomesteadExportCandidate;
 
   // Check required fields
   if (typeof payload.version !== 'number') return false;

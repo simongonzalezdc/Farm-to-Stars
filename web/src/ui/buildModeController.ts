@@ -37,6 +37,13 @@ interface BuildModeControllerOptions {
   onJobQueued(job: BuildJob): void;
 }
 
+type ParticleEmitterFactory = Phaser.GameObjects.Particles.ParticleEmitterManager & {
+  addParticleEmitter?: (
+    config: Record<string, unknown>
+  ) => Phaser.GameObjects.Particles.ParticleEmitter;
+  createEmitter?: (config: Record<string, unknown>) => Phaser.GameObjects.Particles.ParticleEmitter;
+};
+
 export class BuildModeController {
   private readonly scene: Phaser.Scene;
   private readonly state: GameState;
@@ -98,26 +105,28 @@ export class BuildModeController {
     // Try to create the particle emitter, but make it optional if it fails
     // Phaser 3.80+ removed createEmitter and uses addParticleEmitter instead
     this.placementEmitter = null;
+    const particleManager = this.particleManager as ParticleEmitterFactory;
 
     // Check for new API first (Phaser 3.80+)
-    if (typeof (this.particleManager as any).addParticleEmitter === 'function') {
+    if (typeof particleManager.addParticleEmitter === 'function') {
       try {
-        this.placementEmitter = (this.particleManager as any).addParticleEmitter(emitterConfig);
+        this.placementEmitter = particleManager.addParticleEmitter(emitterConfig);
       } catch (e) {
         // addParticleEmitter failed, continue without particles
         if (import.meta.env.DEV) {
           console.warn('addParticleEmitter failed:', e);
         }
       }
-    } else if (typeof (this.particleManager as any).createEmitter === 'function') {
+    } else if (typeof particleManager.createEmitter === 'function') {
       // Old API (pre-3.80) - but in 3.80+ this throws "createEmitter removed"
       // We'll try it but wrap in try-catch to handle the error gracefully
       try {
-        this.placementEmitter = (this.particleManager as any).createEmitter(emitterConfig);
-      } catch (e: any) {
+        this.placementEmitter = particleManager.createEmitter(emitterConfig);
+      } catch (e: unknown) {
         // In Phaser 3.80+, createEmitter throws "createEmitter removed"
         // This is expected, so we silently continue without particles
-        if (import.meta.env.DEV && !e?.message?.includes('createEmitter removed')) {
+        const message = e instanceof Error ? e.message : String(e);
+        if (import.meta.env.DEV && !message.includes('createEmitter removed')) {
           console.warn('createEmitter failed:', e);
         }
       }

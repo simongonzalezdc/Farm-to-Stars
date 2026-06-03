@@ -9,7 +9,7 @@ import type { TownshipState, Zone, Building, TownshipEvent } from '../../types.t
 import { TownshipManager } from '../../sim/township/townshipManager';
 import { getTownshipCivilization } from '../../sim/township/civilizations/townshipCivilizations';
 import { getBuildingsTable } from '../../sim/township/data/buildingsLoader';
-import type { CivilizationId } from '../../types';
+import type { CivilizationId, ResourceId } from '../../types';
 
 export type ZoneType = 'residential' | 'commercial' | 'industrial' | 'mixed';
 export type TownshipMode = 'view' | 'zone' | 'build' | 'demolish';
@@ -265,7 +265,8 @@ export class TownshipController {
 
     // Check if player can afford it
     for (const [resourceId, cost] of Object.entries(buildingDef.cost)) {
-      if ((state.resources[resourceId as any] || 0) < cost) {
+      const resourceKey = resourceId as ResourceId;
+      if ((state.resources[resourceKey] || 0) < cost) {
         return null; // Cannot afford
       }
     }
@@ -288,7 +289,8 @@ export class TownshipController {
 
     // Deduct costs
     for (const [resourceId, cost] of Object.entries(buildingDef.cost)) {
-      state.resources[resourceId as any] -= cost;
+      const resourceKey = resourceId as ResourceId;
+      state.resources[resourceKey] = (state.resources[resourceKey] || 0) - cost;
     }
 
     // Add building

@@ -9,6 +9,10 @@ module.exports = {
     sourceType: 'module',
     ecmaVersion: 'latest'
   },
+  ignorePatterns: [
+    'dist/**',
+    'public/assets/**'
+  ],
   plugins: ['@typescript-eslint'],
   extends: [
     'eslint:recommended',
@@ -16,9 +20,13 @@ module.exports = {
   ],
   overrides: [
     {
-      files: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
+      files: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'tests/**/*.ts'],
       env: {
         node: true
+      },
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-empty-object-type': 'off'
       }
     }
   ],

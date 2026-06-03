@@ -6,12 +6,17 @@
 
 import type { BuildingsTable, BuildingDefinition } from '../../../types.township';
 import buildingsData from '../../../../content/township/buildings.json';
+import type { CivilizationId } from '../../../types';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
 
 /**
  * Validate a single building definition
  */
-function validateBuilding(building: any): building is BuildingDefinition {
-  if (typeof building !== 'object' || building === null) return false;
+function validateBuilding(building: unknown): building is BuildingDefinition {
+  if (!isRecord(building)) return false;
 
   // Required fields
   if (typeof building.id !== 'string') return false;
@@ -32,7 +37,7 @@ function validateBuilding(building: any): building is BuildingDefinition {
   }
 
   // Cost validation
-  if (!building.cost || typeof building.cost !== 'object') return false;
+  if (!isRecord(building.cost)) return false;
 
   // Maintenance validation
   if (
@@ -53,7 +58,7 @@ function validateBuilding(building: any): building is BuildingDefinition {
  * @throws Error if validation fails
  */
 export function loadBuildings(): BuildingsTable {
-  const data = buildingsData as any;
+  const data = buildingsData as { buildings?: Record<string, unknown> };
 
   if (!data.buildings || typeof data.buildings !== 'object') {
     throw new Error('Invalid buildings.json format: missing "buildings" object');
@@ -109,7 +114,7 @@ export function getBuildingsForCivilization(civilizationId: string): BuildingDef
     if (!building.requirements?.civilization) return true;
 
     // Check if this civilization can build it
-    return building.requirements.civilization.includes(civilizationId as any);
+    return building.requirements.civilization.includes(civilizationId as CivilizationId);
   });
 }
 
@@ -134,7 +139,7 @@ export function isBuildingUnlocked(
   // Check civilization requirement
   if (
     building.requirements?.civilization &&
-    !building.requirements.civilization.includes(civilizationId as any)
+    !building.requirements.civilization.includes(civilizationId as CivilizationId)
   ) {
     return false;
   }

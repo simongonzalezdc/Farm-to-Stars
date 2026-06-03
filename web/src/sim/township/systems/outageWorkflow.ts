@@ -4,8 +4,7 @@
  * Handles service disruptions and repairs for utility buildings
  */
 
-import type { TownshipState, Building } from '../../../types.township';
-import type { BuildingsTable } from '../data/buildingsLoader';
+import type { TownshipState, Building, BuildingDefinition, BuildingsTable } from '../../../types.township';
 
 export interface OutageConfig {
   meanTimeBetweenOutages: number; // Average seconds between outages
@@ -160,7 +159,7 @@ export class OutageWorkflowSystem {
   /**
    * Calculate outage chance based on building condition
    */
-  private calculateOutageChance(building: Building, def: any): number {
+  private calculateOutageChance(building: Building, def: BuildingDefinition): number {
     // Base chance: 10%
     let chance = 0.1;
 
@@ -187,7 +186,7 @@ export class OutageWorkflowSystem {
   /**
    * Calculate repair cost
    */
-  private calculateRepairCost(building: Building, def: any): Record<string, number> {
+  private calculateRepairCost(building: Building, def: BuildingDefinition): Record<string, number> {
     const cost: Record<string, number> = {};
 
     // Repair cost is a percentage of building cost
@@ -195,9 +194,8 @@ export class OutageWorkflowSystem {
     const damagePercent = 1 - healthPercent;
 
     for (const [resourceId, buildCost] of Object.entries(def.cost)) {
-      cost[resourceId] = Math.ceil(
-        (buildCost as number) * this.config.repairCostMultiplier * damagePercent
-      );
+      if (typeof buildCost !== 'number') continue;
+      cost[resourceId] = Math.ceil(buildCost * this.config.repairCostMultiplier * damagePercent);
     }
 
     return cost;
@@ -206,7 +204,7 @@ export class OutageWorkflowSystem {
   /**
    * Calculate repair time
    */
-  private calculateRepairTime(building: Building, def: any): number {
+  private calculateRepairTime(building: Building, _def: BuildingDefinition): number {
     const healthPercent = building.health / 100;
     const damagePercent = 1 - healthPercent;
 

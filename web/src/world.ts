@@ -19,6 +19,7 @@ import type {
   BuildingDefinition,
   BuildingId,
   ConstructionJob,
+  CivilizationsTable,
   CropsTable,
   CropId,
   GameEvent,
@@ -170,7 +171,7 @@ export function tick(
   recipes: Record<RecipeId, RecipeDefinition> = {},
   crops: CropsTable = {},
   livestock: LivestockTable = {},
-  civilizations: Record<string, any> = {}
+  civilizations: CivilizationsTable = {}
 ): GameEvent[] {
   const events: GameEvent[] = [];
 
@@ -418,7 +419,7 @@ function processHomestead(
   seasonDefinition: SeasonDefinition,
   crops: CropsTable,
   livestockDefs: LivestockTable,
-  civilizations: Record<string, any> = {}
+  civilizations: CivilizationsTable = {}
 ): HomesteadTickResult {
   const events: GameEvent[] = [];
   const feedConsumed: Partial<Record<ResourceId, number>> = {};

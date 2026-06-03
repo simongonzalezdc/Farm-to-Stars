@@ -4,8 +4,13 @@
  * Handles spreading of power, water, and other services across the city grid
  */
 
-import type { TownshipState, Building } from '../../../types.township';
-import type { BuildingsTable } from '../data/buildingsLoader';
+import type {
+  TownshipState,
+  Building,
+  BuildingDefinition,
+  BuildingsTable,
+  ServiceType
+} from '../../../types.township';
 
 export interface UtilityNetwork {
   power: boolean[][]; // Grid of powered tiles
@@ -80,8 +85,8 @@ export class UtilitiesPropagationSystem {
   private propagateService(
     network: UtilityNetwork,
     building: Building,
-    buildingDef: any,
-    service: string,
+    buildingDef: BuildingDefinition,
+    service: ServiceType,
     gridWidth: number,
     gridHeight: number
   ): void {
