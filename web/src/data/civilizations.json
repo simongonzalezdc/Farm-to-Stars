@@ -5,6 +5,7 @@
     "tagline": "Masters of Solar Technology",
     "description": "Through centuries of innovation with obsidian mirrors and solar furnaces, the Teotihuacan have become masters of light and energy. Their pyramid cities gleam with focused sunlight, powering advanced metallurgy and optics.",
     "bonuses": {
+      "communityStewardship": 1.0,
       "solarEnergy": 1.10,
       "research": 1.05
     },
@@ -24,6 +25,9 @@
         "season": "spring",
         "description": "Celebrate the sun's rebirth with offerings and astronomical observations",
         "effect": "solarBonus",
+        "bonuses": {
+          "solarEnergy": 1.10
+        },
         "duration": 168
       }
     ],
@@ -35,6 +39,7 @@
     "tagline": "Masters of Knowledge and Mathematics",
     "description": "The Maya have perfected the art of observation and calculation. Their observatories track celestial movements with precision, while their libraries preserve centuries of accumulated wisdom in elegant glyphs.",
     "bonuses": {
+      "communityStewardship": 1.0,
       "research": 1.15,
       "astronomy": 1.20
     },
@@ -54,6 +59,9 @@
         "season": "autumn",
         "description": "Mark the completion of a 20-year calendar cycle with mathematical ceremonies",
         "effect": "researchBonus",
+        "bonuses": {
+          "research": 1.10
+        },
         "duration": 168
       }
     ],
@@ -65,6 +73,7 @@
     "tagline": "Masters of Water and Efficiency",
     "description": "In the driest desert on Earth, the Moche have learned to capture every drop. Fog catchers, sophisticated irrigation, and water conservation make life flourish where it shouldn't be possible.",
     "bonuses": {
+      "communityStewardship": 1.0,
       "waterEfficiency": 1.20,
       "resourceConservation": 1.10
     },
@@ -84,6 +93,9 @@
         "season": "winter",
         "description": "Honor the sea goddess and the waters that give life to the desert",
         "effect": "waterBonus",
+        "bonuses": {
+          "waterEfficiency": 1.10
+        },
         "duration": 168
       }
     ],
@@ -95,6 +107,7 @@
     "tagline": "Masters of Trade and Gift Economy",
     "description": "The Hopewell have created vast trade networks spanning continents. Their earthwork monuments serve as gathering places where goods and knowledge flow freely through reciprocal gift-giving.",
     "bonuses": {
+      "communityStewardship": 1.0,
       "tradeEfficiency": 1.15,
       "resourceGathering": 1.10
     },
@@ -114,6 +127,9 @@
         "season": "summer",
         "description": "Communities come together to exchange gifts and strengthen bonds",
         "effect": "tradeBonus",
+        "bonuses": {
+          "tradeEfficiency": 1.10
+        },
         "duration": 168
       }
     ],
@@ -125,6 +141,7 @@
     "tagline": "Masters of Sustainability and Efficiency",
     "description": "Living in harmony with their mesa environment for centuries, the Puebloan have perfected sustainable living. Every resource is used fully, nothing is wasted, and communities thrive through careful planning.",
     "bonuses": {
+      "communityStewardship": 1.0,
       "resourceEfficiency": 1.15,
       "buildingDurability": 1.10
     },
@@ -144,6 +161,9 @@
         "season": "autumn",
         "description": "Celebrate the efficient harvest and give thanks for sustainable abundance",
         "effect": "efficiencyBonus",
+        "bonuses": {
+          "resourceEfficiency": 1.10
+        },
         "duration": 168
       }
     ],

@@ -537,15 +537,26 @@ function validateCivilizationsTable(raw: unknown): CivilizationsTable {
           !isString(festivalRecord.season) ||
           !isString(festivalRecord.description) ||
           !isString(festivalRecord.effect) ||
+          !isRecord(festivalRecord.bonuses) ||
           !isNumber(festivalRecord.duration)
         ) {
           throw new Error(`Civilization "${key}" festival #${index} is missing required fields.`);
+        }
+        const festivalBonuses: CivilizationDefinition['bonuses'] = {};
+        for (const [bonusKey, bonusValue] of Object.entries(festivalRecord.bonuses)) {
+          if (!isNumber(bonusValue)) {
+            throw new Error(
+              `Civilization "${key}" festival #${index} bonus "${bonusKey}" must be numeric.`
+            );
+          }
+          festivalBonuses[bonusKey] = bonusValue;
         }
         return {
           name: festivalRecord.name,
           season: festivalRecord.season,
           description: festivalRecord.description,
           effect: festivalRecord.effect,
+          bonuses: festivalBonuses,
           duration: festivalRecord.duration
         };
       }

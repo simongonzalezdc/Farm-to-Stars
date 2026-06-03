@@ -16,9 +16,9 @@ export interface ZoneMaturationConfig {
 }
 
 const DEFAULT_CONFIG: ZoneMaturationConfig = {
-  maturationRate: 2.0, // 2% per second = ~50 seconds to mature
-  decayRate: 0.5, // Slower decay
-  spawnThreshold: 80, // Need 80% maturity to spawn
+  maturationRate: 0.02, // 2% per second = ~50 seconds to mature
+  decayRate: 0.005, // Slower decay
+  spawnThreshold: 0.8, // Need 80% maturity to spawn
   minSpacing: 2 // 2 tile minimum spacing
 };
 
@@ -47,10 +47,13 @@ export class ZoneMaturationSystem {
       // Update maturity
       if (zoneDemand > 0) {
         // Positive demand - zone grows
-        zone.maturity = Math.min(100, zone.maturity + this.config.maturationRate * zoneDemand * dt);
+        zone.maturity = Math.min(1, zone.maturity + this.config.maturationRate * zoneDemand * dt);
       } else if (zoneDemand < 0) {
         // Negative demand - zone decays
         zone.maturity = Math.max(0, zone.maturity + this.config.decayRate * zoneDemand * dt);
+      }
+      if (zone.maturity > 0.999) {
+        zone.maturity = 1;
       }
 
       // Try to spawn building if mature enough

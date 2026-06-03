@@ -62,7 +62,7 @@ export class DemandCalculationSystem {
 
     // Unemployment factor
     const unemploymentRate = population.total > 0 ? population.unemployed / population.total : 0;
-    const unemploymentFactor = this.normalize(unemploymentRate, 0, 0.2, -1, 1, true); // High unemployment = bad
+    const unemploymentFactor = this.normalize(unemploymentRate, 0, 0.4, -1, 1, true); // High unemployment = bad
 
     // Happiness factor
     const happinessFactor = this.normalize(metrics.happiness.overall, 0, 100, -1, 1, false);
@@ -91,9 +91,9 @@ export class DemandCalculationSystem {
     const commercialRatio = totalZones > 0 ? zoneDistribution.commercial / totalZones : 0;
     const industrialRatio = totalZones > 0 ? zoneDistribution.industrial / totalZones : 0;
 
-    // Employment factor
-    const employmentRate = population.total > 0 ? population.employed / population.total : 0;
-    const employmentFactor = this.normalize(employmentRate, 0.5, 0.9, -1, 1, false);
+    // Employment-need factor for industrial demand.
+    const employmentNeed = population.total > 0 ? population.unemployed / population.total : 0;
+    const employmentFactor = this.normalize(employmentNeed, 0, 0.5, -1, 1, false);
 
     return {
       residential: {
@@ -131,7 +131,7 @@ export class DemandCalculationSystem {
 
     // Bonus for low population (early game boost)
     const populationBonus =
-      state.population.total < 500 ? 0.3 : state.population.total < 1000 ? 0.15 : 0;
+      state.population.total < 500 ? 0.4 : state.population.total < 1000 ? 0.15 : 0;
 
     return demand + populationBonus;
   }
@@ -178,8 +178,13 @@ export class DemandCalculationSystem {
       commercialRatio * 0.4; // Commerce needs industrial goods
 
     // Penalty if too much industrial (pollution concern)
-    const industrialCount = state.zones.filter((z) => z.type === 'industrial').length;
-    const totalZones = state.zones.length;
+    const zoneDistribution = state.metrics.zoneDistribution;
+    const industrialCount = zoneDistribution.industrial;
+    const totalZones =
+      zoneDistribution.residential +
+      zoneDistribution.commercial +
+      zoneDistribution.industrial +
+      zoneDistribution.mixed;
 
     if (totalZones > 0 && industrialCount / totalZones > 0.3) {
       return demand - 0.4; // Heavy penalty for pollution

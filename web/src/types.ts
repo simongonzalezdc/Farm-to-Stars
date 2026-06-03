@@ -110,6 +110,7 @@ export interface CivilizationFestival {
   season: string;
   description: string;
   effect: string;
+  bonuses: CivilizationBonuses;
   duration: number;
 }
 

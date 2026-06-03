@@ -74,25 +74,50 @@ void main() {
 }
 `;
 
-class PlacementGhostPipeline extends Phaser.Renderer.WebGL.Pipelines.SinglePipeline {
-  constructor(game: Phaser.Game) {
-    super({
-      game,
-      renderer: game.renderer,
-      fragShader: FRAGMENT_SHADER,
-      uniforms: [
-        'uProjectionMatrix',
-        'uMainSampler',
-        'uResolution',
-        'uTint',
-        'uOutlineColor',
-        'uAlpha',
-        'uOutlineStrength',
-        'uGlow'
-      ]
-    });
-  }
+interface PlacementGhostPipelineInstance {
+  set3f(name: string, x: number, y: number, z: number): void;
+  set1f(name: string, value: number): void;
 }
+
+interface PlacementGhostPipelineManager {
+  has(key: string): boolean;
+  add(key: string, pipeline: PlacementGhostPipelineInstance): void;
+  get(key: string): PlacementGhostPipelineInstance;
+}
+
+interface RendererWithPipelines {
+  pipelines?: PlacementGhostPipelineManager;
+}
+
+interface SinglePipelineConstructor {
+  new (config: Record<string, unknown>): PlacementGhostPipelineInstance;
+}
+
+const PipelineNamespace = Phaser.Renderer.WebGL.Pipelines as
+  | { SinglePipeline?: SinglePipelineConstructor }
+  | undefined;
+const SinglePipeline = PipelineNamespace?.SinglePipeline;
+const PlacementGhostPipeline = SinglePipeline
+  ? class extends SinglePipeline {
+      constructor(game: Phaser.Game) {
+        super({
+          game,
+          renderer: game.renderer,
+          fragShader: FRAGMENT_SHADER,
+          uniforms: [
+            'uProjectionMatrix',
+            'uMainSampler',
+            'uResolution',
+            'uTint',
+            'uOutlineColor',
+            'uAlpha',
+            'uOutlineStrength',
+            'uGlow'
+          ]
+        });
+      }
+    }
+  : null;
 
 function toVec3(hex: number): [number, number, number] {
   const rgb = Phaser.Display.Color.IntegerToRGB(hex);
@@ -109,7 +134,7 @@ export class PlacementGhost extends Phaser.GameObjects.Image {
   static readonly PIPELINE_KEY = 'placement-ghost';
 
   private readonly pipelineKey: string;
-  private pipeline!: PlacementGhostPipeline;
+  private pipeline: PlacementGhostPipelineInstance | null = null;
   private readonly palette: Record<PlacementGhostState, PlacementGhostPaletteEntry>;
   private state: PlacementGhostState = 'valid';
 
@@ -124,25 +149,35 @@ export class PlacementGhost extends Phaser.GameObjects.Image {
     this.setVisible(false);
     this.setAlpha(1);
 
-    this.ensurePipeline();
-    this.setPipeline(this.pipelineKey);
+    if (this.ensurePipeline()) {
+      this.setPipeline(this.pipelineKey);
+    }
     this.refreshUniforms();
   }
 
-  private ensurePipeline() {
-    const renderer = this.scene.game.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
+  private ensurePipeline(): boolean {
+    if (!PlacementGhostPipeline) {
+      return false;
+    }
+    const renderer = this.scene.game.renderer as unknown as RendererWithPipelines;
     const manager = renderer.pipelines;
+    if (!manager) {
+      return false;
+    }
     if (!manager.has(this.pipelineKey)) {
       manager.add(this.pipelineKey, new PlacementGhostPipeline(this.scene.game));
     }
-    this.pipeline = manager.get(this.pipelineKey) as PlacementGhostPipeline;
+    this.pipeline = manager.get(this.pipelineKey);
+    return true;
   }
 
   private refreshUniforms() {
+    const palette = this.palette[this.state];
     if (!this.pipeline) {
+      this.setTint(palette.tint);
+      this.setAlpha(Phaser.Math.Clamp(palette.alpha, 0, 1));
       return;
     }
-    const palette = this.palette[this.state];
     const [rt, gt, bt] = toVec3(palette.tint);
     const [ro, go, bo] = toVec3(palette.outline);
 

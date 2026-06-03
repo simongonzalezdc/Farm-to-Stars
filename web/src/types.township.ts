@@ -367,8 +367,8 @@ export const TOWNSHIP_CONFIG = {
 
   // Simulation
   TICK_RATE: 10, // Hz (matches Homestead)
-  BASE_POPULATION_GROWTH: 0.1, // Citizens per second
-  BASE_ZONE_GROWTH: 0.01, // Maturity per second
+  BASE_POPULATION_GROWTH: 1.0, // Citizens per second
+  BASE_ZONE_GROWTH: 0.03, // Maturity per second
 
   // Demand thresholds
   DEMAND_HIGH: 0.5,

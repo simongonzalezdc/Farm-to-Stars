@@ -104,6 +104,15 @@ import { TelemetryTracker, type TelemetrySnapshot } from './telemetry/telemetry'
 import { HomesteadMetrics } from './telemetry/homesteadMetrics';
 import { exportHomesteadToTownship } from './sim/export/homesteadToTownship';
 import { TownshipScene } from './scenes/TownshipScene';
+
+declare global {
+  interface Window {
+    Phaser?: typeof Phaser;
+    __farmToStarsGame?: Phaser.Game;
+  }
+}
+
+window.Phaser = Phaser;
 import {
   flushPlaytestEvents,
   getPlaytestTelemetryOptIn,
@@ -1586,7 +1595,7 @@ const config: Phaser.Types.Core.GameConfig = {
 async function boot() {
   const tables = await dataTablesPromise;
   prepareHud(tables);
-  new Phaser.Game(config);
+  window.__farmToStarsGame = new Phaser.Game(config);
 }
 
 void boot();

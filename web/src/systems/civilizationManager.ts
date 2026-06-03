@@ -38,7 +38,7 @@ export class CivilizationManager {
    */
   applyBonus(bonusType: keyof CivilizationBonuses, baseValue: number): number {
     const multiplier = this.civilization.bonuses[bonusType] ?? 1.0;
-    return baseValue * multiplier;
+    return Math.round(baseValue * multiplier * 1_000_000) / 1_000_000;
   }
 
   /**
@@ -80,7 +80,7 @@ export class CivilizationManager {
   getBonusDescriptions(): Array<{ name: string; value: string }> {
     return Object.entries(this.civilization.bonuses).map(([key, value]) => ({
       name: this.formatBonusName(key),
-      value: `+${((value - 1) * 100).toFixed(0)}%`
+      value: `+${(((value ?? 1) - 1) * 100).toFixed(0)}%`
     }));
   }
 
@@ -105,7 +105,7 @@ export function createCivilizationManager(
 ): CivilizationManager {
   const civilization = civilizations[civilizationId];
   if (!civilization) {
-    throw new Error(`Unknown civilization ID: ${civilizationId}`);
+    throw new Error(`Civilization ${civilizationId} not found`);
   }
   return new CivilizationManager(civilization);
 }

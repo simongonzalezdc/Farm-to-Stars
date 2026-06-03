@@ -73,7 +73,7 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
     id: SeasonId.Spring,
     label: 'Spring Awakening',
     summary: '+25% gather, +30% build speed, gentle rains improve soil.',
-    durationSeconds: 165,
+    durationSeconds: 150,
     visuals: {
       background: '#203826',
       groundTint: 0xbdf7d4,
@@ -101,7 +101,7 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
     id: SeasonId.Summer,
     label: 'Summer Zenith',
     summary: '+12% gather, +18% sell value with brighter afternoons.',
-    durationSeconds: 165,
+    durationSeconds: 150,
     visuals: {
       background: '#2f3317',
       groundTint: 0xffed9e,
@@ -129,7 +129,7 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
     id: SeasonId.Autumn,
     label: 'Autumn Harvest',
     summary: 'Steady yields, -8% build speed, +10% sell value.',
-    durationSeconds: 165,
+    durationSeconds: 150,
     visuals: {
       background: '#362315',
       groundTint: 0xffb680,
@@ -157,7 +157,7 @@ export const SEASON_DEFINITIONS: Record<SeasonId, SeasonDefinition> = {
     id: SeasonId.Winter,
     label: 'Winter Slumber',
     summary: '-12% gather, -22% build speed, -8% sell value.',
-    durationSeconds: 165,
+    durationSeconds: 150,
     visuals: {
       background: '#1b2f46',
       groundTint: 0xd3e3ff,

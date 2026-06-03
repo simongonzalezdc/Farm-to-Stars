@@ -51,10 +51,13 @@ export function tickZoneGrowth(
     // Update maturity
     const previousMaturity = zone.maturity;
     zone.maturity = Math.min(1.0, zone.maturity + growthRate * dt);
+    if (zone.maturity > 0.999) {
+      zone.maturity = 1.0;
+    }
 
     // Update capacity based on maturity
     const maxCapacity = getMaxZoneCapacity(zone);
-    zone.capacity = Math.floor(zone.maturity * maxCapacity);
+    zone.capacity = Math.max(zone.capacity, Math.floor(zone.maturity * maxCapacity));
 
     // Emit event if zone just matured
     if (previousMaturity < 1.0 && zone.maturity >= 1.0) {
