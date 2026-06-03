@@ -75,11 +75,12 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      - name: Install Playwright Chromium
-        timeout-minutes: 15
-        run: npx playwright install chromium
+      - name: Verify hosted Chrome
+        run: google-chrome --version
 
       - name: Run visual regression tests
+        env:
+          PLAYWRIGHT_USE_SYSTEM_CHROME: '1'
         run: npm run test:visual
 
       - name: Upload Playwright HTML report

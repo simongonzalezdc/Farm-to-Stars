@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+const useSystemChrome = process.env.PLAYWRIGHT_USE_SYSTEM_CHROME === '1';
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -12,7 +14,8 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure'
+    video: 'retain-on-failure',
+    ...(useSystemChrome ? { channel: 'chrome' } : {})
   },
   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
   webServer: {
