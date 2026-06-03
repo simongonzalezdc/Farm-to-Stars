@@ -1,6 +1,16 @@
 node_modules/
 dist/
 coverage/
+playwright-report/
+test-results/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Local agent workspace
+.omx/
 
 # Editor junk
 .DS_Store
