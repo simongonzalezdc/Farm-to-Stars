@@ -14,7 +14,7 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: useSystemChrome ? 'off' : 'retain-on-failure',
     ...(useSystemChrome ? { channel: 'chrome' } : {})
   },
   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
