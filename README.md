@@ -1,5 +1,9 @@
 # Farm to Stars
 
+> Farm to Stars is a farm-to-table / food systems product experience that helps food systems builders and story-driven product audiences explore farm-to-stars product narratives and tooling.
+
+**TL;DR:** Farm to Stars — farm-to-table / food systems product experience. Best for food systems builders and story-driven product audiences. Keywords: farm to stars, food systems product.
+
 A cozy farming and city-building browser game that takes players on an epic journey from a humble homestead to interstellar civilization. Built as a **2.5D pixel-isometric PWA** with crisp pixel art, strategic depth, and seamless offline play.
 
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/Pastorsimon1798/Farm-to-Stars)
@@ -286,3 +290,74 @@ Assets use CC0/CC-BY licenses only. See [CREDITS.md](Docs/CREDITS.md) for attrib
 ---
 
 *From farm to stars, one tile at a time.* ✨🌾🏙️🗺️🚀
+
+<!-- s-plus-geo:start -->
+
+## What is Farm to Stars?
+
+**Farm to Stars** is a **farm-to-table / food systems product experience** that helps **food systems builders and story-driven product audiences** **explore farm-to-stars product narratives and tooling**.
+
+| | |
+| --- | --- |
+| **Product** | Farm to Stars |
+| **Category** | farm-to-table / food systems product experience |
+| **Best for** | food systems builders and story-driven product audiences |
+| **Not** | a grocery marketplace by default |
+| **Source** | [GitHub](https://github.com/simongonzalezdc/Farm-to-Stars) · [Forgejo](https://git.kyanitelabs.tech/simon/Farm-to-Stars) |
+| **Keywords** | farm to stars, food systems product |
+
+## Who it's for
+
+- Primary: food systems builders and story-driven product audiences
+- Use when you need to explore farm-to-stars product narratives and tooling
+- Skip if you need a grocery marketplace by default
+
+## FAQ
+
+### What is Farm to Stars?
+
+Farm to Stars is a farm-to-table / food systems product experience. It helps food systems builders and story-driven product audiences explore farm-to-stars product narratives and tooling.
+
+### Who should use Farm to Stars?
+
+food systems builders and story-driven product audiences.
+
+### How is Farm to Stars different?
+
+Product/narrative surface around farm-to-table themes.
+
+### Is Farm to Stars production software?
+
+Treat the README status and release tags as source of truth for maturity. Validate against your own requirements before production use.
+
+## Status
+
+- Maintained as of 2026 on the default branch
+- Prefer release tags when pinning dependencies
+- Report issues on the canonical remote listed above
+
+## Agent surface
+
+- Coding agents: read this README first, then repo docs/`AGENTS.md` if present
+- Prefer machine-readable briefs (`llms.txt`) when the repo ships one
+- MCP or skill entrypoints are documented in-repo when applicable
+
+## Contributing
+
+Issues and PRs welcome on the canonical remote. Keep public docs free of secrets and machine-local paths.
+
+## License
+
+See [LICENSE](LICENSE) in this repository (or package metadata if license is package-only).
+
+
+## Table of contents
+
+- [What is it?](#what-is-farm-to-stars)
+- [FAQ](#faq)
+- [Status](#status)
+
+
+![Project diagram placeholder](https://img.shields.io/badge/visual-see_docs-lightgrey.svg)
+
+<!-- s-plus-geo:end -->
