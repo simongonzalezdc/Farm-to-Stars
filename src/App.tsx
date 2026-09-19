@@ -4,7 +4,7 @@ import type { GameState } from './game/state/gameState';
 import { getOfficialScenarios, loadScenario } from './game/scenario/loader';
 import { createInitialState } from './game/state/gameState';
 import { createDecisionEngine, type PresentedEvent } from './game/decisions/engine';
-import { createAIProvider } from './ai';
+import { createConfiguredAIProvider } from './ai';
 import { ScenarioSelect } from './ui/ScenarioSelect';
 import { GameScreen } from './ui/GameScreen';
 import './App.css';
@@ -41,8 +41,9 @@ export function App() {
     setError(null);
 
     try {
-      // TODO: Get API key from config
-      const ai = createAIProvider({ type: 'minimax', apiKey: 'demo-key' });
+      // Security fix 2026-09-19: no hardcoded keys — runtime BYOK only, and
+      // the AI path stays disabled (zero MiniMax calls) while unconfigured.
+      const ai = createConfiguredAIProvider();
       const engine = createDecisionEngine(ai);
       const event = await engine.presentEvent(scenario, initialState);
       setCurrentEvent(event);
@@ -58,7 +59,7 @@ export function App() {
 
     setLoading(true);
     try {
-      const ai = createAIProvider({ type: 'minimax', apiKey: 'demo-key' });
+      const ai = createConfiguredAIProvider();
       const engine = createDecisionEngine(ai);
       const outcome = await engine.makeChoice(
         currentScenario,
