@@ -1,17 +1,18 @@
 # Farm to Stars
 
-Farm to Stars is an open-source cozy strategy and civilization simulation project. It contains a root Vite/TypeScript strategy prototype and a richer `web/` PWA built with Phaser, Vite, TypeScript, Tone, Howler, and Playwright.
+Farm to Stars is a dormant, experimental AI-driven grand-strategy game prototype (the v2 pivot) plus a legacy cozy-farming PWA. The root app is React 19 + TypeScript + Zustand + Vite (scenario/decision engine with optional AI narration); `web/` holds the older Phaser/Vite/TypeScript/Tone/Howler PWA, retained as frozen legacy code.
 
 ## Summary
 
-Use this repository as a reference for browser-based farming and city-building simulations, data-driven game content, township systems, seasonal pacing, civilization bonuses, save migration, playtest telemetry, PWA game packaging, and visual regression workflows.
+Status: dormant prototype — root product code unchanged since 2026-06; docs/CI/security maintenance only. AI narration is BYOK-only (user-supplied MiniMax key read at runtime from localStorage; no keys are shipped and zero AI calls happen while unconfigured — PR #24, 2026-09). Use this repository as a reference for AI-narrated strategy prototypes, React/Vite browser games, browser-side BYOK key gating, data-driven game content, township systems, save migration, PWA game packaging, and visual regression workflows.
 
 ## Important Paths
 
 - `README.md`: project overview and verification commands.
 - `LICENSE`: MIT license.
-- `src/`: root strategy prototype.
-- `web/src/`: main web game implementation.
+- `src/`: the v2 pivot app (current product: scenario loader, decision engine, BYOK AI provider, HUD/map/event UI).
+- `src/ai/key.ts`: runtime-only BYOK key accessor (no bundled keys).
+- `web/src/`: legacy v1 game implementation (frozen).
 - `web/src/data/`: homestead data tables.
 - `web/content/`: township and perk content.
 - `web/tests/`: Playwright and supporting test files.
